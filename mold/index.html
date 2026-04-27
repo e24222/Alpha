@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0088)file:///D:/admin/Downloads/%E6%A8%A1%E5%85%B7%E7%AE%A1%E7%90%86%E7%B3%BB%E7%B5%B1_5.html -->
+<!-- saved from url=(0039)file:///D:/admin/Downloads/index_1.html -->
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -250,11 +250,11 @@ textarea { resize:vertical; min-height:64px; }
 #pw-btn:hover { background: #2563eb; }
 #pw-err { color: #f87171; font-size: 0.85rem; margin-top: 10px; display: none; font-family: Microsoft JhengHei, sans-serif; }
 </style>
-<div id="pw-overlay">
+<div id="pw-overlay" style="display: none;">
   <div id="pw-box">
     <h2>🔒 模具清冊管理系統</h2>
     <p>請輸入密碼以繼續</p>
-    <input id="pw-input" type="password" placeholder="輸入密碼" onkeydown="if(event.key==='Enter')checkPW()">
+    <input id="pw-input" type="password" placeholder="輸入密碼" onkeydown="if(event.key===&#39;Enter&#39;)checkPW()">
     <button id="pw-btn" onclick="checkPW()">確認</button>
     <div id="pw-err">密碼錯誤，請再試一次</div>
   </div>
@@ -338,6 +338,8 @@ if (sessionStorage.getItem('mold_auth') === '1') {
     </div>
     <button class="btn btn-primary" onclick="openModal()">＋ 新增</button>
     <button class="btn btn-outline" onclick="exportCSV()">📥 匯出 CSV</button>
+    <button class="btn btn-outline" style="color:#065f46;border-color:#6ee7b7;" onclick="document.getElementById(&#39;importCsvInput&#39;).click()">📤 匯入 CSV</button>
+    <input type="file" id="importCsvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
     <button class="btn btn-outline" onclick="window.print()">🖨️ 列印</button>
   </div>
 
@@ -355,238 +357,238 @@ if (sessionStorage.getItem('mold_auth') === '1') {
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16001-3R&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16001-3R&#39;,&#39;90*15mm 培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16001-3R&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">2</td><td class="c-mono">111/1/28</td><td class="c-mono">—</td><td><span class="c-id">M16001-7B2</span></td><td class="c-gray">E.F</td><td class="c-mono">16001-7</td><td class="c-prod">90*15mm 培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">111/1/11</td><td class="c-mono">111/1/28</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-arrived">已到貨</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16001-7B2&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16001-7B2&#39;,&#39;90*15mm 培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16001-7B2&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">3</td><td class="c-mono">113/1/26</td><td class="c-mono">—</td><td><span class="c-id">M16001-1B-STAR</span></td><td class="c-gray">1~4</td><td class="c-mono">16001-1&amp;3</td><td class="c-prod">9cm 熱膠道 八穴</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">113/1/26</td><td class="c-mono">113/1/26</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-arrived">已到貨</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16001-1B-STAR&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16001-1B-STAR&#39;,&#39;9cm 熱膠道 八穴&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16001-1B-STAR&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">4</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16026-2</span></td><td class="c-gray">2+2</td><td class="c-mono">16026-2</td><td class="c-prod">35mm 培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">101/7/23</td><td class="c-mono">100/12/3</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-arrived">已到貨</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16026-2&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16026-2&#39;,&#39;35mm 培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16026-2&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">5</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16214-1</span></td><td class="c-gray">1+1</td><td class="c-mono">16214-1</td><td class="c-prod">150*20mm 培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">99/11/15</td><td class="c-mono">100/12/3</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16214-1&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16214-1&#39;,&#39;150*20mm 培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16214-1&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">6</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16014-1</span></td><td class="c-gray">1+1</td><td class="c-mono">16014-1</td><td class="c-prod">15CM培養皿 (新模)</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">111/12/3</td><td class="c-mono">—</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16014-1&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16014-1&#39;,&#39;15CM培養皿 (新模)&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16014-1&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">7</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16001-4GP</span></td><td class="c-gray">2+2</td><td class="c-mono">16001-4NGP</td><td class="c-prod">Gplus 90*15mm培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">108/12/18</td><td class="c-mono">100/12/3</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-notes note-danger" title="104/8/12修復中 外觀不良.毛邊">104/8/12修復中 外觀不良.毛邊</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16001-4GP&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16001-4GP&#39;,&#39;Gplus 90*15mm培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16001-4GP&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">8</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16003-1</span></td><td class="c-gray">1.2</td><td class="c-mono">16003-1</td><td class="c-prod">90*20mm培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">106/1/25</td><td class="c-mono">100/12/3</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-notes note-danger" title="底部凹凸不平.水波紋 待報廢">底部凹凸不平.水波紋 待報廢</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16003-1&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16003-1&#39;,&#39;90*20mm培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16003-1&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">9</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16025-4</span></td><td class="c-gray">ZV</td><td class="c-mono">16025-4</td><td class="c-prod">65mm 培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">102/2/18</td><td class="c-mono">100/12/3</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-notes " title="凹底">凹底</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16025-4&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16025-4&#39;,&#39;65mm 培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16025-4&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">10</td><td class="c-mono">113/2/1</td><td class="c-mono">1130201001</td><td><span class="c-id">M16002-2</span></td><td class="c-gray">1.2</td><td class="c-mono">16002-2</td><td class="c-prod">95*15mm 培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">113/3/15</td><td class="c-mono">—</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16002-2&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16002-2&#39;,&#39;95*15mm 培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16002-2&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">11</td><td class="c-mono">101/1/16</td><td class="c-mono">—</td><td><span class="c-id">M16020-2</span></td><td class="c-gray">2+2</td><td class="c-mono">16020-2</td><td class="c-prod">50mm 培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">101/11/23</td><td class="c-mono">100/12/3</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16020-2&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16020-2&#39;,&#39;50mm 培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16020-2&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">12</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16001-5R1</span></td><td class="c-gray">C.D</td><td class="c-mono">16007-2</td><td class="c-prod">90*15mm 培養皿 改四分隔</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">109/8/10</td><td class="c-mono">100/12/3</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-notes note-warn" title="112/9/25改四分隔">112/9/25改四分隔</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16001-5R1&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16001-5R1&#39;,&#39;90*15mm 培養皿 改四分隔&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16001-5R1&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">13</td><td class="c-mono">111/7/1</td><td class="c-mono">—</td><td><span class="c-id">M16001-5R</span></td><td class="c-gray">1.2.3.4</td><td class="c-mono">16005-2</td><td class="c-prod">90*15mm 培養皿 改2分隔</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">—</td><td class="c-mono">111/7/1</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-notes note-warn" title="111/7/1改二分隔">111/7/1改二分隔</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16001-5R&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16001-5R&#39;,&#39;90*15mm 培養皿 改2分隔&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16001-5R&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">14</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16025-3</span></td><td class="c-gray">2+2</td><td class="c-mono">16025-3</td><td class="c-prod">65mm 培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">107/5/3</td><td class="c-mono">100/12/3</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-notes " title="平底">平底</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16025-3&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16025-3&#39;,&#39;65mm 培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16025-3&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">15</td><td class="c-mono">113/12/25</td><td class="c-mono">—</td><td><span class="c-id">M16021-4</span></td><td class="c-gray">1.2</td><td class="c-mono">16021-4</td><td class="c-prod">6cm帶環培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">—</td><td class="c-mono">113/12/25</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-notes note-danger" title="原大慶運至駿翰.2號穴有毛邊造成傾斜">原大慶運至駿翰.2號穴有毛邊造成傾斜</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16021-4&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16021-4&#39;,&#39;6cm帶環培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16021-4&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">18</td><td class="c-mono">114/2/12</td><td class="c-mono">20250201</td><td><span class="c-id">M16003-4</span></td><td class="c-gray">3.4</td><td class="c-mono">16003-4</td><td class="c-prod">90*20mm培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">114/8/1</td><td class="c-mono">114/5/22</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16003-4&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16003-4&#39;,&#39;90*20mm培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16003-4&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">19</td><td class="c-mono">114/7/28</td><td class="c-mono">20250801</td><td><span class="c-id">M16001-4</span></td><td class="c-gray">1.2</td><td class="c-mono">16001-4</td><td class="c-prod">Gplus 90*15mm培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">—</td><td class="c-mono">114/7/28</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-pending">請購中</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16001-4&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16001-4&#39;,&#39;Gplus 90*15mm培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16001-4&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">20</td><td class="c-mono">114/7/28</td><td class="c-mono">20250802</td><td><span class="c-id">M16021-3R</span></td><td class="c-gray">A.B</td><td class="c-mono">16021-3R</td><td class="c-prod">6cm帶環培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">—</td><td class="c-mono">114/7/28</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-pending">請購中</span></td><td><span class="c-notes note-info" title="請購中">請購中</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;駿翰::M16021-3R&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16021-3R&#39;,&#39;6cm帶環培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;駿翰::M16021-3R&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">1</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M1015-2</span></td><td class="c-gray">1~16</td><td class="c-mono">10015-2</td><td class="c-prod">16*100mm試管</td><td class="c-gray">PP</td><td class="c-mono">ST868M</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M1015-2&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M1015-2&#39;,&#39;16*100mm試管&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M1015-2&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">2</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M11017</span></td><td class="c-gray">—</td><td class="c-mono">11017-1NWY</td><td class="c-prod">16*100mm外蓋</td><td class="c-gray">PE</td><td class="c-mono">—</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M11017&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M11017&#39;,&#39;16*100mm外蓋&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M11017&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">3</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M11020</span></td><td class="c-gray">—</td><td class="c-mono">11020-1</td><td class="c-prod">cup stopper瓶蓋</td><td class="c-gray">PP</td><td class="c-mono">ST868M</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M11020&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M11020&#39;,&#39;cup stopper瓶蓋&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M11020&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">4</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16112-21</span></td><td class="c-gray">1</td><td class="c-mono">W16112-11</td><td class="c-prod">12孔培養板底</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M16112-21&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16112-21&#39;,&#39;12孔培養板底&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M16112-21&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">5</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16124-21</span></td><td class="c-gray">—</td><td class="c-mono">W16124-11</td><td class="c-prod">24培養板底</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M16124-21&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16124-21&#39;,&#39;24培養板底&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M16124-21&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">6</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M18051-11 / M18051-12</span></td><td class="c-gray">—</td><td class="c-mono">W18051-11 / W18051-12</td><td class="c-prod">5ml閃爍記數瓶身</td><td class="c-gray">PE/PP</td><td class="c-mono">—</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M18051-11 / M18051-12&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M18051-11 / M18051-12&#39;,&#39;5ml閃爍記數瓶身&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M18051-11 / M18051-12&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">7</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M18052-12</span></td><td class="c-gray">—</td><td class="c-mono">W18052-12</td><td class="c-prod">5ml閃爍記數瓶蓋</td><td class="c-gray">PP</td><td class="c-mono">ST868M</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M18052-12&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M18052-12&#39;,&#39;5ml閃爍記數瓶蓋&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M18052-12&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">8</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M18055-12</span></td><td class="c-gray">—</td><td class="c-mono">W18055-12</td><td class="c-prod">20ml閃爍記數瓶蓋</td><td class="c-gray">PP</td><td class="c-mono">ST868M</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M18055-12&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M18055-12&#39;,&#39;20ml閃爍記數瓶蓋&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M18055-12&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">9</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M9001-1</span></td><td class="c-gray">—</td><td class="c-mono">90001-1</td><td class="c-prod">20孔檢驗盤</td><td class="c-gray">—</td><td class="c-mono">—</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M9001-1&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M9001-1&#39;,&#39;20孔檢驗盤&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M9001-1&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">10</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16235-1</span></td><td class="c-gray">2</td><td class="c-mono">W16235-1</td><td class="c-prod">3.5cm有孔培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">101/1/9</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M16235-1&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16235-1&#39;,&#39;3.5cm有孔培養皿&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M16235-1&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">11</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16106-2</span></td><td class="c-gray">2</td><td class="c-mono">16106-2</td><td class="c-prod">6孔盤</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">103/9/28</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M16106-2&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16106-2&#39;,&#39;6孔盤&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M16106-2&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">12</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16124-12</span></td><td class="c-gray">2</td><td class="c-mono">16124-12</td><td class="c-prod">24孔盤上蓋</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">110/11/8</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M16124-12&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16124-12&#39;,&#39;24孔盤上蓋&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M16124-12&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">13</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16112-12</span></td><td class="c-gray">2</td><td class="c-mono">16112-12</td><td class="c-prod">12孔盤上蓋</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">103/12/5</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M16112-12&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16112-12&#39;,&#39;12孔盤上蓋&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M16112-12&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">14</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M16196-12</span></td><td class="c-gray">2</td><td class="c-mono">W16196-12</td><td class="c-prod">96孔盤上蓋</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">111/10/31</td><td class="c-mono">—</td><td><span class="badge b-dq">大慶</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大慶::M16196-12&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16196-12&#39;,&#39;96孔盤上蓋&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大慶::M16196-12&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">1</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="c-id">M18055-11</span></td><td class="c-gray">—</td><td class="c-mono">W18055-11</td><td class="c-prod">20ml閃爍記數瓶蓋身</td><td class="c-gray">PP</td><td class="c-mono">ST868M</td><td class="c-mono">—</td><td class="c-mono">—</td><td><span class="badge b-md">懋得</span></td><td><span class="badge b-ps-none">未請購</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;懋得::M18055-11&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M18055-11&#39;,&#39;20ml閃爍記數瓶蓋身&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;懋得::M18055-11&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr><tr>
       <td class="c-gray">—</td><td class="c-mono">114/9/15</td><td class="c-mono">202500901</td><td><span class="c-id">M16001-2B-STAR</span></td><td class="c-gray">1-4</td><td class="c-mono">—</td><td class="c-prod">—</td><td class="c-gray">—</td><td class="c-mono">—</td><td class="c-mono">—</td><td class="c-mono">114/9/15</td><td><span class="badge b-in">大陸模具</span></td><td><span class="badge b-ps-pending">請購中</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal(&#39;大陸模具::M16001-2B-STAR&#39;)">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal(&#39;M16001-2B-STAR&#39;,&#39;&#39;)">📁</button>
-        
+        <button class="btn btn-sm btn-del" onclick="del(&#39;大陸模具::M16001-2B-STAR&#39;)" title="永久刪除">✕</button>
       </div></td>
     </tr></tbody>
       </table>
@@ -908,7 +910,7 @@ function render() {
       if (c.k === 'scrapped' && v) return `<td><span class="badge b-sc">${v}</span></td>`;
       return `<td class="${c.cls||''}">${v||'—'}</td>`;
     }).join('');
-    const delable = curTab !== '清冊' && curTab !== '請購中';
+    const isScrapTab = curTab === '報廢';
     const dCount = docCount(r.moldId);
     const docBadge = dCount > 0 ? `<span style="font-size:10px;background:#6d28d9;color:white;border-radius:999px;padding:1px 5px;margin-left:2px;">${dCount}</span>` : '';
     return `<tr>
@@ -916,7 +918,7 @@ function render() {
       <td><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal('${key}')">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal('${r.moldId}','${r.productName||''}')">📁${docBadge}</button>
-        ${delable ? `<button class="btn btn-sm btn-del" onclick="del('${key}')">🗑</button>` : ''}
+        <button class="btn btn-sm btn-del" onclick="del('${key}')" title="永久刪除">✕</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -955,7 +957,7 @@ function buildForm(isScrap, r, defaultFactory='駿翰') {
       ${fi('acceptDate','驗收日期',v('acceptDate'))}
       ${fi('contractNo','合約編號',v('contractNo'))}
       ${fi('contractDate','訂約日期',v('contractDate'))}
-      ${sel('factory','代工廠',v('factory'),['駿翰','大慶','懋得','大陸模具',''])}
+      ${sel('factory','代工廠',v('factory'),['駿翰','大慶','懋得','大陸模具','報廢'])}
       ${fi('retrieveDate','取回/報廢日期',v('retrieveDate'))}
       ${fi('scrapped','報廢出售',v('scrapped'))}
       ${ta('notes','備註',v('notes'))}
@@ -973,7 +975,7 @@ function buildForm(isScrap, r, defaultFactory='駿翰') {
     ${fi('materialId','原料編號',v('materialId'))}
     ${fi('acceptDate','驗收日期',v('acceptDate'))}
     ${fi('contractDate','訂約日期',v('contractDate'))}
-    ${sel('factory','代工廠',v('factory', defaultFactory),['駿翰','大慶','懋得','大陸模具'])}
+    ${sel('factory','代工廠',v('factory', defaultFactory),['駿翰','大慶','懋得','大陸模具','報廢'])}
     ${sel('procStatus','請購狀態',v('procStatus','未請購'),['未請購','請購中','已到貨','取消'])}
     ${ta('notes','備註',v('notes'))}
   </div>`;
@@ -1011,9 +1013,10 @@ function save() {
   const moldId = gv('moldId');
   if (!moldId) { showToast('請填寫模具編號','err'); return; }
 
-  const isScrap = (curTab === '報廢') || (editKey && editKey.startsWith('報廢::'));
+  const factoryVal = gv('factory');
+  const isScrap = (curTab === '報廢') || (editKey && editKey.startsWith('報廢::')) || factoryVal === '報廢';
   const isVirtual = curTab === '清冊' || curTab === '請購中';
-  const targetTab = isScrap ? '報廢' : (isVirtual ? gv('factory')||'駿翰' : curTab);
+  const targetTab = isScrap ? '報廢' : (isVirtual ? factoryVal||'駿翰' : curTab);
 
   const rec = isScrap ? {
     seq:gv('seq'), procDate:gv('procDate'), procNo:gv('procNo'),
@@ -1048,6 +1051,28 @@ function save() {
 // ════════════════════════════════════
 //  DELETE
 // ════════════════════════════════════
+function moveToScrap(key) {
+  const [tab, moldId] = key.split('::');
+  const r = DB[tab]?.find(x => x.moldId === moldId);
+  if (!r) return;
+  if (!confirm(`確定要將「${r.productName||moldId}」移至報廢？`)) return;
+
+  // 從原分頁移除
+  DB[tab] = DB[tab].filter(x => x.moldId !== moldId);
+
+  // 加入報廢分頁，補上報廢相關欄位
+  if (!DB['報廢']) DB['報廢'] = [];
+  const scrapRec = {
+    ...r,
+    scrapped: new Date().toLocaleDateString('zh-TW', {year:'numeric', month:'2-digit', day:'2-digit'}),
+    retrieveDate: r.retrieveDate || '',
+  };
+  DB['報廢'].push(scrapRec);
+
+  saveDB(); updateSummary(); render();
+  showToast(`🗑 已將 ${moldId} 移至報廢`);
+}
+
 function del(key) {
   const [tab, moldId] = key.split('::');
   const r = DB[tab]?.find(x => x.moldId === moldId);
@@ -1061,6 +1086,109 @@ function del(key) {
 // ════════════════════════════════════
 //  EXPORT CSV
 // ════════════════════════════════════
+// ════════════════════════════════════
+//  IMPORT CSV
+// ════════════════════════════════════
+function importCSV(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const text = ev.target.result;
+      // 解析 CSV（處理引號內的逗號和換行）
+      const parseCSV = (str) => {
+        const rows = [];
+        let row = [], cell = '', inQ = false;
+        for (let i = 0; i < str.length; i++) {
+          const ch = str[i], nx = str[i+1];
+          if (inQ) {
+            if (ch === '"' && nx === '"') { cell += '"'; i++; }
+            else if (ch === '"') inQ = false;
+            else cell += ch;
+          } else {
+            if (ch === '"') inQ = true;
+            else if (ch === ',') { row.push(cell.trim()); cell = ''; }
+            else if (ch === '\n' || (ch === '\r' && nx === '\n')) {
+              if (ch === '\r') i++;
+              row.push(cell.trim()); rows.push(row); row = []; cell = '';
+            } else cell += ch;
+          }
+        }
+        if (cell || row.length) { row.push(cell.trim()); rows.push(row); }
+        return rows.filter(r => r.some(c => c !== ''));
+      };
+
+      const rows = parseCSV(text);
+      if (rows.length < 2) { showToast('⚠ CSV 內容不足，無法匯入', 'err'); return; }
+
+      // 偵測 header 行（找到含「模具編號」的那行）
+      let headerIdx = rows.findIndex(r => r.some(c => c === '模具編號'));
+      if (headerIdx < 0) { showToast('⚠ 找不到「模具編號」欄位，請確認格式', 'err'); return; }
+
+      const headers = rows[headerIdx];
+      const dataRows = rows.slice(headerIdx + 1).filter(r => r.some(c => c));
+
+      // 欄位名稱 → key 對照表
+      const HEADER_MAP = {
+        '請購日期':'procDate', '請購單號':'procNo', '模具編號':'moldId',
+        '穴號':'cavity', '產品編號':'productId', '產品名稱':'productName',
+        '原料':'material', '原料編號':'materialId', '驗收日期':'acceptDate',
+        '合約編號':'contractNo', '訂約日期':'contractDate', '代工廠':'factory',
+        '請購狀態':'procStatus', '備註':'notes',
+        '取回日期':'retrieveDate', '取回報廢日期':'retrieveDate', '報廢出售':'scrapped',
+        '序號':'seq', '':'seq'
+      };
+
+      // 對照欄位
+      const keyMap = headers.map(h => HEADER_MAP[h] || null);
+      const moldIdCol = keyMap.indexOf('moldId');
+      if (moldIdCol < 0) { showToast('⚠ 找不到「模具編號」欄位', 'err'); return; }
+
+      // 組成 records
+      let imported = 0, skipped = 0, updated = 0;
+      const newRecs = [];
+      dataRows.forEach(row => {
+        const moldId = row[moldIdCol];
+        if (!moldId || moldId === '—') { skipped++; return; }
+
+        const rec = {};
+        keyMap.forEach((k, i) => { if (k) rec[k] = row[i] === '—' ? '' : (row[i] || ''); });
+
+        // 決定存到哪個 tab
+        const factory = rec.factory || '';
+        let targetTab;
+        if (factory === '報廢' || rec.retrieveDate || rec.scrapped) {
+          targetTab = '報廢';
+        } else if (['駿翰','大慶','懋得','大陸模具'].includes(factory)) {
+          targetTab = factory;
+        } else {
+          targetTab = '駿翰'; // 預設
+        }
+
+        if (!DB[targetTab]) DB[targetTab] = [];
+
+        // 檢查是否已存在（同 moldId）→ 更新
+        const existIdx = DB[targetTab].findIndex(x => x.moldId === moldId);
+        if (existIdx >= 0) { DB[targetTab][existIdx] = rec; updated++; }
+        else { DB[targetTab].push(rec); imported++; }
+      });
+
+      saveDB();
+      updateSummary();
+      render();
+      showToast(`✅ 匯入完成：新增 ${imported} 筆、更新 ${updated} 筆、略過 ${skipped} 筆`);
+    } catch(err) {
+      console.error(err);
+      showToast('❌ 匯入失敗：' + err.message, 'err');
+    }
+  };
+  reader.onerror = () => showToast('讀取檔案失敗', 'err');
+  reader.readAsText(file, 'utf-8');
+}
+
 function exportCSV() {
   const esc = v => `"${String(v??'').replace(/"/g,'""')}"`;
   const row = vals => vals.map(esc).join(',');
@@ -1411,4 +1539,4 @@ document.addEventListener('keydown', e => {
 </script>
 
 
-</body></html>                                                                                                                                                                                                                                                                                                              
+</body></html>
