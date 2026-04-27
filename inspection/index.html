@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍冶首件檢驗記錄系統</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1a5276, #2e86c1);
+    color: white;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: 1px; }
+  .header .subtitle { font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
+
+  /* Tabs */
+  .tabs {
+    background: #1a5276;
+    display: flex;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .tab-btn {
+    padding: 12px 28px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-family: inherit;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .tab-btn:hover { color: white; }
+  .tab-btn.active { color: white; border-bottom-color: #f0b429; }
+
+  /* Main */
+  .main { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+
+  /* Card */
+  .card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a5276;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e8f4f8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon { font-size: 1.2rem; }
+
+  /* Form grid */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px 24px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+  }
+  .form-group label .req { color: #e74c3c; margin-left: 2px; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 9px 12px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border 0.2s, box-shadow 0.2s;
+    background: #fafbfc;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: #2e86c1;
+    box-shadow: 0 0 0 3px rgba(46,134,193,0.1);
+    background: white;
+  }
+
+  /* Inspection table */
+  .inspection-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  .inspection-table th {
+    background: #eaf4fb;
+    padding: 10px 14px;
+    text-align: center;
+    font-weight: 700;
+    color: #1a5276;
+    border: 1px solid #c8dce8;
+    font-size: 0.88rem;
+  }
+  .inspection-table td {
+    padding: 8px 10px;
+    border: 1px solid #dde;
+    vertical-align: middle;
+  }
+  .inspection-table tr:nth-child(even) td { background: #f9fbfd; }
+  .inspection-table tr:hover td { background: #f0f8ff; }
+  .inspection-table td.item-name { font-weight: 600; color: #2c3e50; white-space: nowrap; }
+  .inspection-table td.standard { color: #555; font-size: 0.85rem; }
+  .inspection-table input[type="number"] {
+    width: 70px;
+    padding: 5px 8px;
+    border: 1px solid #ccd;
+    border-radius: 5px;
+    font-family: inherit;
+    text-align: center;
+    background: #fafbfc;
+  }
+  .inspection-table input[type="number"]:focus {
+    outline: none;
+    border-color: #2e86c1;
+    box-shadow: 0 0 0 2px rgba(46,134,193,0.15);
+  }
+
+  /* Result radio buttons */
+  .result-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .result-group label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #ccd;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    user-select: none;
+    background: white;
+  }
+  .result-group input[type="radio"] { display: none; }
+  .result-group label:has(input[value="OK"]:checked) { background: #d4efdf; border-color: #27ae60; color: #1e8449; }
+  .result-group label:has(input[value="NG"]:checked) { background: #fadbd8; border-color: #e74c3c; color: #c0392b; }
+  .result-group label:has(input[value="NA"]:checked) { background: #f2f3f4; border-color: #95a5a6; color: #7f8c8d; }
+
+  /* New mold section */
+  .new-mold-badge {
+    display: inline-block;
+    background: #f39c12;
+    color: white;
+    font-size: 0.72rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 6px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+
+  /* Submit button */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 32px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: linear-gradient(135deg, #2e86c1, #1a5276); color: white; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,134,193,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-secondary { background: #f0f2f5; color: #555; border: 1px solid #dde; }
+  .btn-secondary:hover { background: #e8eaed; }
+  .form-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+
+  /* Alert */
+  .alert {
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  .alert.show { display: flex; align-items: center; gap: 10px; }
+  .alert-success { background: #d4efdf; color: #1e8449; border: 1px solid #a9dfbf; }
+  .alert-error { background: #fadbd8; color: #c0392b; border: 1px solid #f1948a; }
+
+  /* ===================== ADMIN VIEW ===================== */
+  .admin-filters {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  .filter-group label { font-size: 0.82rem; font-weight: 600; color: #666; }
+  .filter-group input, .filter-group select {
+    padding: 8px 11px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: #fafbfc;
+  }
+  .filter-group input:focus, .filter-group select:focus {
+    outline: none; border-color: #2e86c1;
+    box-shadow: 0 0 0 3px rgba(46,134,193,0.1);
+  }
+  .filter-actions { display: flex; align-items: flex-end; gap: 10px; }
+
+  /* Records table */
+  .records-table-wrap { overflow-x: auto; }
+  .records-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  .records-table th {
+    background: #1a5276;
+    color: white;
+    padding: 11px 14px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  .records-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+  }
+  .records-table tr:hover td { background: #f0f8ff; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .badge-ok { background: #d4efdf; color: #1e8449; }
+  .badge-ng { background: #fadbd8; color: #c0392b; }
+  .badge-na { background: #f2f3f4; color: #7f8c8d; }
+  .badge-mixed { background: #fdebd0; color: #d35400; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    text-align: center;
+  }
+  .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #1a5276; line-height: 1; }
+  .stat-card .label { font-size: 0.82rem; color: #888; margin-top: 4px; }
+
+  /* Detail modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    background: linear-gradient(135deg, #1a5276, #2e86c1);
+    color: white;
+    padding: 18px 24px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h3 { font-size: 1.1rem; }
+  .modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-body { padding: 24px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 20px; margin-bottom: 20px; }
+  .detail-item { display: flex; flex-direction: column; gap: 2px; }
+  .detail-item .dl { font-size: 0.8rem; color: #888; }
+  .detail-item .dv { font-size: 0.95rem; font-weight: 600; color: #333; }
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .detail-table th { background: #eaf4fb; padding: 8px 12px; text-align: center; font-weight: 700; color: #1a5276; border: 1px solid #c8dce8; }
+  .detail-table td { padding: 7px 12px; border: 1px solid #dde; text-align: center; }
+  .detail-table td:first-child { text-align: left; font-weight: 600; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 48px 20px; color: #aaa; }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 1rem; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 40px; color: #888; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #e0e0e0;
+    border-top-color: #2e86c1;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Pagination */
+  .pagination { display: flex; gap: 6px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .page-btn {
+    padding: 6px 12px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.88rem;
+    transition: all 0.15s;
+  }
+  .page-btn:hover { background: #eaf4fb; border-color: #2e86c1; }
+  .page-btn.active { background: #2e86c1; color: white; border-color: #2e86c1; }
+
+  /* Print */
+  @media print {
+    .tabs, .form-actions, .header .subtitle { display: none; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .admin-filters { grid-template-columns: 1fr 1fr; }
+    .stats-bar { grid-template-columns: 1fr 1fr; }
+    .card { padding: 18px 16px; }
+  }
+  @media (max-width: 480px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .admin-filters { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <h1>🔬龍冶首件檢驗記錄系統</h1>
+      <div class="subtitle">First Article Inspection Record System</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('form')">📝 填寫檢驗記錄</button>
+    <button class="tab-btn" onclick="showTab('admin')">📊 查詢管理</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ============ FORM TAB ============ -->
+  <div id="tab-form">
+    <div id="alert-form" class="alert"></div>
+
+    <form id="inspection-form" onsubmit="submitForm(event)">
+      <!-- Basic Info -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📋</span> 基本資料</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>廠商名稱 <span class="req">*</span></label>
+            <input type="text" name="vendor" placeholder="請輸入廠商名稱" required>
+          </div>
+          <div class="form-group">
+            <label>檢驗日期 <span class="req">*</span></label>
+            <input type="date" name="inspection_date" required>
+          </div>
+          <div class="form-group">
+            <label>品名 <span class="req">*</span></label>
+            <input type="text" name="product_name" placeholder="請輸入品名" required>
+          </div>
+          <div class="form-group">
+            <label>料號</label>
+            <input type="text" name="part_number" placeholder="請輸入料號">
+          </div>
+          <div class="form-group">
+            <label>抽檢量</label>
+            <input type="number" name="sample_size" placeholder="數量" min="0">
+          </div>
+          <div class="form-group">
+            <label>檢驗人員 <span class="req">*</span></label>
+            <input type="text" name="inspector" placeholder="請輸入姓名" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inspection Items -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🔍</span> 檢驗項目</div>
+        <div style="overflow-x:auto;">
+          <table class="inspection-table">
+            <thead>
+              <tr>
+                <th style="width:130px;">檢驗項目</th>
+                <th>檢驗標準</th>
+                <th style="width:90px;">抽樣數</th>
+                <th style="width:90px;">不良數</th>
+                <th style="width:150px;">判定</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Items -->
+              <tr>
+                <td class="item-name">外觀</td>
+                <td class="standard">清澈透明、無霧化</td>
+                <td><input type="number" name="transparency_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="transparency_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="transparency_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="transparency_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">變形</td>
+                <td class="standard">無翹曲、扭曲</td>
+                <td><input type="number" name="deformation_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="deformation_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="deformation_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="deformation_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">色差</td>
+                <td class="standard">同批顏色一致</td>
+                <td><input type="number" name="color_diff_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="color_diff_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="color_diff_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="color_diff_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">黑點／異物</td>
+                <td class="standard">不得有肉眼可見異物</td>
+                <td><input type="number" name="foreign_matter_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="foreign_matter_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="foreign_matter_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="foreign_matter_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">灌點凸起／破裂</td>
+                <td class="standard">灌點不可過大或破裂</td>
+                <td><input type="number" name="gate_defect_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="gate_defect_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="gate_defect_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="gate_defect_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">表面刮傷．拉傷</td>
+                <td class="standard">不得有明顯刮痕</td>
+                <td><input type="number" name="scratch_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="scratch_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="scratch_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="scratch_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">毛邊</td>
+                <td class="standard">邊緣平整、不割手</td>
+                <td><input type="number" name="burr_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="burr_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="burr_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="burr_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">平整度</td>
+                <td class="standard">底部不可凹下或凸起或有水波紋</td>
+                <td><input type="number" name="flatness_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="flatness_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="flatness_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="flatness_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">歪斜度</td>
+                <td class="standard">使用水平儀量測不可歪斜</td>
+                <td><input type="number" name="skewness_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="skewness_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="skewness_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="skewness_result" value="NG">✗ NG</label>
+                </div></td>
+              </tr>
+              <!-- New mold section -->
+              <tr>
+                <td colspan="5" style="background:#fff8e7;padding:8px 14px;font-size:0.85rem;font-weight:700;color:#b7770d;">
+                  ⭐ 新模或修模後確認項目
+                </td>
+              </tr>
+              <tr>
+                <td class="item-name">堆疊平穩度 <span class="new-mold-badge">新模</span></td>
+                <td class="standard">堆疊不可晃動</td>
+                <td><input type="number" name="stacking_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="stacking_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="stacking_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="stacking_result" value="NG">✗ NG</label>
+                  <label><input type="radio" name="stacking_result" value="NA">— N/A</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">相扣穩定 <span class="new-mold-badge">新模</span></td>
+                <td class="standard">相扣時不會滑出</td>
+                <td><input type="number" name="locking_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="locking_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="locking_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="locking_result" value="NG">✗ NG</label>
+                  <label><input type="radio" name="locking_result" value="NA">— N/A</label>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="item-name">尺寸 <span class="new-mold-badge">新模</span></td>
+                <td class="standard">符合圖面尺寸</td>
+                <td><input type="number" name="dimension_samples" min="0" placeholder="0"></td>
+                <td><input type="number" name="dimension_defects" min="0" placeholder="0"></td>
+                <td><div class="result-group">
+                  <label><input type="radio" name="dimension_result" value="OK">✓ OK</label>
+                  <label><input type="radio" name="dimension_result" value="NG">✗ NG</label>
+                  <label><input type="radio" name="dimension_result" value="NA">— N/A</label>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📝</span> 備注說明</div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>備注說明</label>
+            <textarea name="remarks" rows="3" placeholder="如有其他說明事項，請填寫於此..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">🔄 重新填寫</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">✅ 送出檢驗記錄</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============ ADMIN TAB ============ -->
+  <div id="tab-admin" style="display:none;">
+    <div id="alert-admin" class="alert"></div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card"><div class="value" id="stat-total">—</div><div class="label">總記錄數</div></div>
+      <div class="stat-card"><div class="value" id="stat-ok" style="color:#27ae60;">—</div><div class="label">全部通過</div></div>
+      <div class="stat-card"><div class="value" id="stat-ng" style="color:#e74c3c;">—</div><div class="label">有不合格項</div></div>
+      <div class="stat-card"><div class="value" id="stat-vendors">—</div><div class="label">廠商數</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🔎</span> 搜尋篩選</div>
+      <div class="admin-filters">
+        <div class="filter-group">
+          <label>廠商名稱</label>
+          <input type="text" id="f-vendor" placeholder="搜尋廠商...">
+        </div>
+        <div class="filter-group">
+          <label>品名</label>
+          <input type="text" id="f-product" placeholder="搜尋品名...">
+        </div>
+        <div class="filter-group">
+          <label>日期（起）</label>
+          <input type="date" id="f-date-from">
+        </div>
+        <div class="filter-group">
+          <label>日期（迄）</label>
+          <input type="date" id="f-date-to">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="clearFilters()">清除</button>
+        <button class="btn btn-primary" onclick="loadRecords()">🔍 查詢</button>
+      </div>
+    </div>
+
+    <!-- Records -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> 檢驗記錄列表</div>
+      <div id="records-container">
+        <div class="loading"><div class="spinner"></div><p>載入中...</p></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Password Modal -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header">
+      <h3>🔒 查詢管理</h3>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:32px 28px;">
+      <p style="color:#555;margin-bottom:20px;font-size:0.95rem;">請輸入管理密碼</p>
+      <input type="password" id="pw-input" placeholder="輸入密碼"
+        style="width:100%;padding:11px 14px;border:1px solid #d0d7de;border-radius:8px;font-size:1rem;font-family:inherit;text-align:center;letter-spacing:4px;"
+        onkeydown="if(event.key==='Enter')checkPw()">
+      <div id="pw-error" style="color:#e74c3c;font-size:0.85rem;margin-top:10px;display:none;">密碼錯誤，請重試</div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:center;">
+        <button class="btn btn-secondary" onclick="closePwModal()">取消</button>
+        <button class="btn btn-primary" onclick="checkPw()">確認</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>📋 檢驗記錄詳細資料</h3>
+      <button class="modal-close" onclick="document.getElementById('modal').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://achrezfjtyjjgoyaaowr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const PAGE_SIZE = 20;
+let currentPage = 1;
+let allRecords = [];
+
+// Set today's date on form
+document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
+
+// ============ TAB ============
+let adminUnlocked = false;
+
+function showTab(tab) {
+  if (tab === 'admin' && !adminUnlocked) {
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-error').style.display = 'none';
+    document.getElementById('pw-modal').classList.add('show');
+    setTimeout(() => document.getElementById('pw-input').focus(), 100);
+    return;
+  }
+  document.getElementById('tab-form').style.display = tab === 'form' ? 'block' : 'none';
+  document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', (i === 0 && tab === 'form') || (i === 1 && tab === 'admin'));
+  });
+  if (tab === 'admin') loadRecords();
+}
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === '22505047') {
+    adminUnlocked = true;
+    document.getElementById('pw-modal').classList.remove('show');
+    showTab('admin');
+  } else {
+    document.getElementById('pw-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+function closePwModal() {
+  document.getElementById('pw-modal').classList.remove('show');
+}
+
+// ============ FORM SUBMIT ============
+async function submitForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 送出中...';
+  hideAlert('form');
+
+  const form = e.target;
+  const fd = new FormData(form);
+  const data = {};
+  for (const [k, v] of fd.entries()) {
+    if (v !== '') data[k] = v;
+  }
+
+  // Convert numbers
+  ['sample_size','transparency_samples','transparency_defects',
+   'deformation_samples','deformation_defects','color_diff_samples','color_diff_defects',
+   'foreign_matter_samples','foreign_matter_defects','gate_defect_samples','gate_defect_defects',
+   'scratch_samples','scratch_defects','burr_samples','burr_defects',
+   'flatness_samples','flatness_defects','skewness_samples','skewness_defects',
+   'stacking_samples','stacking_defects','locking_samples','locking_defects',
+   'dimension_samples','dimension_defects'].forEach(k => {
+    if (data[k] !== undefined) data[k] = parseInt(data[k]) || 0;
+  });
+
+  try {
+    const { error } = await db.from('inspection_records').insert([data]);
+    if (error) throw error;
+    showAlert('form', 'success', '✅ 檢驗記錄已成功送出！感謝您的配合。');
+    form.reset();
+    document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    showAlert('form', 'error', '❌ 送出失敗：' + (err.message || '請稍後再試'));
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✅ 送出檢驗記錄';
+}
+
+function resetForm() {
+  if (confirm('確定要清除所有已填寫的資料嗎？')) {
+    document.getElementById('inspection-form').reset();
+    document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
+  }
+}
+
+// ============ ADMIN ============
+async function loadRecords() {
+  document.getElementById('records-container').innerHTML =
+    '<div class="loading"><div class="spinner"></div><p>載入中...</p></div>';
+  document.getElementById('pagination').innerHTML = '';
+
+  const vendor = document.getElementById('f-vendor').value.trim();
+  const product = document.getElementById('f-product').value.trim();
+  const dateFrom = document.getElementById('f-date-from').value;
+  const dateTo = document.getElementById('f-date-to').value;
+
+  try {
+    let q = db.from('inspection_records').select('*').order('inspection_date', { ascending: false }).order('created_at', { ascending: false });
+    if (vendor) q = q.ilike('vendor', `%${vendor}%`);
+    if (product) q = q.ilike('product_name', `%${product}%`);
+    if (dateFrom) q = q.gte('inspection_date', dateFrom);
+    if (dateTo) q = q.lte('inspection_date', dateTo);
+
+    const { data, error } = await q;
+    if (error) throw error;
+
+    allRecords = data || [];
+    currentPage = 1;
+    renderStats(allRecords);
+    renderRecords();
+  } catch (err) {
+    document.getElementById('records-container').innerHTML =
+      `<div class="empty-state"><div class="icon">⚠️</div><p>載入失敗：${err.message}</p></div>`;
+  }
+}
+
+function renderStats(records) {
+  const total = records.length;
+  const vendors = new Set(records.map(r => r.vendor)).size;
+  const ngCount = records.filter(r => hasNG(r)).length;
+  const okCount = total - ngCount;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-ok').textContent = okCount;
+  document.getElementById('stat-ng').textContent = ngCount;
+  document.getElementById('stat-vendors').textContent = vendors;
+}
+
+function hasNG(r) {
+  const results = ['transparency_result','deformation_result','color_diff_result','foreign_matter_result',
+    'gate_defect_result','scratch_result','burr_result','flatness_result','skewness_result',
+    'stacking_result','locking_result','dimension_result'];
+  return results.some(k => r[k] === 'NG');
+}
+
+function getOverallBadge(r) {
+  const results = ['transparency_result','deformation_result','color_diff_result','foreign_matter_result',
+    'gate_defect_result','scratch_result','burr_result','flatness_result','skewness_result',
+    'stacking_result','locking_result','dimension_result'];
+  const actual = results.filter(k => r[k] && r[k] !== 'NA');
+  if (actual.some(k => r[k] === 'NG')) return '<span class="badge badge-ng">✗ NG</span>';
+  if (actual.every(k => r[k] === 'OK')) return '<span class="badge badge-ok">✓ OK</span>';
+  return '<span class="badge badge-mixed">部分填寫</span>';
+}
+
+function renderRecords() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = allRecords.slice(start, start + PAGE_SIZE);
+  const totalPages = Math.ceil(allRecords.length / PAGE_SIZE);
+
+  if (allRecords.length === 0) {
+    document.getElementById('records-container').innerHTML =
+      '<div class="empty-state"><div class="icon">📭</div><p>查無符合條件的記錄</p></div>';
+    return;
+  }
+
+  let html = `<div class="records-table-wrap"><table class="records-table">
+    <thead><tr>
+      <th>日期</th><th>廠商</th><th>品名</th><th>料號</th>
+      <th>抽檢量</th><th>檢驗人員</th><th>整體判定</th><th>操作</th>
+    </tr></thead><tbody>`;
+
+  for (const r of pageData) {
+    html += `<tr>
+      <td>${r.inspection_date || '—'}</td>
+      <td><strong>${esc(r.vendor)}</strong></td>
+      <td>${esc(r.product_name)}</td>
+      <td>${esc(r.part_number || '—')}</td>
+      <td>${r.sample_size ?? '—'}</td>
+      <td>${esc(r.inspector)}</td>
+      <td>${getOverallBadge(r)}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;" onclick='showDetail(${JSON.stringify(r).replace(/'/g,"\\'")} )'>詳細</button>
+        <button class="btn" style="padding:5px 12px;font-size:0.82rem;background:#fadbd8;color:#c0392b;border:1px solid #f1948a;" onclick="deleteRecord('${r.id}', '${esc(r.vendor)}', '${esc(r.product_name)}')">刪除</button>
+      </td>
+    </tr>`;
+  }
+
+  html += '</tbody></table></div>';
+  document.getElementById('records-container').innerHTML = html;
+
+  // Pagination
+  let pgHtml = '';
+  if (totalPages > 1) {
+    if (currentPage > 1) pgHtml += `<button class="page-btn" onclick="goPage(${currentPage-1})">‹</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 2)
+        pgHtml += `<button class="page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
+      else if (Math.abs(i - currentPage) === 3)
+        pgHtml += `<span style="padding:6px 4px;color:#aaa;">…</span>`;
+    }
+    if (currentPage < totalPages) pgHtml += `<button class="page-btn" onclick="goPage(${currentPage+1})">›</button>`;
+  }
+  document.getElementById('pagination').innerHTML = pgHtml;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderRecords();
+  document.querySelector('.card:last-child').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearFilters() {
+  ['f-vendor','f-product','f-date-from','f-date-to'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  loadRecords();
+}
+
+// ============ DETAIL MODAL ============
+const ITEMS = [
+  { key: 'transparency', name: '外觀', std: '清澈透明、無霧化' },
+  { key: 'deformation', name: '變形', std: '無翹曲、扭曲' },
+  { key: 'color_diff', name: '色差', std: '同批顏色一致' },
+  { key: 'foreign_matter', name: '黑點／異物', std: '不得有肉眼可見異物' },
+  { key: 'gate_defect', name: '灌點凸起／破裂', std: '灌點不可過大或破裂' },
+  { key: 'scratch', name: '表面刮傷．拉傷', std: '不得有明顯刮痕' },
+  { key: 'burr', name: '毛邊', std: '邊緣平整、不割手' },
+  { key: 'flatness', name: '平整度', std: '底部不可凹下或凸起或有水波紋' },
+  { key: 'skewness', name: '歪斜度', std: '使用水平儀量測不可歪斜' },
+  { key: 'stacking', name: '堆疊平穩度★', std: '堆疊不可晃動' },
+  { key: 'locking', name: '相扣穩定★', std: '相扣時不會滑出' },
+  { key: 'dimension', name: '尺寸★', std: '符合圖面尺寸' },
+];
+
+function showDetail(r) {
+  let body = `<div class="detail-grid">
+    <div class="detail-item"><div class="dl">廠商</div><div class="dv">${esc(r.vendor)}</div></div>
+    <div class="detail-item"><div class="dl">檢驗日期</div><div class="dv">${r.inspection_date}</div></div>
+    <div class="detail-item"><div class="dl">品名</div><div class="dv">${esc(r.product_name)}</div></div>
+    <div class="detail-item"><div class="dl">料號</div><div class="dv">${esc(r.part_number||'—')}</div></div>
+    <div class="detail-item"><div class="dl">抽檢量</div><div class="dv">${r.sample_size??'—'}</div></div>
+    <div class="detail-item"><div class="dl">檢驗人員</div><div class="dv">${esc(r.inspector)}</div></div>
+    <div class="detail-item"><div class="dl">提交時間</div><div class="dv">${new Date(r.created_at).toLocaleString('zh-TW')}</div></div>
+  </div>`;
+
+  body += `<table class="detail-table"><thead><tr>
+    <th>檢驗項目</th><th>檢驗標準</th><th>抽樣數</th><th>不良數</th><th>判定</th>
+  </tr></thead><tbody>`;
+
+  for (const item of ITEMS) {
+    const res = r[`${item.key}_result`];
+    const resHtml = res === 'OK' ? '<span class="badge badge-ok">✓ OK</span>'
+      : res === 'NG' ? '<span class="badge badge-ng">✗ NG</span>'
+      : res === 'NA' ? '<span class="badge badge-na">— N/A</span>'
+      : '—';
+    body += `<tr>
+      <td>${item.name}</td>
+      <td style="font-size:0.83rem;color:#666;">${item.std}</td>
+      <td>${r[`${item.key}_samples`]??'—'}</td>
+      <td>${r[`${item.key}_defects`]??'—'}</td>
+      <td>${resHtml}</td>
+    </tr>`;
+  }
+  body += '</tbody></table>';
+
+  if (r.remarks) body += `<div style="margin-top:16px;padding:12px 16px;background:#f9f9f9;border-radius:8px;border-left:3px solid #2e86c1;font-size:0.9rem;"><strong>備注：</strong>${esc(r.remarks)}</div>`;
+
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('show');
+  }
+}
+
+// ============ DELETE ============
+async function deleteRecord(id, vendor, product) {
+  if (!confirm(`確定要刪除這筆紀錄嗎？\n\n廠商：${vendor}\n品名：${product}\n\n刪除後無法復原。`)) return;
+  try {
+    const { error } = await db.from('inspection_records').delete().eq('id', id);
+    if (error) throw error;
+    // 從本地陣列移除後重新渲染，不需要重新拉資料
+    allRecords = allRecords.filter(r => r.id !== id);
+    renderStats(allRecords);
+    renderRecords();
+  } catch (err) {
+    alert('刪除失敗：' + (err.message || '請稍後再試'));
+  }
+}
+
+// ============ UTILS ============
+function showAlert(tab, type, msg) {
+  const el = document.getElementById(`alert-${tab}`);
+  el.className = `alert alert-${type} show`;
+  el.textContent = msg;
+}
+function hideAlert(tab) {
+  document.getElementById(`alert-${tab}`).className = 'alert';
+}
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
