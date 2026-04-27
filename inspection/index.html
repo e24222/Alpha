@@ -380,9 +380,40 @@
   .page-btn:hover { background: #eaf4fb; border-color: #2e86c1; }
   .page-btn.active { background: #2e86c1; color: white; border-color: #2e86c1; }
 
+  /* Sub-tabs (inside 後台管理) */
+  .sub-tabs {
+    display: flex;
+    gap: 6px;
+    background: white;
+    padding: 6px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 22px;
+    overflow-x: auto;
+  }
+  .sub-tab-btn {
+    padding: 10px 22px;
+    border: none;
+    background: transparent;
+    color: #555;
+    font-size: 0.94rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 7px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .sub-tab-btn:hover { background: #f0f6fb; color: #1a5276; }
+  .sub-tab-btn.active {
+    background: linear-gradient(135deg, #2e86c1, #1a5276);
+    color: white;
+    box-shadow: 0 2px 6px rgba(26,82,118,0.3);
+  }
+
   /* Print */
   @media print {
-    .tabs, .form-actions, .header .subtitle { display: none; }
+    .tabs, .sub-tabs, .form-actions, .header .subtitle { display: none; }
   }
 
   /* Responsive */
@@ -409,7 +440,7 @@
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('form')">📝 填寫檢驗記錄</button>
-    <button class="tab-btn" onclick="showTab('admin')">📊 查詢管理</button>
+    <button class="tab-btn" onclick="showTab('backend')">🔧 後台管理</button>
   </div>
 </div>
 
@@ -434,7 +465,9 @@
           </div>
           <div class="form-group">
             <label>品名 <span class="req">*</span></label>
-            <input type="text" name="product_name" placeholder="請輸入品名" required>
+            <select name="product_name" id="product-name-select" required>
+              <option value="">載入中...</option>
+            </select>
           </div>
           <div class="form-group">
             <label>料號</label>
@@ -454,13 +487,23 @@
       <!-- Inspection Items -->
       <div class="card">
         <div class="card-title"><span class="icon">🔍</span> 檢驗項目</div>
+
+        <!-- Shared sample count -->
+        <div style="background:#eaf4fb;border:1px solid #c8dce8;border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <label style="font-weight:700;color:#1a5276;font-size:0.95rem;white-space:nowrap;">
+            🎯 本次抽樣數 <span class="req">*</span>
+          </label>
+          <input type="number" name="shared_samples" id="shared-samples" min="0" placeholder="輸入數量" required
+            style="padding:9px 14px;border:1px solid #2e86c1;border-radius:6px;font-size:1rem;font-family:inherit;background:white;width:120px;text-align:center;font-weight:700;color:#1a5276;">
+          <span style="color:#666;font-size:0.85rem;">（此數量將自動套用至下表所有檢驗項目）</span>
+        </div>
+
         <div style="overflow-x:auto;">
           <table class="inspection-table">
             <thead>
               <tr>
-                <th style="width:130px;">檢驗項目</th>
+                <th style="width:140px;">檢驗項目</th>
                 <th>檢驗標準</th>
-                <th style="width:90px;">抽樣數</th>
                 <th style="width:90px;">不良數</th>
                 <th style="width:150px;">判定</th>
               </tr>
@@ -470,7 +513,6 @@
               <tr>
                 <td class="item-name">外觀</td>
                 <td class="standard">清澈透明、無霧化</td>
-                <td><input type="number" name="transparency_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="transparency_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="transparency_result" value="OK">✓ OK</label>
@@ -480,7 +522,6 @@
               <tr>
                 <td class="item-name">變形</td>
                 <td class="standard">無翹曲、扭曲</td>
-                <td><input type="number" name="deformation_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="deformation_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="deformation_result" value="OK">✓ OK</label>
@@ -490,7 +531,6 @@
               <tr>
                 <td class="item-name">色差</td>
                 <td class="standard">同批顏色一致</td>
-                <td><input type="number" name="color_diff_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="color_diff_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="color_diff_result" value="OK">✓ OK</label>
@@ -500,7 +540,6 @@
               <tr>
                 <td class="item-name">黑點／異物</td>
                 <td class="standard">不得有肉眼可見異物</td>
-                <td><input type="number" name="foreign_matter_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="foreign_matter_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="foreign_matter_result" value="OK">✓ OK</label>
@@ -510,7 +549,6 @@
               <tr>
                 <td class="item-name">灌點凸起／破裂</td>
                 <td class="standard">灌點不可過大或破裂</td>
-                <td><input type="number" name="gate_defect_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="gate_defect_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="gate_defect_result" value="OK">✓ OK</label>
@@ -520,7 +558,6 @@
               <tr>
                 <td class="item-name">表面刮傷．拉傷</td>
                 <td class="standard">不得有明顯刮痕</td>
-                <td><input type="number" name="scratch_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="scratch_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="scratch_result" value="OK">✓ OK</label>
@@ -530,7 +567,6 @@
               <tr>
                 <td class="item-name">毛邊</td>
                 <td class="standard">邊緣平整、不割手</td>
-                <td><input type="number" name="burr_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="burr_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="burr_result" value="OK">✓ OK</label>
@@ -540,7 +576,6 @@
               <tr>
                 <td class="item-name">平整度</td>
                 <td class="standard">底部不可凹下或凸起或有水波紋</td>
-                <td><input type="number" name="flatness_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="flatness_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="flatness_result" value="OK">✓ OK</label>
@@ -550,7 +585,6 @@
               <tr>
                 <td class="item-name">歪斜度</td>
                 <td class="standard">使用水平儀量測不可歪斜</td>
-                <td><input type="number" name="skewness_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="skewness_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="skewness_result" value="OK">✓ OK</label>
@@ -559,14 +593,13 @@
               </tr>
               <!-- New mold section -->
               <tr>
-                <td colspan="5" style="background:#fff8e7;padding:8px 14px;font-size:0.85rem;font-weight:700;color:#b7770d;">
+                <td colspan="4" style="background:#fff8e7;padding:8px 14px;font-size:0.85rem;font-weight:700;color:#b7770d;">
                   ⭐ 新模或修模後確認項目
                 </td>
               </tr>
               <tr>
                 <td class="item-name">堆疊平穩度 <span class="new-mold-badge">新模</span></td>
                 <td class="standard">堆疊不可晃動</td>
-                <td><input type="number" name="stacking_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="stacking_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="stacking_result" value="OK">✓ OK</label>
@@ -577,7 +610,6 @@
               <tr>
                 <td class="item-name">相扣穩定 <span class="new-mold-badge">新模</span></td>
                 <td class="standard">相扣時不會滑出</td>
-                <td><input type="number" name="locking_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="locking_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="locking_result" value="OK">✓ OK</label>
@@ -588,7 +620,6 @@
               <tr>
                 <td class="item-name">尺寸 <span class="new-mold-badge">新模</span></td>
                 <td class="standard">符合圖面尺寸</td>
-                <td><input type="number" name="dimension_samples" min="0" placeholder="0"></td>
                 <td><input type="number" name="dimension_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
                   <label><input type="radio" name="dimension_result" value="OK">✓ OK</label>
@@ -618,6 +649,14 @@
       </div>
     </form>
   </div>
+
+  <!-- ============ BACKEND WRAPPER ============ -->
+  <div id="backend-wrapper" style="display:none;">
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" data-subtab="admin" onclick="showTab('admin')">📊 查詢管理</button>
+      <button class="sub-tab-btn" data-subtab="exception" onclick="showTab('exception')">⚠️ 異常處理</button>
+      <button class="sub-tab-btn" data-subtab="products" onclick="showTab('products')">🏷️ 品名管理</button>
+    </div>
 
   <!-- ============ ADMIN TAB ============ -->
   <div id="tab-admin" style="display:none;">
@@ -668,6 +707,70 @@
     </div>
   </div>
 
+  <!-- ============ EXCEPTION TAB ============ -->
+  <div id="tab-exception" style="display:none;">
+    <div id="alert-exception" class="alert"></div>
+
+    <!-- Selectors -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🔎</span> 選擇查詢對象</div>
+      <div class="admin-filters" style="grid-template-columns:1fr 1fr auto;">
+        <div class="filter-group">
+          <label>廠商 <span class="req">*</span></label>
+          <select id="ex-vendor" onchange="loadExceptions()">
+            <option value="">請選擇廠商...</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>品名 <span class="req">*</span></label>
+          <select id="ex-product" onchange="loadExceptions()">
+            <option value="">請選擇品名...</option>
+          </select>
+        </div>
+        <div class="filter-group" style="justify-content:flex-end;">
+          <label>&nbsp;</label>
+          <button class="btn btn-secondary" onclick="clearExceptionFilters()">清除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card">
+      <div class="card-title"><span class="icon">⚠️</span> 異常紀錄（依日期由新到舊）</div>
+      <div id="exception-container">
+        <div class="empty-state"><div class="icon">👆</div><p>請先選擇廠商與品名</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PRODUCTS TAB ============ -->
+  <div id="tab-products" style="display:none;">
+    <div id="alert-products" class="alert"></div>
+
+    <!-- Add new -->
+    <div class="card">
+      <div class="card-title"><span class="icon">➕</span> 新增品名</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="form-group" style="flex:1;min-width:240px;">
+          <label>品名</label>
+          <input type="text" id="new-product-name" placeholder="輸入新品名後按『新增』或 Enter"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addProductName();}">
+        </div>
+        <button class="btn btn-primary" onclick="addProductName()">➕ 新增</button>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> 品名清單</div>
+      <div id="products-container">
+        <div class="loading"><div class="spinner"></div><p>載入中...</p></div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /backend-wrapper -->
+
 </div><!-- /main -->
 
 <!-- Password Modal -->
@@ -714,23 +817,56 @@ let allRecords = [];
 // Set today's date on form
 document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
 
+// 載入品名下拉選單
+loadProductOptions();
+
 // ============ TAB ============
 let adminUnlocked = false;
+let pendingTab = null;            // 密碼解鎖後要切換到哪個分頁
+let currentSubTab = 'admin';      // 後台管理目前的子分頁
+const BACKEND_SUBS = ['admin', 'exception', 'products'];
 
 function showTab(tab) {
-  if (tab === 'admin' && !adminUnlocked) {
+  // 「後台管理」按鈕按下時 → 回到上次進入的子分頁（預設查詢管理）
+  if (tab === 'backend') tab = currentSubTab || 'admin';
+
+  const isBackend = BACKEND_SUBS.includes(tab);
+
+  // 密碼保護
+  if (isBackend && !adminUnlocked) {
+    pendingTab = tab;
     document.getElementById('pw-input').value = '';
     document.getElementById('pw-error').style.display = 'none';
     document.getElementById('pw-modal').classList.add('show');
     setTimeout(() => document.getElementById('pw-input').focus(), 100);
     return;
   }
+
+  // 顯示/隱藏 form 與 backend-wrapper
   document.getElementById('tab-form').style.display = tab === 'form' ? 'block' : 'none';
-  document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
+  document.getElementById('backend-wrapper').style.display = isBackend ? 'block' : 'none';
+
+  // 切換後台子分頁
+  if (isBackend) {
+    currentSubTab = tab;
+    document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
+    document.getElementById('tab-exception').style.display = tab === 'exception' ? 'block' : 'none';
+    document.getElementById('tab-products').style.display = tab === 'products' ? 'block' : 'none';
+  }
+
+  // 主分頁 active 狀態：填寫(0) / 後台(1)
   document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-    btn.classList.toggle('active', (i === 0 && tab === 'form') || (i === 1 && tab === 'admin'));
+    btn.classList.toggle('active', (i === 0 && tab === 'form') || (i === 1 && isBackend));
   });
+
+  // 子分頁 active 狀態
+  document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.subtab === tab);
+  });
+
   if (tab === 'admin') loadRecords();
+  if (tab === 'products') loadProductsList();
+  if (tab === 'exception') loadExceptionFilters();
 }
 
 function checkPw() {
@@ -738,7 +874,8 @@ function checkPw() {
   if (val === '22505047') {
     adminUnlocked = true;
     document.getElementById('pw-modal').classList.remove('show');
-    showTab('admin');
+    showTab(pendingTab || 'admin');
+    pendingTab = null;
   } else {
     document.getElementById('pw-error').style.display = 'block';
     document.getElementById('pw-input').value = '';
@@ -748,6 +885,7 @@ function checkPw() {
 
 function closePwModal() {
   document.getElementById('pw-modal').classList.remove('show');
+  pendingTab = null;
 }
 
 // ============ FORM SUBMIT ============
@@ -764,6 +902,14 @@ async function submitForm(e) {
   for (const [k, v] of fd.entries()) {
     if (v !== '') data[k] = v;
   }
+
+  // 將共用抽樣數套用至所有檢驗項目（保持資料庫結構不變）
+  const sharedSamples = parseInt(data.shared_samples) || 0;
+  const itemKeys = ['transparency','deformation','color_diff','foreign_matter',
+    'gate_defect','scratch','burr','flatness','skewness',
+    'stacking','locking','dimension'];
+  itemKeys.forEach(k => { data[`${k}_samples`] = sharedSamples; });
+  delete data.shared_samples; // 這個欄位只是 UI 用，不存 DB
 
   // Convert numbers
   ['sample_size','transparency_samples','transparency_defects',
@@ -895,119 +1041,4 @@ function renderRecords() {
 
   // Pagination
   let pgHtml = '';
-  if (totalPages > 1) {
-    if (currentPage > 1) pgHtml += `<button class="page-btn" onclick="goPage(${currentPage-1})">‹</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-      if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 2)
-        pgHtml += `<button class="page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
-      else if (Math.abs(i - currentPage) === 3)
-        pgHtml += `<span style="padding:6px 4px;color:#aaa;">…</span>`;
-    }
-    if (currentPage < totalPages) pgHtml += `<button class="page-btn" onclick="goPage(${currentPage+1})">›</button>`;
-  }
-  document.getElementById('pagination').innerHTML = pgHtml;
-}
-
-function goPage(p) {
-  currentPage = p;
-  renderRecords();
-  document.querySelector('.card:last-child').scrollIntoView({ behavior: 'smooth' });
-}
-
-function clearFilters() {
-  ['f-vendor','f-product','f-date-from','f-date-to'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  loadRecords();
-}
-
-// ============ DETAIL MODAL ============
-const ITEMS = [
-  { key: 'transparency', name: '外觀', std: '清澈透明、無霧化' },
-  { key: 'deformation', name: '變形', std: '無翹曲、扭曲' },
-  { key: 'color_diff', name: '色差', std: '同批顏色一致' },
-  { key: 'foreign_matter', name: '黑點／異物', std: '不得有肉眼可見異物' },
-  { key: 'gate_defect', name: '灌點凸起／破裂', std: '灌點不可過大或破裂' },
-  { key: 'scratch', name: '表面刮傷．拉傷', std: '不得有明顯刮痕' },
-  { key: 'burr', name: '毛邊', std: '邊緣平整、不割手' },
-  { key: 'flatness', name: '平整度', std: '底部不可凹下或凸起或有水波紋' },
-  { key: 'skewness', name: '歪斜度', std: '使用水平儀量測不可歪斜' },
-  { key: 'stacking', name: '堆疊平穩度★', std: '堆疊不可晃動' },
-  { key: 'locking', name: '相扣穩定★', std: '相扣時不會滑出' },
-  { key: 'dimension', name: '尺寸★', std: '符合圖面尺寸' },
-];
-
-function showDetail(r) {
-  let body = `<div class="detail-grid">
-    <div class="detail-item"><div class="dl">廠商</div><div class="dv">${esc(r.vendor)}</div></div>
-    <div class="detail-item"><div class="dl">檢驗日期</div><div class="dv">${r.inspection_date}</div></div>
-    <div class="detail-item"><div class="dl">品名</div><div class="dv">${esc(r.product_name)}</div></div>
-    <div class="detail-item"><div class="dl">料號</div><div class="dv">${esc(r.part_number||'—')}</div></div>
-    <div class="detail-item"><div class="dl">抽檢量</div><div class="dv">${r.sample_size??'—'}</div></div>
-    <div class="detail-item"><div class="dl">檢驗人員</div><div class="dv">${esc(r.inspector)}</div></div>
-    <div class="detail-item"><div class="dl">提交時間</div><div class="dv">${new Date(r.created_at).toLocaleString('zh-TW')}</div></div>
-  </div>`;
-
-  body += `<table class="detail-table"><thead><tr>
-    <th>檢驗項目</th><th>檢驗標準</th><th>抽樣數</th><th>不良數</th><th>判定</th>
-  </tr></thead><tbody>`;
-
-  for (const item of ITEMS) {
-    const res = r[`${item.key}_result`];
-    const resHtml = res === 'OK' ? '<span class="badge badge-ok">✓ OK</span>'
-      : res === 'NG' ? '<span class="badge badge-ng">✗ NG</span>'
-      : res === 'NA' ? '<span class="badge badge-na">— N/A</span>'
-      : '—';
-    body += `<tr>
-      <td>${item.name}</td>
-      <td style="font-size:0.83rem;color:#666;">${item.std}</td>
-      <td>${r[`${item.key}_samples`]??'—'}</td>
-      <td>${r[`${item.key}_defects`]??'—'}</td>
-      <td>${resHtml}</td>
-    </tr>`;
-  }
-  body += '</tbody></table>';
-
-  if (r.remarks) body += `<div style="margin-top:16px;padding:12px 16px;background:#f9f9f9;border-radius:8px;border-left:3px solid #2e86c1;font-size:0.9rem;"><strong>備注：</strong>${esc(r.remarks)}</div>`;
-
-  document.getElementById('modal-body').innerHTML = body;
-  document.getElementById('modal').classList.add('show');
-}
-
-function closeModal(e) {
-  if (e.target === document.getElementById('modal')) {
-    document.getElementById('modal').classList.remove('show');
-  }
-}
-
-// ============ DELETE ============
-async function deleteRecord(id, vendor, product) {
-  if (!confirm(`確定要刪除這筆紀錄嗎？\n\n廠商：${vendor}\n品名：${product}\n\n刪除後無法復原。`)) return;
-  try {
-    const { error } = await db.from('inspection_records').delete().eq('id', id);
-    if (error) throw error;
-    // 從本地陣列移除後重新渲染，不需要重新拉資料
-    allRecords = allRecords.filter(r => r.id !== id);
-    renderStats(allRecords);
-    renderRecords();
-  } catch (err) {
-    alert('刪除失敗：' + (err.message || '請稍後再試'));
-  }
-}
-
-// ============ UTILS ============
-function showAlert(tab, type, msg) {
-  const el = document.getElementById(`alert-${tab}`);
-  el.className = `alert alert-${type} show`;
-  el.textContent = msg;
-}
-function hideAlert(tab) {
-  document.getElementById(`alert-${tab}`).className = 'alert';
-}
-function esc(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-</script>
-</body>
-</html>
+  if 
