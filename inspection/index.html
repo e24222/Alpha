@@ -1041,4 +1041,400 @@ function renderRecords() {
 
   // Pagination
   let pgHtml = '';
-  if 
+  if (totalPages > 1) {
+    if (currentPage > 1) pgHtml += `<button class="page-btn" onclick="goPage(${currentPage-1})">‹</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 2)
+        pgHtml += `<button class="page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
+      else if (Math.abs(i - currentPage) === 3)
+        pgHtml += `<span style="padding:6px 4px;color:#aaa;">…</span>`;
+    }
+    if (currentPage < totalPages) pgHtml += `<button class="page-btn" onclick="goPage(${currentPage+1})">›</button>`;
+  }
+  document.getElementById('pagination').innerHTML = pgHtml;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderRecords();
+  document.querySelector('.card:last-child').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearFilters() {
+  ['f-vendor','f-product','f-date-from','f-date-to'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  loadRecords();
+}
+
+// ============ DETAIL MODAL ============
+const ITEMS = [
+  { key: 'transparency', name: '外觀', std: '清澈透明、無霧化' },
+  { key: 'deformation', name: '變形', std: '無翹曲、扭曲' },
+  { key: 'color_diff', name: '色差', std: '同批顏色一致' },
+  { key: 'foreign_matter', name: '黑點／異物', std: '不得有肉眼可見異物' },
+  { key: 'gate_defect', name: '灌點凸起／破裂', std: '灌點不可過大或破裂' },
+  { key: 'scratch', name: '表面刮傷．拉傷', std: '不得有明顯刮痕' },
+  { key: 'burr', name: '毛邊', std: '邊緣平整、不割手' },
+  { key: 'flatness', name: '平整度', std: '底部不可凹下或凸起或有水波紋' },
+  { key: 'skewness', name: '歪斜度', std: '使用水平儀量測不可歪斜' },
+  { key: 'stacking', name: '堆疊平穩度★', std: '堆疊不可晃動' },
+  { key: 'locking', name: '相扣穩定★', std: '相扣時不會滑出' },
+  { key: 'dimension', name: '尺寸★', std: '符合圖面尺寸' },
+];
+
+function showDetail(r) {
+  let body = `<div class="detail-grid">
+    <div class="detail-item"><div class="dl">廠商</div><div class="dv">${esc(r.vendor)}</div></div>
+    <div class="detail-item"><div class="dl">檢驗日期</div><div class="dv">${r.inspection_date}</div></div>
+    <div class="detail-item"><div class="dl">品名</div><div class="dv">${esc(r.product_name)}</div></div>
+    <div class="detail-item"><div class="dl">料號</div><div class="dv">${esc(r.part_number||'—')}</div></div>
+    <div class="detail-item"><div class="dl">抽檢量</div><div class="dv">${r.sample_size??'—'}</div></div>
+    <div class="detail-item"><div class="dl">檢驗人員</div><div class="dv">${esc(r.inspector)}</div></div>
+    <div class="detail-item"><div class="dl">提交時間</div><div class="dv">${new Date(r.created_at).toLocaleString('zh-TW')}</div></div>
+  </div>`;
+
+  body += `<table class="detail-table"><thead><tr>
+    <th>檢驗項目</th><th>檢驗標準</th><th>抽樣數</th><th>不良數</th><th>判定</th>
+  </tr></thead><tbody>`;
+
+  for (const item of ITEMS) {
+    const res = r[`${item.key}_result`];
+    const resHtml = res === 'OK' ? '<span class="badge badge-ok">✓ OK</span>'
+      : res === 'NG' ? '<span class="badge badge-ng">✗ NG</span>'
+      : res === 'NA' ? '<span class="badge badge-na">— N/A</span>'
+      : '—';
+    body += `<tr>
+      <td>${item.name}</td>
+      <td style="font-size:0.83rem;color:#666;">${item.std}</td>
+      <td>${r[`${item.key}_samples`]??'—'}</td>
+      <td>${r[`${item.key}_defects`]??'—'}</td>
+      <td>${resHtml}</td>
+    </tr>`;
+  }
+  body += '</tbody></table>';
+
+  if (r.remarks) body += `<div style="margin-top:16px;padding:12px 16px;background:#f9f9f9;border-radius:8px;border-left:3px solid #2e86c1;font-size:0.9rem;"><strong>備注：</strong>${esc(r.remarks)}</div>`;
+
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('show');
+  }
+}
+
+// ============ DELETE ============
+async function deleteRecord(id, vendor, product) {
+  if (!confirm(`確定要刪除這筆紀錄嗎？\n\n廠商：${vendor}\n品名：${product}\n\n刪除後無法復原。`)) return;
+  try {
+    const { error } = await db.from('inspection_records').delete().eq('id', id);
+    if (error) throw error;
+    // 從本地陣列移除後重新渲染，不需要重新拉資料
+    allRecords = allRecords.filter(r => r.id !== id);
+    renderStats(allRecords);
+    renderRecords();
+  } catch (err) {
+    alert('刪除失敗：' + (err.message || '請稍後再試'));
+  }
+}
+
+// ============ PRODUCT NAMES ============
+// 自然排序（1, 2, 10 順序正確；也支援中文）
+function naturalSort(a, b) {
+  return String(a).localeCompare(String(b), 'zh-Hant', { numeric: true, sensitivity: 'base' });
+}
+
+// 將品名清單載入至填寫頁的下拉選單
+async function loadProductOptions() {
+  const sel = document.getElementById('product-name-select');
+  try {
+    const { data, error } = await db.from('product_names').select('name');
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      sel.innerHTML = '<option value="">（尚無品名，請至「品名管理」新增）</option>';
+      return;
+    }
+    const sorted = [...data].sort((a, b) => naturalSort(a.name, b.name));
+    sel.innerHTML = '<option value="">請選擇品名...</option>' +
+      sorted.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
+  } catch (err) {
+    sel.innerHTML = `<option value="">載入失敗：${err.message}</option>`;
+  }
+}
+
+// 載入品名管理清單
+async function loadProductsList() {
+  const container = document.getElementById('products-container');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入中...</p></div>';
+  try {
+    const { data: raw, error } = await db.from('product_names').select('*');
+    if (error) throw error;
+    const data = (raw || []).slice().sort((a, b) => naturalSort(a.name, b.name));
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>尚無品名，請在上方新增</p></div>';
+      return;
+    }
+    let html = `<div class="records-table-wrap"><table class="records-table">
+      <thead><tr>
+        <th style="width:60px;">#</th>
+        <th>品名</th>
+        <th style="width:180px;">建立時間</th>
+        <th style="width:170px;">操作</th>
+      </tr></thead><tbody>`;
+    data.forEach((p, i) => {
+      html += `<tr data-id="${p.id}">
+        <td>${i + 1}</td>
+        <td class="product-name-cell"><strong>${esc(p.name)}</strong></td>
+        <td style="color:#888;font-size:0.85rem;">${new Date(p.created_at).toLocaleString('zh-TW')}</td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;"
+            onclick='editProductName(${JSON.stringify(p).replace(/'/g,"\\'")} )'>✏️ 編輯</button>
+          <button class="btn" style="padding:5px 12px;font-size:0.82rem;background:#fadbd8;color:#c0392b;border:1px solid #f1948a;"
+            onclick="deleteProductName('${p.id}', '${esc(p.name)}')">🗑 刪除</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>載入失敗：${err.message}</p></div>`;
+  }
+}
+
+async function addProductName() {
+  const input = document.getElementById('new-product-name');
+  const name = input.value.trim();
+  if (!name) {
+    showAlert('products', 'error', '⚠️ 請輸入品名');
+    return;
+  }
+  try {
+    const { error } = await db.from('product_names').insert([{ name }]);
+    if (error) {
+      if (error.code === '23505') throw new Error('此品名已存在');
+      throw error;
+    }
+    input.value = '';
+    showAlert('products', 'success', `✅ 已新增品名「${name}」`);
+    await loadProductsList();
+    await loadProductOptions();
+  } catch (err) {
+    showAlert('products', 'error', '❌ 新增失敗：' + (err.message || '請稍後再試'));
+  }
+}
+
+async function editProductName(p) {
+  const newName = prompt(`請輸入新的品名：`, p.name);
+  if (newName === null) return; // 取消
+  const trimmed = newName.trim();
+  if (!trimmed) {
+    showAlert('products', 'error', '⚠️ 品名不可為空');
+    return;
+  }
+  if (trimmed === p.name) return; // 沒變動
+  try {
+    const { error } = await db.from('product_names').update({ name: trimmed }).eq('id', p.id);
+    if (error) {
+      if (error.code === '23505') throw new Error('此品名已存在');
+      throw error;
+    }
+    showAlert('products', 'success', `✅ 已更新為「${trimmed}」`);
+    await loadProductsList();
+    await loadProductOptions();
+  } catch (err) {
+    showAlert('products', 'error', '❌ 修改失敗：' + (err.message || '請稍後再試'));
+  }
+}
+
+async function deleteProductName(id, name) {
+  if (!confirm(`確定要刪除品名「${name}」嗎？\n\n（已送出的檢驗記錄不會受影響）`)) return;
+  try {
+    const { error } = await db.from('product_names').delete().eq('id', id);
+    if (error) throw error;
+    showAlert('products', 'success', `✅ 已刪除「${name}」`);
+    await loadProductsList();
+    await loadProductOptions();
+  } catch (err) {
+    showAlert('products', 'error', '❌ 刪除失敗：' + (err.message || '請稍後再試'));
+  }
+}
+
+// ============ EXCEPTIONS ============
+// 載入廠商、品名下拉（進入分頁時）
+async function loadExceptionFilters() {
+  const vendorSel = document.getElementById('ex-vendor');
+  const productSel = document.getElementById('ex-product');
+
+  // 廠商：從 inspection_records 抓 distinct
+  try {
+    const { data: records, error: recErr } = await db.from('inspection_records').select('vendor');
+    if (recErr) throw recErr;
+    const vendors = [...new Set((records || []).map(r => r.vendor).filter(Boolean))].sort(naturalSort);
+    const currentV = vendorSel.value;
+    vendorSel.innerHTML = '<option value="">請選擇廠商...</option>' +
+      vendors.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    if (vendors.includes(currentV)) vendorSel.value = currentV;
+  } catch (err) {
+    vendorSel.innerHTML = `<option value="">載入失敗：${err.message}</option>`;
+  }
+
+  // 品名：從 product_names 抓（自然排序）
+  try {
+    const { data, error } = await db.from('product_names').select('name');
+    if (error) throw error;
+    const currentP = productSel.value;
+    const sorted = (data || []).slice().sort((a, b) => naturalSort(a.name, b.name));
+    productSel.innerHTML = '<option value="">請選擇品名...</option>' +
+      sorted.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
+    if (sorted.some(p => p.name === currentP)) productSel.value = currentP;
+  } catch (err) {
+    productSel.innerHTML = `<option value="">載入失敗：${err.message}</option>`;
+  }
+}
+
+function clearExceptionFilters() {
+  document.getElementById('ex-vendor').value = '';
+  document.getElementById('ex-product').value = '';
+  document.getElementById('exception-container').innerHTML =
+    '<div class="empty-state"><div class="icon">👆</div><p>請先選擇廠商與品名</p></div>';
+}
+
+// 查詢某廠商某品名的 NG 紀錄
+async function loadExceptions() {
+  const vendor = document.getElementById('ex-vendor').value;
+  const product = document.getElementById('ex-product').value;
+  const container = document.getElementById('exception-container');
+
+  if (!vendor || !product) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">👆</div><p>請先選擇廠商與品名</p></div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入中...</p></div>';
+
+  try {
+    const { data, error } = await db.from('inspection_records')
+      .select('*')
+      .eq('vendor', vendor)
+      .eq('product_name', product)
+      .order('inspection_date', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    // 過濾出有任一項 NG 的紀錄
+    const anomalies = (data || []).filter(r => hasNG(r));
+
+    if (anomalies.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">🎉</div>
+        <p>「${esc(vendor)} / ${esc(product)}」目前沒有異常紀錄</p></div>`;
+      return;
+    }
+
+    let html = `<div style="margin-bottom:12px;color:#555;font-size:0.9rem;">
+      共找到 <strong style="color:#c0392b;">${anomalies.length}</strong> 筆異常紀錄
+    </div>`;
+
+    anomalies.forEach(r => {
+      // 找出所有 NG 項目
+      const ngItems = ITEMS
+        .filter(item => r[`${item.key}_result`] === 'NG')
+        .map(item => ({
+          name: item.name.replace('★', ''),
+          defects: r[`${item.key}_defects`] ?? '—'
+        }));
+
+      html += `<div style="border:1px solid #f1948a;border-left:5px solid #e74c3c;border-radius:8px;padding:16px 20px;margin-bottom:14px;background:#fffafa;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed #f1c5c0;">
+          <div>
+            <span style="font-size:1.05rem;font-weight:700;color:#c0392b;">📅 ${r.inspection_date || '—'}</span>
+            <span style="margin-left:14px;color:#666;font-size:0.88rem;">檢驗人員：${esc(r.inspector || '—')}</span>
+            ${r.part_number ? `<span style="margin-left:14px;color:#666;font-size:0.88rem;">料號：${esc(r.part_number)}</span>` : ''}
+            ${r.sample_size != null ? `<span style="margin-left:14px;color:#666;font-size:0.88rem;">抽檢量：${r.sample_size}</span>` : ''}
+          </div>
+          <span style="font-size:0.78rem;color:#999;">${new Date(r.created_at).toLocaleString('zh-TW')}</span>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <div style="font-size:0.85rem;font-weight:600;color:#888;margin-bottom:6px;">不良項目</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${ngItems.map(it => `<span class="badge badge-ng" style="font-size:0.82rem;">${esc(it.name)}（不良${it.defects}）</span>`).join('')}
+          </div>
+        </div>
+
+        ${r.remarks ? `<div style="margin-bottom:12px;padding:10px 14px;background:#f9f9f9;border-radius:6px;border-left:3px solid #95a5a6;font-size:0.88rem;">
+          <strong style="color:#666;">原備註：</strong>${esc(r.remarks)}
+        </div>` : ''}
+
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:600;color:#1a5276;margin-bottom:6px;">
+            📝 處理備註 <span style="color:#888;font-weight:400;font-size:0.78rem;">（可編輯，請記得按儲存）</span>
+          </label>
+          <textarea id="hn-${r.id}" rows="2"
+            style="width:100%;padding:9px 12px;border:1px solid #d0d7de;border-radius:6px;font-family:inherit;font-size:0.92rem;background:white;resize:vertical;"
+            placeholder="輸入處理方式、跟廠商溝通結果、改善對策等..."
+            oninput="markDirty('${r.id}')">${esc(r.handling_notes || '')}</textarea>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+            <span id="hn-status-${r.id}" style="font-size:0.82rem;color:#888;align-self:center;"></span>
+            <button class="btn btn-primary" id="hn-save-${r.id}" style="padding:6px 18px;font-size:0.88rem;"
+              onclick="saveHandlingNotes('${r.id}')">💾 儲存</button>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>載入失敗：${err.message}</p></div>`;
+  }
+}
+
+function markDirty(id) {
+  const s = document.getElementById(`hn-status-${id}`);
+  if (s) { s.textContent = '未儲存'; s.style.color = '#d35400'; }
+}
+
+async function saveHandlingNotes(id) {
+  const textarea = document.getElementById(`hn-${id}`);
+  const btn = document.getElementById(`hn-save-${id}`);
+  const status = document.getElementById(`hn-status-${id}`);
+  const notes = textarea.value;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 儲存中...';
+  try {
+    const { error } = await db.from('inspection_records').update({ handling_notes: notes }).eq('id', id);
+    if (error) throw error;
+    status.textContent = '✓ 已儲存';
+    status.style.color = '#1e8449';
+  } catch (err) {
+    status.textContent = '✗ 儲存失敗：' + (err.message || '');
+    status.style.color = '#c0392b';
+  }
+  btn.disabled = false;
+  btn.textContent = '💾 儲存';
+}
+
+// ============ UTILS ============
+function showAlert(tab, type, msg) {
+  const el = document.getElementById(`alert-${tab}`);
+  el.className = `alert alert-${type} show`;
+  el.textContent = msg;
+  // 3 秒後自動淡出（品名管理的短訊息）
+  if (tab === 'products') {
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => hideAlert(tab), 3000);
+  }
+}
+function hideAlert(tab) {
+  document.getElementById(`alert-${tab}`).className = 'alert';
+}
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
