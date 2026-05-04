@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0039)file:///D:/admin/Downloads/index_7.html -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍冶首件檢驗記錄系統</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./index_files/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -438,10 +438,10 @@
       <div class="subtitle">First Article Inspection Record System</div>
     </div>
   </div>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('form')">📝 填寫檢驗記錄</button>
-    <button class="tab-btn" onclick="showTab('backend')">🔧 後台管理</button>
-  </div>
+</div>
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab(&#39;form&#39;)">📝 填寫檢驗記錄</button>
+  <button class="tab-btn" onclick="showTab(&#39;backend&#39;)">🔧 後台管理</button>
 </div>
 
 <div class="main">
@@ -457,29 +457,23 @@
         <div class="form-grid">
           <div class="form-group">
             <label>廠商名稱 <span class="req">*</span></label>
-            <input type="text" name="vendor" placeholder="請輸入廠商名稱" required>
+            <input type="text" name="vendor" placeholder="請輸入廠商名稱" required="">
           </div>
           <div class="form-group">
             <label>檢驗日期 <span class="req">*</span></label>
-            <input type="date" name="inspection_date" required>
+            <input type="date" name="inspection_date" required="">
           </div>
           <div class="form-group">
             <label>品名 <span class="req">*</span></label>
-            <select name="product_name" id="product-name-select" required>
-              <option value="">載入中...</option>
-            </select>
+            <select name="product_name" id="product-name-select" required=""><option value="">請選擇品名...</option><option value="3.5公分培養皿">3.5公分培養皿</option><option value="5公分 培養皿">5公分 培養皿</option><option value="6.5公分培養皿">6.5公分培養皿</option><option value="6公分有環培養皿">6公分有環培養皿</option><option value="9公分 Gplus培養皿">9公分 Gplus培養皿</option><option value="9公分熱澆道培養皿">9公分熱澆道培養皿</option><option value="15公分培養皿">15公分培養皿</option><option value="90*20 培養皿">90*20 培養皿</option><option value="150*20 培養皿">150*20 培養皿</option></select>
           </div>
           <div class="form-group">
             <label>料號</label>
             <input type="text" name="part_number" placeholder="請輸入料號">
           </div>
           <div class="form-group">
-            <label>抽檢量</label>
-            <input type="number" name="sample_size" placeholder="數量" min="0">
-          </div>
-          <div class="form-group">
             <label>檢驗人員 <span class="req">*</span></label>
-            <input type="text" name="inspector" placeholder="請輸入姓名" required>
+            <input type="text" name="inspector" placeholder="請輸入姓名" required="">
           </div>
         </div>
       </div>
@@ -493,8 +487,7 @@
           <label style="font-weight:700;color:#1a5276;font-size:0.95rem;white-space:nowrap;">
             🎯 本次抽樣數 <span class="req">*</span>
           </label>
-          <input type="number" name="shared_samples" id="shared-samples" min="0" placeholder="輸入數量" required
-            style="padding:9px 14px;border:1px solid #2e86c1;border-radius:6px;font-size:1rem;font-family:inherit;background:white;width:120px;text-align:center;font-weight:700;color:#1a5276;">
+          <input type="number" name="shared_samples" id="shared-samples" min="0" placeholder="輸入數量" required="" style="padding:9px 14px;border:1px solid #2e86c1;border-radius:6px;font-size:1rem;font-family:inherit;background:white;width:120px;text-align:center;font-weight:700;color:#1a5276;">
           <span style="color:#666;font-size:0.85rem;">（此數量將自動套用至下表所有檢驗項目）</span>
         </div>
 
@@ -653,9 +646,9 @@
   <!-- ============ BACKEND WRAPPER ============ -->
   <div id="backend-wrapper" style="display:none;">
     <div class="sub-tabs">
-      <button class="sub-tab-btn active" data-subtab="admin" onclick="showTab('admin')">📊 查詢管理</button>
-      <button class="sub-tab-btn" data-subtab="exception" onclick="showTab('exception')">⚠️ 異常處理</button>
-      <button class="sub-tab-btn" data-subtab="products" onclick="showTab('products')">🏷️ 品名管理</button>
+      <button class="sub-tab-btn active" data-subtab="admin" onclick="showTab(&#39;admin&#39;)">📊 查詢管理</button>
+      <button class="sub-tab-btn" data-subtab="exception" onclick="showTab(&#39;exception&#39;)">⚠️ 異常處理</button>
+      <button class="sub-tab-btn" data-subtab="products" onclick="showTab(&#39;products&#39;)">🏷️ 品名管理</button>
     </div>
 
   <!-- ============ ADMIN TAB ============ -->
@@ -753,8 +746,7 @@
       <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
         <div class="form-group" style="flex:1;min-width:240px;">
           <label>品名</label>
-          <input type="text" id="new-product-name" placeholder="輸入新品名後按『新增』或 Enter"
-            onkeydown="if(event.key==='Enter'){event.preventDefault();addProductName();}">
+          <input type="text" id="new-product-name" placeholder="輸入新品名後按『新增』或 Enter" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();addProductName();}">
         </div>
         <button class="btn btn-primary" onclick="addProductName()">➕ 新增</button>
       </div>
@@ -781,9 +773,7 @@
     </div>
     <div class="modal-body" style="text-align:center;padding:32px 28px;">
       <p style="color:#555;margin-bottom:20px;font-size:0.95rem;">請輸入管理密碼</p>
-      <input type="password" id="pw-input" placeholder="輸入密碼"
-        style="width:100%;padding:11px 14px;border:1px solid #d0d7de;border-radius:8px;font-size:1rem;font-family:inherit;text-align:center;letter-spacing:4px;"
-        onkeydown="if(event.key==='Enter')checkPw()">
+      <input type="password" id="pw-input" placeholder="輸入密碼" style="width:100%;padding:11px 14px;border:1px solid #d0d7de;border-radius:8px;font-size:1rem;font-family:inherit;text-align:center;letter-spacing:4px;" onkeydown="if(event.key===&#39;Enter&#39;)checkPw()">
       <div id="pw-error" style="color:#e74c3c;font-size:0.85rem;margin-top:10px;display:none;">密碼錯誤，請重試</div>
       <div style="display:flex;gap:10px;margin-top:20px;justify-content:center;">
         <button class="btn btn-secondary" onclick="closePwModal()">取消</button>
@@ -798,7 +788,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>📋 檢驗記錄詳細資料</h3>
-      <button class="modal-close" onclick="document.getElementById('modal').classList.remove('show')">✕</button>
+      <button class="modal-close" onclick="document.getElementById(&#39;modal&#39;).classList.remove(&#39;show&#39;)">✕</button>
     </div>
     <div class="modal-body" id="modal-body"></div>
   </div>
@@ -817,8 +807,12 @@ let allRecords = [];
 // Set today's date on form
 document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
 
-// 載入品名下拉選單
-loadProductOptions();
+// 載入品名下拉選單（等 Supabase SDK 完全就緒後再執行）
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadProductOptions);
+} else {
+  loadProductOptions();
+}
 
 // ============ TAB ============
 let adminUnlocked = false;
@@ -928,6 +922,7 @@ async function submitForm(e) {
     showAlert('form', 'success', '✅ 檢驗記錄已成功送出！感謝您的配合。');
     form.reset();
     document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
+    await loadProductOptions(); // 重新載入品名下拉（reset 會清空選單）
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
     showAlert('form', 'error', '❌ 送出失敗：' + (err.message || '請稍後再試'));
@@ -1436,5 +1431,6 @@ function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
