@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0040)file:///D:/admin/Downloads/index_12.html -->
+<!-- saved from url=(0040)file:///D:/admin/Downloads/index_13.html -->
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -440,14 +440,14 @@
   </div>
 </div>
 <div class="tabs">
-  <button class="tab-btn active" onclick="showTab(&#39;form&#39;)">📝 填寫檢驗記錄</button>
-  <button class="tab-btn" onclick="showTab(&#39;backend&#39;)">🔧 後台管理</button>
+  <button class="tab-btn" onclick="showTab(&#39;form&#39;)">📝 填寫檢驗記錄</button>
+  <button class="tab-btn active" onclick="showTab(&#39;backend&#39;)">🔧 後台管理</button>
 </div>
 
 <div class="main">
 
   <!-- ============ FORM TAB ============ -->
-  <div id="tab-form">
+  <div id="tab-form" style="display: none;">
     <div id="alert-form" class="alert"></div>
 
     <form id="inspection-form" onsubmit="submitForm(event)">
@@ -641,7 +641,7 @@
   </div>
 
   <!-- ============ BACKEND WRAPPER ============ -->
-  <div id="backend-wrapper" style="display:none;">
+  <div id="backend-wrapper" style="display: block;">
     <div class="sub-tabs">
       <button class="sub-tab-btn active" data-subtab="admin" onclick="showTab(&#39;admin&#39;)">📊 查詢管理</button>
       <button class="sub-tab-btn" data-subtab="exception" onclick="showTab(&#39;exception&#39;)">⚠️ 異常處理</button>
@@ -649,15 +649,15 @@
     </div>
 
   <!-- ============ ADMIN TAB ============ -->
-  <div id="tab-admin" style="display:none;">
+  <div id="tab-admin" style="display: block;">
     <div id="alert-admin" class="alert"></div>
 
     <!-- Stats -->
     <div class="stats-bar" id="stats-bar">
-      <div class="stat-card"><div class="value" id="stat-total">—</div><div class="label">總記錄數</div></div>
-      <div class="stat-card"><div class="value" id="stat-ok" style="color:#27ae60;">—</div><div class="label">全部通過</div></div>
-      <div class="stat-card"><div class="value" id="stat-ng" style="color:#e74c3c;">—</div><div class="label">有不合格項</div></div>
-      <div class="stat-card"><div class="value" id="stat-vendors">—</div><div class="label">廠商數</div></div>
+      <div class="stat-card"><div class="value" id="stat-total">3</div><div class="label">總記錄數</div></div>
+      <div class="stat-card"><div class="value" id="stat-ok" style="color:#27ae60;">2</div><div class="label">全部通過</div></div>
+      <div class="stat-card"><div class="value" id="stat-ng" style="color:#e74c3c;">1</div><div class="label">有不合格項</div></div>
+      <div class="stat-card"><div class="value" id="stat-vendors">2</div><div class="label">廠商數</div></div>
     </div>
 
     <!-- Filters -->
@@ -690,9 +690,47 @@
     <!-- Records -->
     <div class="card">
       <div class="card-title"><span class="icon">📋</span> 檢驗記錄列表</div>
-      <div id="records-container">
-        <div class="loading"><div class="spinner"></div><p>載入中...</p></div>
-      </div>
+      <div id="records-container"><div class="records-table-wrap"><table class="records-table">
+    <thead><tr>
+      <th>日期</th><th>廠商</th><th>品名</th><th>料號</th>
+      <th>抽檢量</th><th>檢驗人員</th><th>整體判定</th><th>操作</th>
+    </tr></thead><tbody><tr>
+      <td>2026-04-30</td>
+      <td><strong>龍冶</strong></td>
+      <td>9公分 Gplus培養皿</td>
+      <td>—</td>
+      <td>20</td>
+      <td>范邦彥</td>
+      <td><span class="badge badge-ng">✗ NG</span></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;" onclick="showDetail({&quot;id&quot;:&quot;911d2d52-7c8a-4ff4-a3ff-6bbc7793417e&quot;,&quot;created_at&quot;:&quot;2026-04-30T01:36:25.511441+00:00&quot;,&quot;vendor&quot;:&quot;龍冶&quot;,&quot;inspection_date&quot;:&quot;2026-04-30&quot;,&quot;product_name&quot;:&quot;9公分 Gplus培養皿&quot;,&quot;part_number&quot;:null,&quot;sample_size&quot;:20,&quot;inspector&quot;:&quot;范邦彥&quot;,&quot;supervisor&quot;:null,&quot;remarks&quot;:&quot;1號糢有固定點刮痕，固定凹點  ，1.2號模底部有變形凸起&quot;,&quot;transparency_samples&quot;:20,&quot;transparency_defects&quot;:10,&quot;transparency_result&quot;:&quot;NG&quot;,&quot;deformation_samples&quot;:20,&quot;deformation_defects&quot;:null,&quot;deformation_result&quot;:null,&quot;color_diff_samples&quot;:20,&quot;color_diff_defects&quot;:null,&quot;color_diff_result&quot;:null,&quot;foreign_matter_samples&quot;:20,&quot;foreign_matter_defects&quot;:null,&quot;foreign_matter_result&quot;:null,&quot;gate_defect_samples&quot;:20,&quot;gate_defect_defects&quot;:null,&quot;gate_defect_result&quot;:null,&quot;scratch_samples&quot;:20,&quot;scratch_defects&quot;:null,&quot;scratch_result&quot;:null,&quot;burr_samples&quot;:20,&quot;burr_defects&quot;:null,&quot;burr_result&quot;:null,&quot;flatness_samples&quot;:20,&quot;flatness_defects&quot;:20,&quot;flatness_result&quot;:&quot;NG&quot;,&quot;skewness_samples&quot;:20,&quot;skewness_defects&quot;:null,&quot;skewness_result&quot;:null,&quot;stacking_samples&quot;:20,&quot;stacking_defects&quot;:null,&quot;stacking_result&quot;:null,&quot;locking_samples&quot;:20,&quot;locking_defects&quot;:null,&quot;locking_result&quot;:null,&quot;dimension_samples&quot;:20,&quot;dimension_defects&quot;:null,&quot;dimension_result&quot;:null,&quot;handling_notes&quot;:null} )">詳細</button>
+        <button class="btn" style="padding:5px 12px;font-size:0.82rem;background:#fadbd8;color:#c0392b;border:1px solid #f1948a;" onclick="deleteRecord(&#39;911d2d52-7c8a-4ff4-a3ff-6bbc7793417e&#39;, &#39;龍冶&#39;, &#39;9公分 Gplus培養皿&#39;)">刪除</button>
+      </td>
+    </tr><tr>
+      <td>2026-04-28</td>
+      <td><strong>駿漢</strong></td>
+      <td>9公分 Gplus培養皿</td>
+      <td>1601-1 Gplus</td>
+      <td>20</td>
+      <td>葉欲盛</td>
+      <td><span class="badge badge-ok">✓ OK</span></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;" onclick="showDetail({&quot;id&quot;:&quot;f727b72a-17b9-4f06-8dfb-3c465ed2c65d&quot;,&quot;created_at&quot;:&quot;2026-04-28T08:17:15.377275+00:00&quot;,&quot;vendor&quot;:&quot;駿漢&quot;,&quot;inspection_date&quot;:&quot;2026-04-28&quot;,&quot;product_name&quot;:&quot;9公分 Gplus培養皿&quot;,&quot;part_number&quot;:&quot;1601-1 Gplus&quot;,&quot;sample_size&quot;:20,&quot;inspector&quot;:&quot;葉欲盛&quot;,&quot;supervisor&quot;:null,&quot;remarks&quot;:null,&quot;transparency_samples&quot;:20,&quot;transparency_defects&quot;:null,&quot;transparency_result&quot;:&quot;OK&quot;,&quot;deformation_samples&quot;:20,&quot;deformation_defects&quot;:null,&quot;deformation_result&quot;:&quot;OK&quot;,&quot;color_diff_samples&quot;:20,&quot;color_diff_defects&quot;:null,&quot;color_diff_result&quot;:&quot;OK&quot;,&quot;foreign_matter_samples&quot;:20,&quot;foreign_matter_defects&quot;:null,&quot;foreign_matter_result&quot;:&quot;OK&quot;,&quot;gate_defect_samples&quot;:20,&quot;gate_defect_defects&quot;:null,&quot;gate_defect_result&quot;:&quot;OK&quot;,&quot;scratch_samples&quot;:20,&quot;scratch_defects&quot;:null,&quot;scratch_result&quot;:&quot;OK&quot;,&quot;burr_samples&quot;:20,&quot;burr_defects&quot;:null,&quot;burr_result&quot;:&quot;OK&quot;,&quot;flatness_samples&quot;:20,&quot;flatness_defects&quot;:null,&quot;flatness_result&quot;:&quot;OK&quot;,&quot;skewness_samples&quot;:20,&quot;skewness_defects&quot;:null,&quot;skewness_result&quot;:&quot;OK&quot;,&quot;stacking_samples&quot;:20,&quot;stacking_defects&quot;:null,&quot;stacking_result&quot;:&quot;OK&quot;,&quot;locking_samples&quot;:20,&quot;locking_defects&quot;:null,&quot;locking_result&quot;:&quot;OK&quot;,&quot;dimension_samples&quot;:20,&quot;dimension_defects&quot;:null,&quot;dimension_result&quot;:&quot;OK&quot;,&quot;handling_notes&quot;:null} )">詳細</button>
+        <button class="btn" style="padding:5px 12px;font-size:0.82rem;background:#fadbd8;color:#c0392b;border:1px solid #f1948a;" onclick="deleteRecord(&#39;f727b72a-17b9-4f06-8dfb-3c465ed2c65d&#39;, &#39;駿漢&#39;, &#39;9公分 Gplus培養皿&#39;)">刪除</button>
+      </td>
+    </tr><tr>
+      <td>2026-04-27</td>
+      <td><strong>龍冶</strong></td>
+      <td>6公分有環培養皿</td>
+      <td>1621-6公分</td>
+      <td>20</td>
+      <td>葉欲盛</td>
+      <td><span class="badge badge-ok">✓ OK</span></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;" onclick="showDetail({&quot;id&quot;:&quot;fc097568-53e7-430c-a38b-d2b0cc494b0c&quot;,&quot;created_at&quot;:&quot;2026-04-27T07:45:21.030413+00:00&quot;,&quot;vendor&quot;:&quot;龍冶&quot;,&quot;inspection_date&quot;:&quot;2026-04-27&quot;,&quot;product_name&quot;:&quot;6公分有環培養皿&quot;,&quot;part_number&quot;:&quot;1621-6公分&quot;,&quot;sample_size&quot;:20,&quot;inspector&quot;:&quot;葉欲盛&quot;,&quot;supervisor&quot;:null,&quot;remarks&quot;:null,&quot;transparency_samples&quot;:20,&quot;transparency_defects&quot;:null,&quot;transparency_result&quot;:&quot;OK&quot;,&quot;deformation_samples&quot;:20,&quot;deformation_defects&quot;:null,&quot;deformation_result&quot;:&quot;OK&quot;,&quot;color_diff_samples&quot;:20,&quot;color_diff_defects&quot;:null,&quot;color_diff_result&quot;:&quot;OK&quot;,&quot;foreign_matter_samples&quot;:20,&quot;foreign_matter_defects&quot;:null,&quot;foreign_matter_result&quot;:&quot;OK&quot;,&quot;gate_defect_samples&quot;:20,&quot;gate_defect_defects&quot;:null,&quot;gate_defect_result&quot;:&quot;OK&quot;,&quot;scratch_samples&quot;:20,&quot;scratch_defects&quot;:null,&quot;scratch_result&quot;:&quot;OK&quot;,&quot;burr_samples&quot;:20,&quot;burr_defects&quot;:null,&quot;burr_result&quot;:&quot;OK&quot;,&quot;flatness_samples&quot;:20,&quot;flatness_defects&quot;:null,&quot;flatness_result&quot;:&quot;OK&quot;,&quot;skewness_samples&quot;:20,&quot;skewness_defects&quot;:null,&quot;skewness_result&quot;:&quot;OK&quot;,&quot;stacking_samples&quot;:20,&quot;stacking_defects&quot;:null,&quot;stacking_result&quot;:&quot;OK&quot;,&quot;locking_samples&quot;:20,&quot;locking_defects&quot;:null,&quot;locking_result&quot;:&quot;OK&quot;,&quot;dimension_samples&quot;:20,&quot;dimension_defects&quot;:null,&quot;dimension_result&quot;:&quot;OK&quot;,&quot;handling_notes&quot;:null} )">詳細</button>
+        <button class="btn" style="padding:5px 12px;font-size:0.82rem;background:#fadbd8;color:#c0392b;border:1px solid #f1948a;" onclick="deleteRecord(&#39;fc097568-53e7-430c-a38b-d2b0cc494b0c&#39;, &#39;龍冶&#39;, &#39;6公分有環培養皿&#39;)">刪除</button>
+      </td>
+    </tr></tbody></table></div></div>
       <div class="pagination" id="pagination"></div>
     </div>
   </div>
@@ -791,8 +829,12 @@
   </div>
 </div>
 
-<script>
-// 全域變數（需在 showTab 等函數呼叫前存在）
+<script defer="">
+const SUPABASE_URL = 'https://achrezfjtyjjgoyaaowr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const PAGE_SIZE = 20;
 let currentPage = 1;
 let allRecords = [];
@@ -800,17 +842,9 @@ let adminUnlocked = false;
 let pendingTab = null;
 let currentSubTab = 'admin';
 const BACKEND_SUBS = ['admin', 'exception', 'products'];
-let db = null;
 
-// 初始化（等 Supabase SDK 與頁面全部就緒）
-window.addEventListener('load', function() {
-  const SUPABASE_URL = 'https://achrezfjtyjjgoyaaowr.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
-  const { createClient } = supabase;
-  db = createClient(SUPABASE_URL, SUPABASE_KEY);
-  document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
-  loadProductOptions();
-});
+document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
+loadProductOptions();
 
 function showTab(tab) {
   // 「後台管理」按鈕按下時 → 回到上次進入的子分頁（預設查詢管理）
