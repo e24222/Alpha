@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0040)file:///D:/admin/Downloads/index_11.html -->
+<!-- saved from url=(0040)file:///D:/admin/Downloads/index_12.html -->
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -792,23 +792,22 @@
 </div>
 
 <script>
-const SUPABASE_URL = 'https://achrezfjtyjjgoyaaowr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
-
+// 全域變數（需在 showTab 等函數呼叫前存在）
 const PAGE_SIZE = 20;
 let currentPage = 1;
 let allRecords = [];
-
-// ============ TAB ============
 let adminUnlocked = false;
 let pendingTab = null;
 let currentSubTab = 'admin';
 const BACKEND_SUBS = ['admin', 'exception', 'products'];
+let db = null;
 
-// 初始化（等頁面與 Supabase SDK 全部就緒）
+// 初始化（等 Supabase SDK 與頁面全部就緒）
 window.addEventListener('load', function() {
+  const SUPABASE_URL = 'https://achrezfjtyjjgoyaaowr.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
+  const { createClient } = supabase;
+  db = createClient(SUPABASE_URL, SUPABASE_KEY);
   document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
   loadProductOptions();
 });
