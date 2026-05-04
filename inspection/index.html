@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif; background: #f0f2f5; color: #333; }
+  body { font-family: 'Microsoft JhengHei', '微軟正黑體',h Arial, sans-serif; background: #f0f2f5; color: #333; }
 
   /* Header */
   .header {
@@ -844,7 +844,7 @@ let currentSubTab = 'admin';
 const BACKEND_SUBS = ['admin', 'exception', 'products'];
 
 document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
-loadProductOptions();
+loadProductOptions();showTab('form');
 
 function showTab(tab) {
   // 「後台管理」按鈕按下時 → 回到上次進入的子分頁（預設查詢管理）
@@ -948,7 +948,7 @@ async function submitForm(e) {
     showAlert('form', 'success', '✅ 檢驗記錄已成功送出！感謝您的配合。');
     form.reset();
     document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
-    await loadProductOptions(); // 重新載入品名下拉（reset 會清空選單）
+    await loadProductOptions();showTab('form'); // 重新載入品名下拉（reset 會清空選單）
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
     showAlert('form', 'error', '❌ 送出失敗：' + (err.message || '請稍後再試'));
@@ -1241,7 +1241,7 @@ async function addProductName() {
     input.value = '';
     showAlert('products', 'success', `✅ 已新增品名「${name}」`);
     await loadProductsList();
-    await loadProductOptions();
+    await loadProductOptions();showTab('form');
   } catch (err) {
     showAlert('products', 'error', '❌ 新增失敗：' + (err.message || '請稍後再試'));
   }
@@ -1264,7 +1264,7 @@ async function editProductName(p) {
     }
     showAlert('products', 'success', `✅ 已更新為「${trimmed}」`);
     await loadProductsList();
-    await loadProductOptions();
+    await loadProductOptions();showTab('form');
   } catch (err) {
     showAlert('products', 'error', '❌ 修改失敗：' + (err.message || '請稍後再試'));
   }
@@ -1277,7 +1277,7 @@ async function deleteProductName(id, name) {
     if (error) throw error;
     showAlert('products', 'success', `✅ 已刪除「${name}」`);
     await loadProductsList();
-    await loadProductOptions();
+    await loadProductOptions();showTab('form');
   } catch (err) {
     showAlert('products', 'error', '❌ 刪除失敗：' + (err.message || '請稍後再試'));
   }
