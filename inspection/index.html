@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0039)file:///D:/admin/Downloads/index_9.html -->
+<!-- saved from url=(0040)file:///D:/admin/Downloads/index_11.html -->
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -801,21 +801,17 @@ const PAGE_SIZE = 20;
 let currentPage = 1;
 let allRecords = [];
 
-// Set today's date on form
-document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
-
-// 載入品名下拉選單（等 Supabase SDK 完全就緒後再執行）
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', loadProductOptions);
-} else {
-  loadProductOptions();
-}
-
 // ============ TAB ============
 let adminUnlocked = false;
-let pendingTab = null;            // 密碼解鎖後要切換到哪個分頁
-let currentSubTab = 'admin';      // 後台管理目前的子分頁
+let pendingTab = null;
+let currentSubTab = 'admin';
 const BACKEND_SUBS = ['admin', 'exception', 'products'];
+
+// 初始化（等頁面與 Supabase SDK 全部就緒）
+window.addEventListener('load', function() {
+  document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
+  loadProductOptions();
+});
 
 function showTab(tab) {
   // 「後台管理」按鈕按下時 → 回到上次進入的子分頁（預設查詢管理）
