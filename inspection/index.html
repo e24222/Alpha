@@ -1340,7 +1340,6 @@ async function loadExceptions() {
     const { data, error } = await db.from('inspection_records')
       .select('*')
       .eq('vendor', vendor)
-      .eq('product_name', product)
       .order('inspection_date', { ascending: false })
       .order('created_at', { ascending: false });
     if (error) throw error;
