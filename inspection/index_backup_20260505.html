@@ -427,32 +427,6 @@
     .form-grid { grid-template-columns: 1fr; }
     .admin-filters { grid-template-columns: 1fr; }
   }
-
-  /* ===== Mobile Responsive ===== */
-  @media (max-width: 768px) {
-    .header-inner { padding: 14px 16px; }
-    .header h1 { font-size: 1.2rem; }
-    .tabs { padding: 0 8px; }
-    .tab-btn { padding: 10px 14px; font-size: 0.85rem; }
-    .main { padding: 16px 12px; }
-    .card { padding: 18px 16px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .admin-filters { grid-template-columns: 1fr 1fr; }
-    .stats-bar { grid-template-columns: 1fr 1fr; }
-    .inspection-table th, .inspection-table td { padding: 6px 8px; font-size: 0.82rem; }
-    .result-group { gap: 6px; }
-    .result-group label { padding: 4px 8px; font-size: 0.8rem; }
-    .form-actions { flex-direction: column; align-items: stretch; }
-    .form-actions .btn { width: 100%; justify-content: center; }
-    .sub-tabs { flex-wrap: wrap; }
-    .sub-tab-btn { font-size: 0.82rem; padding: 8px 12px; }
-  }
-  @media (max-width: 480px) {
-    .header h1 { font-size: 1rem; }
-    .admin-filters { grid-template-columns: 1fr; }
-    .stats-bar { grid-template-columns: 1fr 1fr; }
-    .tab-btn { padding: 8px 10px; font-size: 0.8rem; }
-  }
 </style>
 </head>
 <body>
@@ -534,7 +508,7 @@
                 <td class="standard">清澈透明、無霧化</td>
                 <td><input type="number" name="transparency_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="transparency_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="transparency_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="transparency_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -543,7 +517,7 @@
                 <td class="standard">無翹曲、扭曲</td>
                 <td><input type="number" name="deformation_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="deformation_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="deformation_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="deformation_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -552,7 +526,7 @@
                 <td class="standard">同批顏色一致</td>
                 <td><input type="number" name="color_diff_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="color_diff_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="color_diff_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="color_diff_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -561,7 +535,7 @@
                 <td class="standard">不得有肉眼可見異物</td>
                 <td><input type="number" name="foreign_matter_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="foreign_matter_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="foreign_matter_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="foreign_matter_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -570,7 +544,7 @@
                 <td class="standard">灌點不可過大或破裂</td>
                 <td><input type="number" name="gate_defect_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="gate_defect_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="gate_defect_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="gate_defect_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -579,7 +553,7 @@
                 <td class="standard">不得有明顯刮痕</td>
                 <td><input type="number" name="scratch_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="scratch_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="scratch_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="scratch_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -588,7 +562,7 @@
                 <td class="standard">邊緣平整、不割手</td>
                 <td><input type="number" name="burr_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="burr_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="burr_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="burr_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -597,7 +571,7 @@
                 <td class="standard">底部不可凹下或凸起或有水波紋</td>
                 <td><input type="number" name="flatness_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="flatness_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="flatness_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="flatness_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -606,7 +580,7 @@
                 <td class="standard">使用水平儀量測不可歪斜</td>
                 <td><input type="number" name="skewness_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="skewness_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="skewness_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="skewness_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -621,7 +595,7 @@
                 <td class="standard">堆疊不可晃動</td>
                 <td><input type="number" name="stacking_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="stacking_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="stacking_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="stacking_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -630,7 +604,7 @@
                 <td class="standard">相扣時不會滑出</td>
                 <td><input type="number" name="locking_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="locking_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="locking_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="locking_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -639,7 +613,7 @@
                 <td class="standard">符合圖面尺寸</td>
                 <td><input type="number" name="dimension_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="dimension_result" value="OK" checked>✓ OK</label>
+                  <label><input type="radio" name="dimension_result" value="OK">✓ OK</label>
                   <label><input type="radio" name="dimension_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
