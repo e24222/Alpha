@@ -1329,7 +1329,7 @@ async function loadExceptions() {
   const product = document.getElementById('ex-product').value;
   const container = document.getElementById('exception-container');
 
-  if (!vendor || !product) {
+  if (!vendor) {
     container.innerHTML = '<div class="empty-state"><div class="icon">👆</div><p>請先選擇廠商與品名</p></div>';
     return;
   }
@@ -1346,11 +1346,11 @@ async function loadExceptions() {
     if (error) throw error;
 
     // 過濾出有任一項 NG 的紀錄
-    const anomalies = (data || []).filter(r => hasNG(r));
+    const filtered=product?(data||[]).filter(r=>r.product_name===product):(data||[]);const anomalies=filtered.filter(r=>hasNG(r));
 
     if (anomalies.length === 0) {
       container.innerHTML = `<div class="empty-state"><div class="icon">🎉</div>
-        <p>「${esc(vendor)} / ${esc(product)}」目前沒有異常紀錄</p></div>`;
+        <p>「${esc(vendor)}${product?" / "+esc(product):""}」目前沒有異常紀錄</p></div>`;
       return;
     }
 
