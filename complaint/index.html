@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客訴管理系統 — 龍冶</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#2563eb;--pri-d:#1d4ed8;--pri-l:#eff6ff;
+  --ok:#16a34a;--warn:#d97706;--err:#dc2626;--urg:#7c3aed;
+  --bg:#f1f5f9;--card:#fff;--bdr:#e2e8f0;
+  --tx:#1e293b;--mu:#64748b;--fa:#94a3b8;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','微軟正黑體',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+
+/* ──────── GATE / SETUP SCREENS ──────── */
+.gate{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;padding:20px}
+.gate-box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:40px;width:100%;max-width:440px;color:#fff;text-align:center}
+.gate-icon{font-size:3rem;margin-bottom:12px}
+.gate-title{font-size:1.3rem;font-weight:800;margin-bottom:6px}
+.gate-sub{font-size:.9rem;opacity:.6;margin-bottom:28px;line-height:1.5}
+.gate-input{width:100%;padding:12px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1rem;text-align:center;letter-spacing:4px;font-family:monospace;outline:none;margin-bottom:12px}
+.gate-input:focus{border-color:#60a5fa}
+.gate-input.normal{letter-spacing:normal;font-family:inherit;text-align:left}
+.gate-btn{width:100%;padding:12px;border-radius:10px;background:#2563eb;color:#fff;border:none;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:8px;transition:.15s}
+.gate-btn:hover{background:#1d4ed8}
+.gate-btn.sec{background:rgba(255,255,255,.1)}
+.gate-btn.sec:hover{background:rgba(255,255,255,.2)}
+.gate-err{color:#f87171;font-size:.85rem;margin-bottom:10px;display:none}
+.gate-label{font-size:.85rem;opacity:.7;text-align:left;margin-bottom:5px}
+.gate-fg{margin-bottom:14px;text-align:left}
+.gate-code{background:rgba(0,0,0,.3);border-radius:8px;padding:12px 14px;font-family:monospace;font-size:.78rem;color:#7dd3fc;text-align:left;line-height:1.6;margin:10px 0;white-space:pre-wrap;overflow-x:auto}
+.gate-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:.85rem;opacity:.8;text-align:left}
+.gate-num{background:#2563eb;color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-top:1px}
+.setup-scroll{max-height:70vh;overflow-y:auto}
+
+/* ──────── APP LAYOUT ──────── */
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:#0f172a;color:#fff;position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100}
+.sb-head{padding:18px 14px 14px;border-bottom:1px solid #1e293b}
+.sb-logo{font-size:15px;font-weight:700;color:#60a5fa}
+.sb-sub{font-size:11px;color:#475569;margin-top:2px}
+.sb-nav{padding:8px;flex:1;overflow-y:auto}
+.nsep{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.08em;padding:8px 10px 4px;margin-top:6px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#cbd5e1;font-size:13px;transition:.15s}
+.ni:hover{background:#1e293b;color:#fff}
+.ni.on{background:#2563eb;color:#fff}
+.ni .ico{width:17px;text-align:center;font-size:13px}
+.sb-foot{padding:8px;border-top:1px solid #1e293b}
+.alert-badge{background:#ef4444;color:#fff;border-radius:100px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:auto}
+.main{margin-left:230px;flex:1;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:16px;font-weight:600}
+.page{padding:22px;display:none}
+.page.on{display:block}
+
+/* ──────── COMPONENTS ──────── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:.15s;font-family:inherit}
+.bp{background:var(--pri);color:#fff}.bp:hover{background:var(--pri-d)}
+.bs{background:var(--bdr);color:var(--tx)}.bs:hover{background:#cbd5e1}
+.bd{background:var(--err);color:#fff}.bd:hover{background:#b91c1c}
+.bo{background:transparent;border:1px solid var(--bdr);color:var(--tx)}.bo:hover{background:var(--bg)}
+.bsm{padding:4px 10px;font-size:12px}
+.bxs{padding:2px 8px;font-size:11px}
+.card{background:#fff;border-radius:12px;border:1px solid var(--bdr)}
+.ch{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:14px;font-weight:600}
+.cb{padding:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat{background:#fff;border-radius:12px;border:1px solid var(--bdr);padding:16px 18px}
+.slbl{font-size:12px;color:var(--mu);margin-bottom:5px}
+.sval{font-size:26px;font-weight:700}
+.ssub{font-size:11px;color:var(--fa);margin-top:2px}
+.cb{color:var(--pri)}.cw{color:var(--warn)}.cg{color:var(--ok)}.cr{color:var(--err)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tbl-w{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 14px;text-align:left;font-size:12.5px;border-bottom:1px solid var(--bdr)}
+th{background:#f8fafc;font-weight:600;color:var(--mu);white-space:nowrap}
+tbody tr:hover td{background:#f8fafc;cursor:pointer}
+tbody tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+.bn{background:#dbeafe;color:#1d4ed8}.bp2{background:#fef3c7;color:#b45309}
+.bg{background:#dcfce7;color:#15803d}.bc{background:#f1f5f9;color:#475569}
+.bq{background:#fee2e2;color:#991b1b}.bsh{background:#fce7f3;color:#9d174d}
+.bdl{background:#ede9fe;color:#5b21b6}.bu{background:#e0f2fe;color:#075985}
+.sv-輕微{background:#dcfce7;color:#15803d}.sv-中等{background:#fef3c7;color:#b45309}
+.sv-嚴重{background:#fee2e2;color:#991b1b}.sv-緊急{background:#f3e8ff;color:#6d28d9}
+.fg{display:flex;flex-direction:column;gap:5px}
+label{font-size:13px;font-weight:500}
+.req::after{content:' *';color:var(--err)}
+input,select,textarea{padding:8px 10px;border:1px solid var(--bdr);border-radius:8px;font-size:13px;color:var(--tx);background:#fff;transition:.15s;font-family:inherit;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+input[readonly]{background:#f8fafc;color:var(--mu)}
+textarea{resize:vertical;min-height:80px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.ff{grid-column:1/-1}
+.sec-ttl{font-size:13px;font-weight:600;color:var(--pri);padding-bottom:7px;border-bottom:2px solid var(--pri-l);margin-bottom:13px}
+.upload-zone{border:2px dashed var(--bdr);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.15s;background:#f8fafc}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--pri);background:var(--pri-l)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:10px}
+.mitem{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--bdr)}
+.mitem img,.mitem video{width:100%;height:80px;object-fit:cover;display:block;cursor:pointer}
+.mrm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mnm{padding:2px 5px;font-size:9px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb2{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{position:relative;flex:1;min-width:160px}
+.sw input{padding-left:30px}
+.sw .si{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:13px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:18px;overflow-y:auto}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:780px;margin:auto}
+.mh{padding:16px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mt2{font-size:15px;font-weight:600}
+.mx{background:none;border:none;font-size:17px;cursor:pointer;color:var(--mu);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0}
+.mx:hover{background:var(--bg)}
+.mb2{padding:20px}
+.mf{padding:13px 20px;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;gap:8px}
+.det-blk{background:var(--bg);border-radius:9px;padding:12px 14px;margin-bottom:11px}
+.dlbl{font-size:11px;color:var(--mu);margin-bottom:2px;font-weight:500;text-transform:uppercase}
+.dval{font-size:13px;font-weight:500}
+.ir{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tl .tli{display:flex;gap:10px;padding-bottom:14px;position:relative}
+.tl .tli::before{content:'';position:absolute;left:13px;top:27px;bottom:0;width:1px;background:var(--bdr)}
+.tl .tli:last-child::before{display:none}
+.tl-dot{width:26px;height:26px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;font-weight:700}
+.tl-bd{flex:1;padding-top:3px}
+.tl-t{font-size:11px;color:var(--fa)}
+.tl-tx{font-size:12.5px;margin-top:3px;line-height:1.5}
+.rca-box{margin-top:4px;font-size:12px;color:#b45309;padding:5px 9px;background:#fffbeb;border-radius:5px}
+.capa-box{margin-top:3px;font-size:12px;color:#15803d;padding:5px 9px;background:#f0fdf4;border-radius:5px}
+.barchart{display:flex;flex-direction:column;gap:9px}
+.brow{display:flex;align-items:center;gap:7px}
+.blbl{font-size:11.5px;color:var(--mu);width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bwrap{flex:1;background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden}
+.bfill{height:100%;border-radius:4px;transition:width .5s}
+.bnum{font-size:12px;font-weight:600;width:18px;text-align:right}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;align-items:center;justify-content:center}
+.lbx{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lbx:hover{background:rgba(255,255,255,.3)}
+.cfm{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center}
+.cfmb{background:#fff;border-radius:12px;padding:26px 22px;max-width:340px;width:90%;text-align:center}
+.cfmb .ci{font-size:36px;margin-bottom:8px}
+.cfmb .cn{font-size:15px;font-weight:600;margin-bottom:6px}
+.cfmb .cm{font-size:13px;color:var(--mu);margin-bottom:18px;line-height:1.5}
+.cfmb .cbb{display:flex;gap:8px;justify-content:center}
+.tw{position:fixed;top:16px;right:16px;z-index:400;display:flex;flex-direction:column;gap:6px}
+.toast{background:#1e293b;color:#fff;padding:10px 14px;border-radius:9px;font-size:13px;max-width:300px;animation:ti .2s ease}
+.toast.ok{background:#15803d}.toast.err{background:#dc2626}.toast.warn{background:#d97706}
+@keyframes ti{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.empty{text-align:center;padding:48px 20px;color:var(--mu)}
+.empty i{font-size:40px;display:block;margin-bottom:8px}
+.mb3{margin-bottom:10px}.mb4{margin-bottom:14px}.mb5{margin-bottom:18px}.mb6{margin-bottom:22px}
+.mt4{margin-top:14px}
+.flex{display:flex}.ic{align-items:center}.jb{justify-content:space-between}.gap2{gap:7px}
+.txs{font-size:12px}.txmu{color:var(--mu)}.fw6{font-weight:600}
+code{font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 4px;border-radius:3px}
+.info-b{background:#eff6ff;border-radius:9px;padding:11px 14px;font-size:12.5px;color:#1d4ed8;margin-bottom:18px}
+
+/* Overdue alert row */
+.alert-row{background:#fff5f5;border:1px solid #fca5a5;border-radius:9px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px;font-size:13px}
+.alert-ico{font-size:20px;flex-shrink:0}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;margin-left:4px;animation:blink 1.2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<!-- ══ PASSWORD GATE ══ -->
+<div class="gate" id="gateScreen">
+  <div class="gate-box">
+    <div class="gate-icon">🔒</div>
+    <div class="gate-title">客訴管理系統</div>
+    <div class="gate-sub">龍冶管理系統 · 請輸入密碼</div>
+    <input class="gate-input" type="password" id="pwIn" placeholder="輸入密碼"
+      onkeydown="if(event.key==='Enter')checkPw()">
+    <div class="gate-err" id="pwErr">密碼錯誤，請重試</div>
+    <button class="gate-btn" onclick="checkPw()">進入系統</button>
+    <div style="margin-top:12px">
+      <a href="../" style="color:rgba(255,255,255,.4);font-size:.85rem;text-decoration:none">← 返回主選單</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SUPABASE SETUP ══ -->
+<div class="gate" id="setupScreen" style="display:none">
+  <div class="gate-box setup-scroll" style="max-width:520px;text-align:left">
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="gate-icon">⚙️</div>
+      <div class="gate-title">首次設定 — 連接雲端資料庫</div>
+      <div class="gate-sub">需要 Supabase 帳號才能讓多人共用資料（免費）</div>
+    </div>
+
+    <div class="gate-step"><div class="gate-num">1</div><div>前往 <strong style="color:#7dd3fc">supabase.com</strong> 免費註冊，建立新專案（Free tier）</div></div>
+    <div class="gate-step"><div class="gate-num">2</div><div>在 Supabase 左側選 <strong style="color:#7dd3fc">SQL Editor</strong>，貼上以下 SQL 並執行：</div></div>
+    <div class="gate-code">-- 建立客訴資料表
+CREATE TABLE IF NOT EXISTS complaints (
+  id text PRIMARY KEY,
+  date text, customer text, contact text,
+  phone text, email text, product text, lot text,
+  ship_date text, qty integer, order_no text, po text,
+  category text, severity text, description text,
+  demand text, handler text, status text DEFAULT '新案件',
+  note text, logs jsonb DEFAULT '[]',
+  media_count integer DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_all" ON complaints
+  FOR ALL TO anon USING (true) WITH CHECK (true);</div>
+
+    <div class="gate-step"><div class="gate-num">3</div><div>到 <strong style="color:#7dd3fc">Storage → New bucket</strong>，建立名稱 <code style="background:rgba(0,0,0,.3);color:#7dd3fc">complaint-media</code>，勾選 Public</div></div>
+    <div class="gate-step"><div class="gate-num">4</div><div>到 <strong style="color:#7dd3fc">Settings → API</strong>，複製 Project URL 和 anon/public key 填入下方</div></div>
+
+    <div class="gate-fg">
+      <div class="gate-label">Supabase Project URL</div>
+      <input class="gate-input normal" type="text" id="sbUrl" placeholder="https://xxxxxxxxxxx.supabase.co">
+    </div>
+    <div class="gate-fg">
+      <div class="gate-label">Supabase Anon Key</div>
+      <input class="gate-input normal" type="text" id="sbKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+    </div>
+    <div class="gate-err" id="sbErr">無法連接，請確認 URL 和 Key 是否正確</div>
+    <button class="gate-btn" onclick="saveSupabase()">✅ 連接並進入系統</button>
+    <button class="gate-btn sec" onclick="useLocalMode()" style="margin-top:8px">🔒 暫時用本機模式（單人）</button>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div class="app" id="mainApp" style="display:none">
+
+<nav class="sidebar">
+  <div class="sb-head">
+    <div class="sb-logo">🧫 客訴管理系統</div>
+    <div class="sb-sub" id="sbSub">龍冶塑膠</div>
+  </div>
+  <div class="sb-nav">
+    <div class="nsep">主選單</div>
+    <div class="ni on" onclick="nav('dashboard')"><span class="ico">📊</span>儀表板<span id="alertBadge" class="alert-badge" style="display:none">0</span></div>
+    <div class="ni" onclick="nav('list')"><span class="ico">📋</span>客訴列表</div>
+    <div class="ni" onclick="nav('new')"><span class="ico">➕</span>新增客訴</div>
+    <div class="nsep">通知</div>
+    <div class="ni" onclick="requestNotif()"><span class="ico">🔔</span>開啟桌面通知</div>
+    <div class="ni" onclick="checkOverdue()"><span class="ico">⏰</span>檢查逾期案件</div>
+    <div class="nsep">設定</div>
+    <div class="ni" onclick="nav('settings')"><span class="ico">⚙️</span>系統設定</div>
+    <div class="ni" onclick="logout()"><span class="ico">🚪</span>登出</div>
+  </div>
+  <div class="sb-foot">
+    <div style="font-size:10px;color:#475569;padding:4px 8px" id="modeLabel">● 連線中</div>
+  </div>
+</nav>
+
+<main class="main">
+<header class="topbar">
+  <div class="topbar-title" id="pgTitle">儀表板</div>
+  <div class="flex gap2">
+    <button class="btn bp" onclick="nav('new')">＋ 新增客訴</button>
+  </div>
+</header>
+
+<!-- ▸ DASHBOARD -->
+<div id="pg-dashboard" class="page on">
+  <!-- Overdue alerts -->
+  <div id="overdueSection"></div>
+
+  <div class="stats mb4">
+    <div class="stat"><div class="slbl">本月新增</div><div class="sval cb" id="sNew">—</div><div class="ssub">筆客訴</div></div>
+    <div class="stat"><div class="slbl">處理中</div><div class="sval cw" id="sOpen">—</div><div class="ssub">尚未結案</div></div>
+    <div class="stat"><div class="slbl">已解決/結案</div><div class="sval cg" id="sDone">—</div><div class="ssub">筆</div></div>
+    <div class="stat"><div class="slbl">緊急案件</div><div class="sval cr" id="sUrg">—</div><div class="ssub">需立即處理</div></div>
+  </div>
+
+  <div class="g2 mb4">
+    <div class="card">
+      <div class="ch"><div class="ct">📊 按類別統計</div></div>
+      <div class="cb"><div class="barchart" id="catChart"></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">⚠️ 按嚴重程度</div></div>
+      <div class="cb"><div class="barchart" id="sevChart"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">🕐 最近 10 筆</div><button class="btn bo bsm" onclick="nav('list')">查看全部</button></div>
+    <div class="tbl-w">
+      <table><thead><tr><th>案件編號</th><th>客戶</th><th>類別</th><th>嚴重度</th><th>狀態</th><th>日期</th><th>附件</th></tr></thead>
+      <tbody id="dashTb"></tbody></table>
+      <div id="dashEmpty" class="empty" style="display:none"><i>📭</i>尚無客訴記錄</div>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ LIST -->
+<div id="pg-list" class="page">
+  <div class="card mb4">
+    <div class="cb">
+      <div class="sb2">
+        <div class="sw"><span class="si">🔍</span><input type="text" id="q" placeholder="搜尋案件、客戶、描述…" oninput="renderList()"></div>
+        <select id="fCat" onchange="renderList()"><option value="">全部類別</option><option>生產品質問題</option><option>包裝運輸問題</option><option>交期/數量問題</option><option>使用端問題</option></select>
+        <select id="fSt" onchange="renderList()"><option value="">全部狀態</option><option>新案件</option><option>處理中</option><option>已解決</option><option>已結案</option></select>
+        <select id="fSv" onchange="renderList()"><option value="">全部嚴重度</option><option>輕微</option><option>中等</option><option>嚴重</option><option>緊急</option></select>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">客訴記錄</div><span class="txs txmu" id="listCnt"></span></div>
+    <div class="tbl-w">
+      <table><thead><tr><th>案件編號</th><th>客戶</th><th>類別</th><th>嚴重度</th><th>描述摘要</th><th>狀態</th><th>日期</th><th>附件</th><th></th></tr></thead>
+      <tbody id="listTb"></tbody></table>
+      <div id="listEmpty" class="empty" style="display:none"><i>🔎</i>沒有符合條件的記錄</div>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ NEW -->
+<div id="pg-new" class="page">
+<div class="card">
+  <div class="ch"><div class="ct">新增客訴記錄</div></div>
+  <div class="cb">
+  <form id="newForm" onsubmit="submitNew(event)">
+  <div class="info-b">ℹ️ 標有 <span style="color:var(--err)">*</span> 的欄位為必填</div>
+
+  <div class="sec-ttl">📌 一、基本資訊</div>
+  <div class="fgrid mb5">
+    <div class="fg"><label>案件編號</label><input id="nId" readonly></div>
+    <div class="fg"><label class="req">客訴日期</label><input type="date" id="nDate" required></div>
+    <div class="fg"><label class="req">客戶名稱／公司</label><input id="nCust" required placeholder="例：台灣生技股份有限公司"></div>
+    <div class="fg"><label>聯絡人</label><input id="nContact" placeholder="客戶聯絡人"></div>
+    <div class="fg"><label>聯絡電話</label><input id="nPhone" type="tel"></div>
+    <div class="fg"><label>電子信箱</label><input id="nEmail" type="email"></div>
+  </div>
+
+  <div class="sec-ttl">🧫 二、產品資訊</div>
+  <div class="fgrid mb5">
+    <div class="fg"><label>產品型號/規格</label><input id="nProd" placeholder="例：培養皿 60mm"></div>
+    <div class="fg"><label>批號 / Lot No.</label><input id="nLot"></div>
+    <div class="fg"><label>出貨日期</label><input type="date" id="nShip"></div>
+    <div class="fg"><label>問題數量（件）</label><input type="number" id="nQty" min="0"></div>
+    <div class="fg"><label>訂單號碼</label><input id="nOrder"></div>
+    <div class="fg"><label>採購單號</label><input id="nPO"></div>
+  </div>
+
+  <div class="sec-ttl">⚠️ 三、客訴內容</div>
+  <div class="fgrid mb5">
+    <div class="fg"><label class="req">客訴類別</label>
+      <select id="nCat" required>
+        <option value="">請選擇</option>
+        <option value="生產品質問題">生產品質問題（尺寸偏差、裂縫、變形、異物）</option>
+        <option value="包裝運輸問題">包裝運輸問題（包裝破損、碰撞損壞）</option>
+        <option value="交期/數量問題">交期/數量問題（延誤、短缺、錯誤）</option>
+        <option value="使用端問題">使用端問題（使用異常、無菌性疑慮）</option>
+      </select>
+    </div>
+    <div class="fg"><label class="req">嚴重程度</label>
+      <select id="nSev" required>
+        <option value="">請選擇</option>
+        <option value="輕微">🟢 輕微 — 不影響使用</option>
+        <option value="中等">🟡 中等 — 部分影響</option>
+        <option value="嚴重">🔴 嚴重 — 影響正常使用</option>
+        <option value="緊急">🟣 緊急 — 立即處理</option>
+      </select>
+    </div>
+    <div class="fg ff"><label class="req">問題描述</label>
+      <textarea id="nDesc" required placeholder="詳細描述客訴問題，發現時間、情況、影響範圍…"></textarea>
+    </div>
+    <div class="fg ff"><label>客戶要求</label>
+      <textarea id="nDemand" placeholder="客戶訴求（退貨、換貨、折讓、賠償等）" style="min-height:60px"></textarea>
+    </div>
+  </div>
+
+  <div class="sec-ttl">📎 四、附件（圖片／影片）</div>
+  <div class="fg ff mb5">
+    <div class="upload-zone" id="dz" onclick="document.getElementById('fi').click()"
+      ondragover="dzO(event)" ondragleave="dzL(event)" ondrop="dzD(event)">
+      <input type="file" id="fi" multiple accept="image/*,video/*" style="display:none" onchange="addF(event,'new')">
+      <div style="font-size:26px;margin-bottom:5px">📷</div>
+      <div style="font-size:13px;color:var(--mu)">點擊或拖曳上傳圖片／影片</div>
+      <div style="font-size:11px;color:var(--fa);margin-top:3px">JPG、PNG、GIF、WEBP、MP4、MOV 等 · 建議單檔不超過 50MB</div>
+    </div>
+    <div class="mgrid" id="newMG"></div>
+  </div>
+
+  <div class="sec-ttl">📝 五、初步處理</div>
+  <div class="fgrid mb5">
+    <div class="fg"><label>負責人員</label><input id="nHandler" placeholder="負責人姓名"></div>
+    <div class="fg"><label>初步狀態</label>
+      <select id="nStat"><option value="新案件">新案件</option><option value="處理中">處理中</option></select>
+    </div>
+    <div class="fg ff"><label>初步處理說明</label>
+      <textarea id="nAction" placeholder="已採取或計劃採取的初步措施…" style="min-height:65px"></textarea>
+    </div>
+    <div class="fg ff"><label>備註</label>
+      <textarea id="nNote" placeholder="其他補充說明…" style="min-height:50px"></textarea>
+    </div>
+  </div>
+
+  <div class="flex jb">
+    <button type="button" class="btn bs" onclick="nav('list')">取消</button>
+    <button type="submit" class="btn bp">✅ 儲存客訴記錄</button>
+  </div>
+  </form>
+  </div>
+</div>
+</div>
+
+<!-- ▸ SETTINGS -->
+<div id="pg-settings" class="page">
+<div class="card mb4" style="max-width:560px">
+  <div class="ch"><div class="ct">⚙️ 系統設定</div></div>
+  <div class="cb">
+    <div class="sec-ttl">基本設定</div>
+    <div class="fgrid mb5">
+      <div class="fg"><label>公司名稱</label><input id="sCo" placeholder="顯示在側邊欄"></div>
+      <div class="fg"><label>案件編號前綴</label><input id="sPre" placeholder="CMP（預設）"></div>
+    </div>
+
+    <div class="sec-ttl">🔔 Email 提醒設定（EmailJS）</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:10px;line-height:1.6">
+      免費方案每月 200 封，前往 <strong>emailjs.com</strong> 註冊後，建立 Email Service 和 Template，填入下方即可讓系統自動寄提醒信。
+    </div>
+    <div class="fgrid mb5">
+      <div class="fg"><label>EmailJS Public Key</label><input id="ejKey" placeholder="xxxxxxxxxxxx"></div>
+      <div class="fg"><label>Service ID</label><input id="ejSvc" placeholder="service_xxxxxxx"></div>
+      <div class="fg"><label>Template ID</label><input id="ejTpl" placeholder="template_xxxxxxx"></div>
+      <div class="fg"><label>提醒收件人信箱</label><input id="ejTo" type="email" placeholder="your@email.com"></div>
+    </div>
+    <div style="margin-bottom:20px">
+      <button class="btn bo bsm" onclick="testEmail()">📧 測試寄送</button>
+    </div>
+
+    <div class="sec-ttl">☁️ Supabase 連線</div>
+    <div style="background:#f0fdf4;border-radius:8px;padding:11px 14px;font-size:12.5px;color:#15803d;margin-bottom:16px">
+      ✅ 已連接至您的 Supabase 專案：<code>achrezfjtyjjgoyaaowr</code>
+    </div>
+
+    <div style="border-top:1px solid var(--bdr);padding-top:16px;margin-bottom:16px">
+      <div class="fw6 txs mb3" style="color:var(--err)">⚠️ 危險操作</div>
+      <button class="btn bd bsm" onclick="doClear()">清除所有資料</button>
+    </div>
+
+    <div class="flex jb" style="border-top:1px solid var(--bdr);padding-top:14px">
+      <div></div>
+      <button class="btn bp" onclick="saveSett()">儲存設定</button>
+    </div>
+  </div>
+</div>
+</div>
+
+</main>
+</div><!-- /app -->
+
+<!-- ══ DETAIL MODAL ══ -->
+<div id="detM" class="overlay" style="display:none" onclick="if(event.target===this)closeDet()">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="mh">
+    <div>
+      <div class="mt2" id="detTitle"></div>
+      <div class="txs txmu mt4" id="detSub"></div>
+    </div>
+    <button class="mx" onclick="closeDet()">✕</button>
+  </div>
+  <div class="mb2" id="detBody"></div>
+  <div class="mf">
+    <button class="btn bd bsm" id="detDel">🗑️ 刪除</button>
+    <div style="flex:1"></div>
+    <button class="btn bd bsm" id="detEmail" onclick="sendReminderEmail()">📧 寄提醒信</button>
+    <button class="btn bs" onclick="closeDet()">關閉</button>
+    <button class="btn bp" id="detEdit">✏️ 新增處理記錄</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ EDIT MODAL ══ -->
+<div id="editM" class="overlay" style="display:none" onclick="if(event.target===this)closeEdit()">
+<div class="modal" style="max-width:620px" onclick="event.stopPropagation()">
+  <div class="mh"><div class="mt2">✏️ 新增處理記錄</div><button class="mx" onclick="closeEdit()">✕</button></div>
+  <div class="mb2">
+    <div class="fgrid">
+      <div class="fg"><label>狀態更新</label>
+        <select id="eSt"><option>新案件</option><option>處理中</option><option>已解決</option><option>已結案</option></select>
+      </div>
+      <div class="fg"><label>負責人員</label><input id="eHandler" placeholder="負責人姓名"></div>
+      <div class="fg ff"><label>本次處理說明</label><textarea id="eAct" placeholder="本次採取的措施…"></textarea></div>
+      <div class="fg ff"><label>根本原因分析（RCA）</label>
+        <textarea id="eRCA" placeholder="Root Cause Analysis — 問題根本原因…" style="min-height:65px"></textarea>
+      </div>
+      <div class="fg ff"><label>矯正與預防措施（CAPA）</label>
+        <textarea id="eCAPA" placeholder="Corrective and Preventive Action…" style="min-height:65px"></textarea>
+      </div>
+      <div class="fg ff">
+        <label>追加附件</label>
+        <div class="upload-zone" style="padding:14px" onclick="document.getElementById('fi2').click()"
+          ondragover="dzO2(event)" ondragleave="dzL2(event)" ondrop="dzD2(event)">
+          <input type="file" id="fi2" multiple accept="image/*,video/*" style="display:none" onchange="addF(event,'edit')">
+          <div style="font-size:18px;margin-bottom:3px">📷</div>
+          <div style="font-size:12px;color:var(--mu)">點擊或拖曳上傳</div>
+        </div>
+        <div class="mgrid" id="editMG"></div>
+      </div>
+    </div>
+  </div>
+  <div class="mf">
+    <button class="btn bs" onclick="closeEdit()">取消</button>
+    <button class="btn bp" onclick="saveEdit()">儲存記錄</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ LIGHTBOX ══ -->
+<div id="lb" class="lb" style="display:none" onclick="closeLB()">
+  <button class="lbx" onclick="closeLB()">✕</button>
+  <div id="lbC" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- ══ CONFIRM ══ -->
+<div id="cfm" class="cfm" style="display:none">
+  <div class="cfmb">
+    <div class="ci" id="cfmI">⚠️</div>
+    <div class="cn" id="cfmN"></div>
+    <div class="cm" id="cfmM"></div>
+    <div class="cbb">
+      <button class="btn bs" onclick="cfmR(false)">取消</button>
+      <button class="btn bd" onclick="cfmR(true)">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="tw" id="tw"></div>
+
+<script>
+// ══════════════════════════════════
+// CONFIG & STATE
+// ══════════════════════════════════
+const PW = '22505047';
+const SB_URL = 'https://achrezfjtyjjgoyaaowr.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
+let SB = null;   // Supabase client
+let complaints = [];
+let cfg = {};    // { prefix, company, ejKey, ejSvc, ejTpl, ejTo }
+let localMode = false;
+let pendingNew  = [];
+let pendingEdit = [];
+let curId = null;
+let cfmRes = null;
+
+function loadCfg() {
+  try { cfg = JSON.parse(localStorage.getItem('cmp_cfg') || '{}'); } catch(e) { cfg = {}; }
+}
+function saveCfg() { localStorage.setItem('cmp_cfg', JSON.stringify(cfg)); }
+
+// ══════════════════════════════════
+// AUTH / BOOT
+// ══════════════════════════════════
+function checkPw() {
+  const v = document.getElementById('pwIn').value;
+  if (v === PW || sessionStorage.getItem('complaint_auth') === '1') {
+    sessionStorage.setItem('complaint_auth', '1');
+    document.getElementById('gateScreen').style.display = 'none';
+    boot();
+  } else {
+    document.getElementById('pwErr').style.display = 'block';
+    document.getElementById('pwIn').value = '';
+    document.getElementById('pwIn').focus();
+  }
+}
+
+function boot() {
+  loadCfg();
+  // Always use the built-in Supabase credentials
+  initSupabase(SB_URL, SB_KEY);
+  showApp();
+}
+
+function initSupabase(url, key) {
+  SB = supabase.createClient(url, key);
+  localMode = false;
+  document.getElementById('modeLabel').textContent = '● 雲端同步中';
+  document.getElementById('modeLabel').style.color = '#4ade80';
+}
+
+async function saveSupabase() {
+  const url = document.getElementById('sbUrl').value.trim();
+  const key = document.getElementById('sbKey').value.trim();
+  if (!url || !key) { document.getElementById('sbErr').style.display='block'; return; }
+
+  // Test connection
+  try {
+    const client = supabase.createClient(url, key);
+    const { error } = await client.from('complaints').select('id').limit(1);
+    if (error && error.code !== 'PGRST116') throw error;
+    cfg.supabaseUrl = url;
+    cfg.supabaseKey = key;
+    saveCfg();
+    initSupabase(url, key);
+    document.getElementById('setupScreen').style.display = 'none';
+    showApp();
+  } catch(e) {
+    document.getElementById('sbErr').style.display = 'block';
+  }
+}
+
+function useLocalMode() {
+  cfg.localMode = true;
+  localMode = true;
+  saveCfg();
+  document.getElementById('setupScreen').style.display = 'none';
+  showApp();
+}
+
+function showApp() {
+  document.getElementById('mainApp').style.display = 'flex';
+  document.getElementById('sbSub').textContent = cfg.company || '龍冶塑膠';
+  if (localMode) {
+    document.getElementById('modeLabel').textContent = '● 本機模式';
+    document.getElementById('modeLabel').style.color = '#f59e0b';
+  }
+  loadComplaints().then(() => {
+    renderDash();
+    checkOverdue();
+    // Auto-request notification permission
+    if (Notification.permission === 'default') {
+      setTimeout(() => requestNotif(), 2000);
+    }
+  });
+}
+
+function logout() {
+  sessionStorage.removeItem('complaint_auth');
+  location.reload();
+}
+
+// ══════════════════════════════════
+// DATA LAYER
+// ══════════════════════════════════
+async function loadComplaints() {
+  if (localMode) {
+    try { complaints = JSON.parse(localStorage.getItem('complaints_local') || '[]'); } catch(e) { complaints=[]; }
+    return;
+  }
+  const { data, error } = await SB.from('complaints').select('*').order('created_at', { ascending: false });
+  if (error) { toast('載入失敗: ' + error.message, 'err'); return; }
+  complaints = data || [];
+}
+
+async function upsertComplaint(c) {
+  if (localMode) {
+    const idx = complaints.findIndex(x => x.id === c.id);
+    if (idx >= 0) complaints[idx] = c; else complaints.unshift(c);
+    localStorage.setItem('complaints_local', JSON.stringify(complaints));
+    return;
+  }
+  const { error } = await SB.from('complaints').upsert(c);
+  if (error) throw error;
+}
+
+async function removeComplaint(id) {
+  complaints = complaints.filter(x => x.id !== id);
+  if (localMode) { localStorage.setItem('complaints_local', JSON.stringify(complaints)); return; }
+  await SB.from('complaints').delete().eq('id', id);
+  // Also remove storage files
+  if (SB) {
+    const { data } = await SB.storage.from('complaint-media').list(id);
+    if (data && data.length) {
+      const paths = data.map(f => `${id}/${f.name}`);
+      await SB.storage.from('complaint-media').remove(paths);
+    }
+  }
+}
+
+async function uploadFile(id, file) {
+  if (localMode || !SB) return null;
+  const ext  = file.name.split('.').pop();
+  const path = `${id}/${Date.now()}_${file.name}`;
+  const { error } = await SB.storage.from('complaint-media').upload(path, file, { cacheControl:'3600', upsert:false });
+  if (error) { toast('上傳失敗: ' + error.message, 'err'); return null; }
+  const { data } = SB.storage.from('complaint-media').getPublicUrl(path);
+  return { path, url: data.publicUrl, name: file.name, type: file.type };
+}
+
+async function getMediaForComplaint(id) {
+  if (localMode || !SB) return [];
+  const { data } = await SB.storage.from('complaint-media').list(id, { limit: 50 });
+  if (!data) return [];
+  return data.map(f => {
+    const { data: d } = SB.storage.from('complaint-media').getPublicUrl(`${id}/${f.name}`);
+    return { name: f.name, url: d.publicUrl, type: guessType(f.name) };
+  });
+}
+
+// ══════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════
+const TITLES = { dashboard:'儀表板', list:'客訴列表', new:'新增客訴', settings:'系統設定' };
+
+function nav(pg) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('pg-' + pg).classList.add('on');
+  document.querySelectorAll('.ni').forEach(el => {
+    el.classList.toggle('on', el.getAttribute('onclick') && el.getAttribute('onclick').includes("'"+pg+"'"));
+  });
+  document.getElementById('pgTitle').textContent = TITLES[pg] || '';
+  if (pg==='dashboard') renderDash();
+  if (pg==='list')      renderList();
+  if (pg==='new')       initNew();
+  if (pg==='settings')  loadSett();
+}
+
+// ══════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════
+function renderDash() {
+  const now = new Date(), mn = now.getMonth(), yr = now.getFullYear();
+  const mNew  = complaints.filter(c=>{ const d=new Date(c.created_at||c.createdAt); return d.getMonth()===mn&&d.getFullYear()===yr; }).length;
+  const open  = complaints.filter(c=>c.status==='新案件'||c.status==='處理中').length;
+  const done  = complaints.filter(c=>c.status==='已解決'||c.status==='已結案').length;
+  const urg   = complaints.filter(c=>c.severity==='緊急'&&(c.status==='新案件'||c.status==='處理中')).length;
+  document.getElementById('sNew').textContent  = mNew;
+  document.getElementById('sOpen').textContent = open;
+  document.getElementById('sDone').textContent = done;
+  document.getElementById('sUrg').textContent  = urg;
+  const tot = complaints.length || 1;
+  const cats = [['生產品質問題','#ef4444'],['包裝運輸問題','#ec4899'],['交期/數量問題','#8b5cf6'],['使用端問題','#0ea5e9']];
+  document.getElementById('catChart').innerHTML = cats.map(([c,col])=>{
+    const n=complaints.filter(x=>x.category===c).length;
+    return bRow(c.replace('問題',''),n,Math.round(n/tot*100),col);
+  }).join('');
+  const sevs=[['輕微','#22c55e'],['中等','#f59e0b'],['嚴重','#ef4444'],['緊急','#8b5cf6']];
+  document.getElementById('sevChart').innerHTML = sevs.map(([s,col])=>{
+    const n=complaints.filter(x=>x.severity===s).length;
+    return bRow(s,n,Math.round(n/tot*100),col);
+  }).join('');
+  const recent=complaints.slice(0,10);
+  const tb=document.getElementById('dashTb');
+  if(!recent.length){ tb.innerHTML=''; document.getElementById('dashEmpty').style.display='block'; return; }
+  document.getElementById('dashEmpty').style.display='none';
+  tb.innerHTML=recent.map(c=>`<tr onclick="openDet('${c.id}')">
+    <td><code>${c.id}</code></td><td>${esc(c.customer)}</td>
+    <td>${catB(c.category)}</td><td>${sevB(c.severity)}</td>
+    <td>${statB(c.status)}</td><td>${fmtD(c.date)}</td>
+    <td>${(c.media_count||0)?'📎 '+(c.media_count||0):''}</td>
+  </tr>`).join('');
+}
+
+function bRow(l,n,p,col){
+  return `<div class="brow"><div class="blbl">${l}</div>
+  <div class="bwrap"><div class="bfill" style="width:${p}%;background:${col}"></div></div>
+  <div class="bnum">${n}</div></div>`;
+}
+
+// ══════════════════════════════════
+// LIST
+// ══════════════════════════════════
+function renderList() {
+  const q  = (document.getElementById('q').value||'').toLowerCase();
+  const fc = document.getElementById('fCat').value;
+  const fs = document.getElementById('fSt').value;
+  const fv = document.getElementById('fSv').value;
+  const data = complaints.filter(c=>{
+    if(fc&&c.category!==fc) return false;
+    if(fs&&c.status!==fs)   return false;
+    if(fv&&c.severity!==fv) return false;
+    if(q&&!(c.id.toLowerCase().includes(q)||c.customer.toLowerCase().includes(q)||(c.description||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  document.getElementById('listCnt').textContent='共 '+data.length+' 筆';
+  const tb=document.getElementById('listTb');
+  const em=document.getElementById('listEmpty');
+  if(!data.length){ tb.innerHTML=''; em.style.display='block'; return; }
+  em.style.display='none';
+  tb.innerHTML=data.map(c=>`<tr onclick="openDet('${c.id}')">
+    <td><code>${c.id}</code></td><td>${esc(c.customer)}</td>
+    <td>${catB(c.category)}</td><td>${sevB(c.severity)}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.description||'')}</td>
+    <td>${statB(c.status)}</td><td>${fmtD(c.date)}</td>
+    <td>${(c.media_count||0)?'📎 '+(c.media_count||0):''}</td>
+    <td onclick="event.stopPropagation()"><button class="btn bo bxs" onclick="openDet('${c.id}')">查看</button></td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════
+// NEW FORM
+// ══════════════════════════════════
+function initNew() {
+  document.getElementById('newForm').reset();
+  pendingNew=[];
+  document.getElementById('newMG').innerHTML='';
+  const pre=cfg.prefix||'CMP', now=new Date();
+  const seq=String(complaints.length+1).padStart(4,'0');
+  const id=`${pre}-${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}-${seq}`;
+  document.getElementById('nId').value=id;
+  document.getElementById('nDate').value=now.toISOString().split('T')[0];
+}
+
+async function submitNew(e) {
+  e.preventDefault();
+  const id=document.getElementById('nId').value;
+  const now=new Date().toISOString();
+
+  // Upload media first
+  let mediaCount=0;
+  if(!localMode && SB) {
+    for(const f of pendingNew){
+      await uploadFile(id, f.blob);
+      mediaCount++;
+    }
+  } else {
+    mediaCount=pendingNew.length;
+  }
+
+  const initAction=document.getElementById('nAction').value.trim();
+  const handler=document.getElementById('nHandler').value.trim();
+  const logs=[];
+  if(initAction||handler){
+    logs.push({time:now,status:document.getElementById('nStat').value,handler,action:initAction,rca:'',capa:''});
+  }
+
+  const c={
+    id, date:document.getElementById('nDate').value,
+    customer:document.getElementById('nCust').value.trim(),
+    contact:document.getElementById('nContact').value.trim(),
+    phone:document.getElementById('nPhone').value.trim(),
+    email:document.getElementById('nEmail').value.trim(),
+    product:document.getElementById('nProd').value.trim(),
+    lot:document.getElementById('nLot').value.trim(),
+    ship_date:document.getElementById('nShip').value,
+    qty:parseInt(document.getElementById('nQty').value)||null,
+    order_no:document.getElementById('nOrder').value.trim(),
+    po:document.getElementById('nPO').value.trim(),
+    category:document.getElementById('nCat').value,
+    severity:document.getElementById('nSev').value,
+    description:document.getElementById('nDesc').value.trim(),
+    demand:document.getElementById('nDemand').value.trim(),
+    handler, status:document.getElementById('nStat').value,
+    note:document.getElementById('nNote').value.trim(),
+    logs, media_count:mediaCount,
+    created_at:now, updated_at:now,
+    createdAt:now // fallback
+  };
+
+  try {
+    await upsertComplaint(c);
+    complaints.unshift(c);
+    pendingNew=[];
+    toast('✅ 已儲存！案件編號：'+id,'ok');
+    // Auto-send email if urgent
+    if(c.severity==='緊急' && cfg.ejKey) sendEmailAlert(c,'緊急客訴通知');
+    nav('list');
+  } catch(err) {
+    toast('儲存失敗：'+err.message,'err');
+  }
+}
+
+// ══════════════════════════════════
+// FILE UPLOAD
+// ══════════════════════════════════
+function dzO(e){e.preventDefault();document.getElementById('dz').classList.add('drag')}
+function dzL(){document.getElementById('dz').classList.remove('drag')}
+function dzD(e){e.preventDefault();dzL();addF2([...e.dataTransfer.files],'new')}
+function dzO2(e){e.preventDefault();document.getElementById('editDropZ').classList.add('drag')}
+function dzL2(){document.getElementById('editDropZ').classList.remove('drag')}
+function dzD2(e){e.preventDefault();dzL2();addF2([...e.dataTransfer.files],'edit')}
+
+function addF(e,t){addF2([...e.target.files],t);e.target.value='';}
+function addF2(files,t){
+  const arr=t==='new'?pendingNew:pendingEdit;
+  const gid=t==='new'?'newMG':'editMG';
+  files.forEach(file=>{
+    if(!file.type.startsWith('image/')&&!file.type.startsWith('video/')){toast('不支援:'+file.name,'err');return;}
+    const item={name:file.name,type:file.type,blob:file,url:URL.createObjectURL(file)};
+    arr.push(item);
+    const grid=document.getElementById(gid);
+    const div=document.createElement('div');
+    div.className='mitem';
+    const isImg=file.type.startsWith('image/');
+    const idx=arr.length-1;
+    div.innerHTML=`${isImg?`<img src="${item.url}" onclick="openLB('${item.url}','image')">`:`<video src="${item.url}" onclick="openLB('${item.url}','video')"></video>`}
+      <button class="mrm" onclick="rmF(${idx},'${t}')">✕</button>
+      <div class="mnm">${isImg?'':'🎬 '}${esc(file.name)}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+function rmF(idx,t){
+  const arr=t==='new'?pendingNew:pendingEdit;
+  const gid=t==='new'?'newMG':'editMG';
+  URL.revokeObjectURL(arr[idx].url);
+  arr.splice(idx,1);
+  document.getElementById(gid).innerHTML='';
+  arr.forEach((f,i)=>addF2([f.blob],t));
+}
+
+// ══════════════════════════════════
+// DETAIL
+// ══════════════════════════════════
+async function openDet(id) {
+  const c=complaints.find(x=>x.id===id);
+  if(!c) return;
+  curId=id;
+  document.getElementById('detTitle').textContent=esc(c.customer)+' 的客訴';
+  document.getElementById('detSub').textContent='案件編號：'+id+'　建立：'+fmtDT(c.created_at||c.createdAt);
+
+  // Load media
+  const media=await getMediaForComplaint(id);
+
+  const mHtml=media.length?`<div class="mt4">
+    <div class="txs txmu fw6 mb3">📎 附件 (${media.length})</div>
+    <div class="mgrid">${media.map(m=>{
+      const isImg=m.type.startsWith('image/');
+      return `<div class="mitem" onclick="openLB('${m.url}','${isImg?'image':'video'}')">
+        ${isImg?`<img src="${m.url}" alt="${esc(m.name)}">`:`<video src="${m.url}"></video>`}
+        <div class="mnm">${isImg?'':'🎬 '}${esc(m.name)}</div>
+      </div>`;
+    }).join('')}</div></div>`:'';
+
+  const logs=Array.isArray(c.logs)?c.logs:[];
+  const logHtml=logs.length?`<div class="tl">${logs.map((lg,i)=>`<div class="tli">
+    <div class="tl-dot">${i+1}</div>
+    <div class="tl-bd">
+      <div class="tl-t">${fmtDT(lg.time)}${lg.handler?' · '+esc(lg.handler):''} ${statB(lg.status)}</div>
+      ${lg.action?`<div class="tl-tx">${esc(lg.action)}</div>`:''}
+      ${lg.rca?`<div class="rca-box">🔍 <strong>根本原因：</strong>${esc(lg.rca)}</div>`:''}
+      ${lg.capa?`<div class="capa-box">✅ <strong>CAPA：</strong>${esc(lg.capa)}</div>`:''}
+    </div></div>`).join('')}</div>`:
+    '<div class="txs txmu">尚無處理記錄</div>';
+
+  document.getElementById('detBody').innerHTML=`
+    <div class="ir mb4">
+      <div>
+        <div class="det-blk"><div class="dlbl">日期</div><div class="dval">${fmtD(c.date)}</div></div>
+        <div class="det-blk"><div class="dlbl">客戶</div><div class="dval">${esc(c.customer)}</div></div>
+        ${c.contact?`<div class="det-blk"><div class="dlbl">聯絡人</div><div class="dval">${esc(c.contact)}</div></div>`:''}
+        ${c.phone?`<div class="det-blk"><div class="dlbl">電話</div><div class="dval">${esc(c.phone)}</div></div>`:''}
+        ${c.email?`<div class="det-blk"><div class="dlbl">信箱</div><div class="dval">${esc(c.email)}</div></div>`:''}
+      </div>
+      <div>
+        ${c.product?`<div class="det-blk"><div class="dlbl">產品型號</div><div class="dval">${esc(c.product)}</div></div>`:''}
+        ${c.lot?`<div class="det-blk"><div class="dlbl">批號</div><div class="dval"><code>${esc(c.lot)}</code></div></div>`:''}
+        ${c.ship_date?`<div class="det-blk"><div class="dlbl">出貨日</div><div class="dval">${fmtD(c.ship_date)}</div></div>`:''}
+        ${c.qty?`<div class="det-blk"><div class="dlbl">問題數量</div><div class="dval">${c.qty} 件</div></div>`:''}
+        ${c.order_no?`<div class="det-blk"><div class="dlbl">訂單號碼</div><div class="dval">${esc(c.order_no)}</div></div>`:''}
+      </div>
+    </div>
+    <div style="padding:13px 15px;background:#f8fafc;border-radius:9px;margin-bottom:13px">
+      <div class="flex gap2 mb3" style="flex-wrap:wrap">${catB(c.category)} ${sevB(c.severity)} ${statB(c.status)}
+        ${c.handler?`<span class="badge" style="background:#f0fdf4;color:#15803d">👤 ${esc(c.handler)}</span>`:''}
+      </div>
+      <div style="font-size:13px;line-height:1.65;white-space:pre-wrap">${esc(c.description||'')}</div>
+      ${c.demand?`<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--bdr);font-size:12.5px;color:#b45309"><strong>客戶要求：</strong>${esc(c.demand)}</div>`:''}
+    </div>
+    ${mHtml}
+    <div style="margin-top:16px"><div class="txs fw6 mb3">📋 處理歷程</div>${logHtml}</div>
+    ${c.note?`<div style="margin-top:10px;padding:10px 12px;background:#fffbeb;border-radius:8px;font-size:12.5px"><strong>備註：</strong>${esc(c.note)}</div>`:''}
+    <div style="margin-top:8px;font-size:11px;color:var(--fa)">最後更新：${fmtDT(c.updated_at||c.updatedAt)}</div>`;
+
+  document.getElementById('detDel').onclick = ()=>delC(id);
+  document.getElementById('detEdit').onclick = ()=>openEdit(id);
+  document.getElementById('detM').style.display='flex';
+}
+
+function closeDet(){document.getElementById('detM').style.display='none';curId=null;renderList();renderDash();}
+
+// ══════════════════════════════════
+// EDIT
+// ══════════════════════════════════
+function openEdit(id){
+  const c=complaints.find(x=>x.id===id);
+  if(!c) return;
+  pendingEdit=[];
+  document.getElementById('editMG').innerHTML='';
+  document.getElementById('eSt').value=c.status;
+  document.getElementById('eHandler').value=c.handler||'';
+  document.getElementById('eAct').value='';
+  document.getElementById('eRCA').value='';
+  document.getElementById('eCAPA').value='';
+  document.getElementById('editM').style.display='flex';
+}
+function closeEdit(){document.getElementById('editM').style.display='none';}
+
+async function saveEdit(){
+  const id=curId;
+  const c=complaints.find(x=>x.id===id);
+  if(!c) return;
+  const status=document.getElementById('eSt').value;
+  const handler=document.getElementById('eHandler').value.trim();
+  const act=document.getElementById('eAct').value.trim();
+  const rca=document.getElementById('eRCA').value.trim();
+  const capa=document.getElementById('eCAPA').value.trim();
+  const now=new Date().toISOString();
+
+  // Upload extra media
+  let extra=0;
+  if(!localMode && SB){
+    for(const f of pendingEdit){
+      await uploadFile(id, f.blob);
+      extra++;
+    }
+  } else { extra=pendingEdit.length; }
+
+  c.status=status;
+  c.handler=handler||c.handler;
+  c.updated_at=now;
+  c.media_count=(c.media_count||0)+extra;
+  c.logs=Array.isArray(c.logs)?c.logs:[];
+  c.logs.push({time:now,status,handler,action:act,rca,capa});
+
+  try {
+    await upsertComplaint(c);
+    pendingEdit=[];
+    closeEdit();
+    toast('✅ 處理記錄已儲存','ok');
+    // Send email if status changed to resolved
+    if((status==='已解決'||status==='已結案') && cfg.ejKey) sendEmailAlert(c,'客訴案件已結案通知');
+    openDet(id);
+  } catch(err) {
+    toast('儲存失敗：'+err.message,'err');
+  }
+}
+
+// ══════════════════════════════════
+// DELETE
+// ══════════════════════════════════
+async function delC(id){
+  const ok=await cfm2('確認刪除','確定刪除此案件及所有附件？此操作無法復原。','⚠️');
+  if(!ok) return;
+  try {
+    await removeComplaint(id);
+    closeDet();
+    toast('已刪除案件','ok');
+  } catch(err) { toast('刪除失敗','err'); }
+}
+
+// ══════════════════════════════════
+// OVERDUE ALERTS
+// ══════════════════════════════════
+function checkOverdue(){
+  const now=Date.now();
+  const rules=[
+    {sev:'緊急',days:1,label:'緊急案件超過 1 天未結案！'},
+    {sev:'嚴重',days:3,label:'嚴重案件超過 3 天未結案'},
+    {sev:'中等',days:7,label:'中等案件超過 7 天未結案'},
+    {sev:'輕微',days:14,label:'案件超過 14 天未結案'}
+  ];
+  const overdue=[];
+  for(const c of complaints){
+    if(c.status==='已解決'||c.status==='已結案') continue;
+    const age=(now-new Date(c.created_at||c.createdAt))/86400000;
+    const rule=rules.find(r=>r.sev===c.severity);
+    if(rule && age>=rule.days){
+      overdue.push({c,age:Math.floor(age),label:rule.label});
+    }
+  }
+  // Update badge
+  const badge=document.getElementById('alertBadge');
+  badge.style.display=overdue.length?'':'none';
+  badge.textContent=overdue.length;
+  // Render alerts on dashboard
+  const sec=document.getElementById('overdueSection');
+  sec.innerHTML=overdue.map(({c,age,label})=>`
+    <div class="alert-row">
+      <div class="alert-ico">🚨</div>
+      <div style="flex:1">
+        <strong>${esc(c.customer)}</strong> <code>${c.id}</code> — ${label}
+        <span style="color:var(--mu);font-size:12px">（已 ${age} 天，${catB(c.category)} ${sevB(c.severity)}）</span>
+      </div>
+      <button class="btn bo bxs" onclick="openDet('${c.id}')">查看</button>
+    </div>`).join('');
+  // Browser notifications
+  if(overdue.length && Notification.permission==='granted'){
+    overdue.slice(0,3).forEach(({c,label})=>{
+      new Notification('⚠️ 客訴系統逾期提醒', {
+        body: `${c.customer} (${c.id})\n${label}`,
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="28" font-size="28">🧫</text></svg>'
+      });
+    });
+  }
+}
+
+function requestNotif(){
+  if(!('Notification' in window)){toast('此瀏覽器不支援桌面通知','err');return;}
+  if(Notification.permission==='granted'){toast('桌面通知已開啟 ✅','ok');return;}
+  Notification.requestPermission().then(p=>{
+    if(p==='granted'){
+      toast('✅ 桌面通知已開啟！有逾期案件時會自動提醒','ok');
+      new Notification('🧫 客訴管理系統','{ body:\"通知設定成功！\"}');
+    } else {
+      toast('通知權限被拒絕，請在瀏覽器設定中允許','warn');
+    }
+  });
+}
+
+// ══════════════════════════════════
+// EMAIL (EmailJS)
+// ══════════════════════════════════
+function sendEmailAlert(c,subject){
+  if(!cfg.ejKey||!cfg.ejSvc||!cfg.ejTpl||!cfg.ejTo) return;
+  emailjs.init({publicKey:cfg.ejKey});
+  emailjs.send(cfg.ejSvc, cfg.ejTpl, {
+    to_email:   cfg.ejTo,
+    subject:    subject,
+    case_id:    c.id,
+    customer:   c.customer,
+    category:   c.category,
+    severity:   c.severity,
+    status:     c.status,
+    description:c.description||'',
+    handler:    c.handler||'未指定',
+    date:       fmtD(c.date),
+  }).catch(()=>{});
+}
+
+function sendReminderEmail(){
+  const c=complaints.find(x=>x.id===curId);
+  if(!c) return;
+  if(!cfg.ejKey||!cfg.ejSvc||!cfg.ejTpl||!cfg.ejTo){
+    toast('請先在設定中設定 EmailJS 資訊','warn');
+    return;
+  }
+  sendEmailAlert(c,'客訴進度追蹤提醒');
+  toast('📧 提醒信已寄出','ok');
+}
+
+async function testEmail(){
+  if(!cfg.ejKey||!cfg.ejSvc||!cfg.ejTpl||!cfg.ejTo){
+    toast('請先填入 EmailJS 設定','warn');
+    return;
+  }
+  emailjs.init({publicKey:cfg.ejKey});
+  try {
+    await emailjs.send(cfg.ejSvc,cfg.ejTpl,{
+      to_email:cfg.ejTo,subject:'客訴系統測試信',
+      case_id:'TEST-001',customer:'測試客戶',category:'生產品質問題',
+      severity:'輕微',status:'測試',description:'這是一封測試信，確認 EmailJS 設定正確。',
+      handler:'系統測試',date:fmtD(new Date().toISOString().split('T')[0])
+    });
+    toast('📧 測試信已寄出！請確認收件匣','ok');
+  } catch(e) {
+    toast('寄送失敗：'+e.text,'err');
+  }
+}
+
+// ══════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════
+function loadSett(){
+  document.getElementById('sCo').value   = cfg.company||'';
+  document.getElementById('sPre').value  = cfg.prefix||'CMP';
+  document.getElementById('ejKey').value = cfg.ejKey||'';
+  document.getElementById('ejSvc').value = cfg.ejSvc||'';
+  document.getElementById('ejTpl').value = cfg.ejTpl||'';
+  document.getElementById('ejTo').value  = cfg.ejTo||'';
+  // Supabase is pre-configured
+}
+
+async function saveSett(){
+  cfg.company      = document.getElementById('sCo').value.trim()||'龍冶塑膠';
+  cfg.prefix       = document.getElementById('sPre').value.trim()||'CMP';
+  cfg.ejKey        = document.getElementById('ejKey').value.trim();
+  cfg.ejSvc        = document.getElementById('ejSvc').value.trim();
+  cfg.ejTpl        = document.getElementById('ejTpl').value.trim();
+  cfg.ejTo         = document.getElementById('ejTo').value.trim();
+  saveCfg();
+  document.getElementById('sbSub').textContent=cfg.company;
+  toast('✅ 設定已儲存','ok');
+}
+
+async function doClear(){
+  const ok=await cfm2('清除所有資料','將刪除所有客訴資料，確定繼續嗎？','🗑️');
+  if(!ok) return;
+  if(!localMode && SB){
+    await SB.from('complaints').delete().neq('id','__none__');
+  }
+  complaints=[];
+  localStorage.removeItem('complaints_local');
+  toast('所有資料已清除','ok');
+  nav('dashboard');
+}
+
+// ══════════════════════════════════
+// CONFIRM / TOAST / LIGHTBOX
+// ══════════════════════════════════
+function cfm2(title,msg,icon){
+  return new Promise(res=>{
+    cfmRes=res;
+    document.getElementById('cfmI').textContent=icon||'⚠️';
+    document.getElementById('cfmN').textContent=title;
+    document.getElementById('cfmM').textContent=msg;
+    document.getElementById('cfm').style.display='flex';
+  });
+}
+function cfmR(v){document.getElementById('cfm').style.display='none';if(cfmRes){cfmRes(v);cfmRes=null;}}
+function toast(msg,type=''){
+  const el=document.createElement('div');
+  el.className='toast '+(type||'');
+  el.textContent=msg;
+  document.getElementById('tw').appendChild(el);
+  setTimeout(()=>el.remove(),3600);
+}
+function openLB(src,type){
+  document.getElementById('lbC').innerHTML=type==='image'
+    ?`<img src="${src}" style="max-width:90vw;max-height:88vh;border-radius:6px">`
+    :`<video src="${src}" controls autoplay style="max-width:90vw;max-height:88vh;border-radius:6px"></video>`;
+  document.getElementById('lb').style.display='flex';
+}
+function closeLB(){document.getElementById('lb').style.display='none';document.getElementById('lbC').innerHTML='';}
+
+// ══════════════════════════════════
+// HELPERS
+// ══════════════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function p2(n){return String(n).padStart(2,'0');}
+function fmtD(d){if(!d)return'—';const dt=new Date(d.includes('T')?d:d+'T00:00:00');return`${dt.getFullYear()}/${p2(dt.getMonth()+1)}/${p2(dt.getDate())}`;}
+function fmtDT(d){if(!d)return'—';const dt=new Date(d);return`${fmtD(d.split('T')[0])} ${p2(dt.getHours())}:${p2(dt.getMinutes())}`;}
+function guessType(name){const ext=name.split('.').pop().toLowerCase();const m={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',mp4:'video/mp4',mov:'video/quicktime',avi:'video/x-msvideo',webm:'video/webm'};return m[ext]||'application/octet-stream';}
+
+function statB(s){const m={'新案件':'bn','處理中':'bp2','已解決':'bg','已結案':'bc'};return`<span class="badge ${m[s]||''}">${s}</span>`;}
+function catB(c){const m={'生產品質問題':['bq','品質'],'包裝運輸問題':['bsh','運輸'],'交期/數量問題':['bdl','交期'],'使用端問題':['bu','使用端']};const[cls,l]=m[c]||['',''];return`<span class="badge ${cls}">${l||c}</span>`;}
+function sevB(s){return`<span class="badge sv-${s}">${s}</span>`;}
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+window.addEventListener('DOMContentLoaded', ()=>{
+  loadCfg();
+  if(sessionStorage.getItem('complaint_auth')==='1'){
+    document.getElementById('gateScreen').style.display='none';
+    boot();
+  } else {
+    setTimeout(()=>document.getElementById('pwIn').focus(),300);
+  }
+});
+</script>
+</body>
+</html>
