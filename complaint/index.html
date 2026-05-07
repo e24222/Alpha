@@ -170,7 +170,7 @@ code{font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 4px;bor
 <body>
 
 <!-- ══ PASSWORD GATE ══ -->
-<div class="gate" id="gateScreen">
+<div class="gate" id="gateScreen" style="display:none">
   <div class="gate-box">
     <div class="gate-icon">🔒</div>
     <div class="gate-title">客訴管理系統</div>
@@ -1216,4 +1216,4 @@ async function exportExcel() {
 <Row>${CSV_HEADS.map(h=>`<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}</Row>
 ${rows.map(r=>`<Row>${r.map(v=>`<Cell><Data ss:Type="String">${esc(String(v||''))}</Data></Cell>`).join('')}</Row>`).join('\n')}
 </Table></Worksheet></Workbook>`;
-  dlBlob(new Blob([xml],{type:'application/vnd.ms-excel;c
+  dlBlob(new Blob([xml],{type:'appli

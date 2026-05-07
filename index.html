@@ -123,7 +123,7 @@ function checkPw() {
   const v = document.getElementById('pwInput').value;
   if (v === CORRECT) {
     sessionStorage.setItem('complaint_auth', '1');
-    window.location.href = 'complaint/index.html';
+    window.location.href = 'complaint/index.html?a=1';
   } else {
     document.getElementById('pwErr').style.display = 'block';
     document.getElementById('pwInput').value = '';
@@ -132,4 +132,4 @@ function checkPw() {
 }
 </script>
 </body>
-</html>
+</ht
