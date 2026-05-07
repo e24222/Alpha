@@ -839,8 +839,7 @@ async function submitNew(e) {
     handler, status:document.getElementById('nStat').value,
     note:document.getElementById('nNote').value.trim(),
     logs, media_count:mediaCount,
-    created_at:now, updated_at:now,
-    createdAt:now // fallback
+    created_at:now, updated_at:now
   };
 
   try {
@@ -1237,3 +1236,4 @@ window.addEventListener('DOMContentLoaded', ()=>{
 </script>
 </body>
 </html>
+                               
