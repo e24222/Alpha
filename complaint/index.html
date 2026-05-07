@@ -442,9 +442,12 @@ CREATE POLICY "allow_all" ON complaints
       <button class="btn bo bsm" onclick="testEmail()">📧 測試寄送</button>
     </div>
 
-    <div class="sec-ttl">☁️ Supabase 連線</div>
-    <div style="background:#f0fdf4;border-radius:8px;padding:11px 14px;font-size:12.5px;color:#15803d;margin-bottom:16px">
-      ✅ 已連接至您的 Supabase 專案：<code>achrezfjtyjjgoyaaowr</code>
+    <div class="sec-ttl">☁️ 雲端連線狀態</div>
+    <div style="background:#f0fdf4;border-radius:8px;padding:11px 14px;font-size:12.5px;color:#15803d;margin-bottom:8px">
+      ✅ Supabase 已連接：<code>achrezfjtyjjgoyaaowr</code>（客訴記錄同步）
+    </div>
+    <div style="background:#eff6ff;border-radius:8px;padding:11px 14px;font-size:12.5px;color:#1d4ed8;margin-bottom:16px">
+      ✅ Cloudinary 已連接：<code>dcerihnsa</code>（圖片/影片 CDN 儲存）
     </div>
 
     <div style="border-top:1px solid var(--bdr);padding-top:16px;margin-bottom:16px">
@@ -544,60 +547,12 @@ CREATE POLICY "allow_all" ON complaints
 
 <script>
 // ══════════════════════════════════
-// LOCAL MEDIA — IndexedDB
-// (圖片/影片存本地，不佔 Supabase 流量)
+// CLOUDINARY 媒體上傳
+// 圖片/影片上傳至 Cloudinary CDN，URL 存入 Supabase
+// 多台電腦共享、不佔 Supabase 流量
 // ══════════════════════════════════
-let mediaDB = null;
-
-function openMediaDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open('ComplaintMediaDB', 1);
-    req.onupgradeneeded = e => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('media')) {
-        db.createObjectStore('media', { keyPath: 'key' });
-      }
-    };
-    req.onsuccess = e => { mediaDB = e.target.result; res(); };
-    req.onerror   = e => rej(e.target.error);
-  });
-}
-
-function mediaDBPut(obj) {
-  return new Promise((res, rej) => {
-    const tx  = mediaDB.transaction('media', 'readwrite');
-    const req = tx.objectStore('media').put(obj);
-    req.onsuccess = () => res();
-    req.onerror   = () => rej(req.error);
-  });
-}
-
-function mediaDBGetAll() {
-  return new Promise((res, rej) => {
-    const tx  = mediaDB.transaction('media', 'readonly');
-    const req = tx.objectStore('media').getAll();
-    req.onsuccess = () => res(req.result || []);
-    req.onerror   = () => rej(req.error);
-  });
-}
-
-function mediaDBDelete(key) {
-  return new Promise((res, rej) => {
-    const tx  = mediaDB.transaction('media', 'readwrite');
-    const req = tx.objectStore('media').delete(key);
-    req.onsuccess = () => res();
-    req.onerror   = () => rej(req.error);
-  });
-}
-
-function mediaDBClear() {
-  return new Promise((res, rej) => {
-    const tx  = mediaDB.transaction('media', 'readwrite');
-    const req = tx.objectStore('media').clear();
-    req.onsuccess = () => res();
-    req.onerror   = () => rej(req.error);
-  });
-}
+const CLD_CLOUD  = 'dcerihnsa';
+const CLD_PRESET = 'Alphaplus';
 
 // ══════════════════════════════════
 // CONFIG & STATE
@@ -637,13 +592,8 @@ function checkPw() {
 
 function boot() {
   loadCfg();
-  // Open local media DB first, then connect Supabase
-  openMediaDB()
-    .catch(() => {}) // non-fatal if IndexedDB unavailable
-    .finally(() => {
-      initSupabase(SB_URL, SB_KEY);
-      showApp();
-    });
+  initSupabase(SB_URL, SB_KEY);
+  showApp();
 }
 
 function initSupabase(url, key) {
@@ -730,26 +680,31 @@ async function upsertComplaint(c) {
 
 async function removeComplaint(id) {
   complaints = complaints.filter(x => x.id !== id);
-  // Remove from Supabase
   if (!localMode) await SB.from('complaints').delete().eq('id', id);
   else localStorage.setItem('complaints_local', JSON.stringify(complaints));
-  // Remove media from IndexedDB
-  const all = await mediaDBGetAll();
-  for (const m of all.filter(m => m.cid === id)) await mediaDBDelete(m.key);
+  // 注意：Cloudinary 上的檔案不會自動刪除（需 Admin API，需後端），可從 Cloudinary 後台手動清理
 }
 
-// 圖片/影片存 IndexedDB（本地），不上傳 Supabase，不佔流量
+// 上傳至 Cloudinary，回傳 { url, public_id, name, type }
 async function uploadFile(id, file) {
-  const key = `${id}::${Date.now()}_${file.name}`;
-  await mediaDBPut({ key, cid: id, name: file.name, type: file.type, blob: file });
-  return { key, name: file.name, type: file.type };
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLD_PRESET);
+  fd.append('folder', `complaints/${id}`);
+  const resType = file.type.startsWith('video/') ? 'video' : 'image';
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLD_CLOUD}/${resType}/upload`, {
+    method: 'POST', body: fd
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return { url: data.secure_url, public_id: data.public_id, name: file.name, type: file.type };
 }
 
-async function getMediaForComplaint(id) {
-  const all = await mediaDBGetAll();
-  return all
-    .filter(m => m.cid === id)
-    .map(m => ({ key: m.key, name: m.name, type: m.type, url: URL.createObjectURL(m.blob) }));
+// 從 complaints 記錄中的 media 陣列取得附件（同步）
+function getMediaForComplaint(id) {
+  const c = complaints.find(x => x.id === id);
+  if (!c) return [];
+  return Array.isArray(c.media) ? c.media : [];
 }
 
 // ══════════════════════════════════
@@ -861,12 +816,14 @@ async function submitNew(e) {
   const id=document.getElementById('nId').value;
   const now=new Date().toISOString();
 
-  // Upload media to IndexedDB (local, no Supabase bandwidth)
-  let mediaCount=0;
+  // 上傳至 Cloudinary
+  let mediaList = Array.isArray(complaints.find(x=>x.id===id)?.media) ? complaints.find(x=>x.id===id).media : [];
   for(const f of pendingNew){
-    await uploadFile(id, f.blob);
-    mediaCount++;
+    toast('上傳附件中…', '');
+    const m = await uploadFile(id, f.blob);
+    mediaList.push(m);
   }
+  let mediaCount = mediaList.length;
 
   const initAction=document.getElementById('nAction').value.trim();
   const handler=document.getElementById('nHandler').value.trim();
@@ -876,7 +833,7 @@ async function submitNew(e) {
   }
 
   const c={
-    id, date:document.getElementById('nDate').value,
+    id, media: mediaList, date:document.getElementById('nDate').value,
     customer:document.getElementById('nCust').value.trim(),
     contact:document.getElementById('nContact').value.trim(),
     phone:document.getElementById('nPhone').value.trim(),
@@ -959,8 +916,8 @@ async function openDet(id) {
   document.getElementById('detTitle').textContent=esc(c.customer)+' 的客訴';
   document.getElementById('detSub').textContent='案件編號：'+id+'　建立：'+fmtDT(c.created_at||c.createdAt);
 
-  // Load media
-  const media=await getMediaForComplaint(id);
+  // 從 complaint 記錄讀取附件 URL（Cloudinary）
+  const media=getMediaForComplaint(id);
 
   const mHtml=media.length?`<div class="mt4">
     <div class="txs txmu fw6 mb3">📎 附件 (${media.length})</div>
@@ -1047,17 +1004,19 @@ async function saveEdit(){
   const capa=document.getElementById('eCAPA').value.trim();
   const now=new Date().toISOString();
 
-  // Upload extra media to IndexedDB (local, no bandwidth)
-  let extra=0;
+  // 上傳追加附件至 Cloudinary
+  const newMedia = [];
   for(const f of pendingEdit){
-    await uploadFile(id, f.blob);
-    extra++;
+    toast('上傳附件中…', '');
+    const m = await uploadFile(id, f.blob);
+    newMedia.push(m);
   }
 
   c.status=status;
   c.handler=handler||c.handler;
   c.updated_at=now;
-  c.media_count=(c.media_count||0)+extra;
+  c.media = [...(Array.isArray(c.media) ? c.media : []), ...newMedia];
+  c.media_count = c.media.length;
   c.logs=Array.isArray(c.logs)?c.logs:[];
   c.logs.push({time:now,status,handler,action:act,rca,capa});
 
@@ -1245,4 +1204,16 @@ async function exportExcel() {
   if (!complaints.length) { toast('目前沒有客訴記錄', 'err'); return; }
   // Build HTML table → Excel-compatible XML
   const rows = complaints.map(c => [
-    c.id, c.date, c.customer, c.cont
+    c.id, c.date, c.customer, c.contact, c.phone, c.email,
+    c.product, c.lot, c.ship_date, c.qty||'', c.order_no, c.po,
+    c.category, c.severity, c.description, c.demand,
+    c.handler, c.status, c.media_count||0, c.created_at
+  ]);
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Worksheet ss:Name="客訴記錄"><Table>
+<Row>${CSV_HEADS.map(h=>`<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}</Row>
+${rows.map(r=>`<Row>${r.map(v=>`<Cell><Data ss:Type="String">${esc(String(v||''))}</Data></Cell>`).join('')}</Row>`).join('\n')}
+</Table></Worksheet></Workbook>`;
+  dlBlob(new Blob([xml],{type:'application/vnd.ms-excel;c
