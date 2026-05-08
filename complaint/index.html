@@ -485,9 +485,61 @@ CREATE POLICY "allow_all" ON complaints
   <div class="mb2" id="detBody"></div>
   <div class="mf">
     <button class="btn bd bsm" id="detDel">🗑️ 刪除</button>
+    <button class="btn bo bsm" id="detModify">📝 編輯案件</button>
     <div style="flex:1"></div>
     <button class="btn bs" onclick="closeDet()">關閉</button>
     <button class="btn bp" id="detEdit">✏️ 新增處理記錄</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ MODIFY MODAL（編輯原始案件資料）══ -->
+<div id="modifyM" class="overlay" style="display:none" onclick="if(event.target===this)closeModify()">
+<div class="modal" style="max-width:700px" onclick="event.stopPropagation()">
+  <div class="mh"><div class="mt2">📝 編輯案件資料</div><button class="mx" onclick="closeModify()">✕</button></div>
+  <div class="mb2">
+    <div class="fgrid">
+      <div class="fg"><label class="req">客訴日期</label><input type="date" id="mDate"></div>
+      <div class="fg"><label class="req">客戶名稱</label><input id="mCust" placeholder="客戶公司名稱"></div>
+      <div class="fg"><label>聯絡人</label><input id="mContact" placeholder="姓名"></div>
+      <div class="fg"><label>電話</label><input id="mPhone" placeholder="聯絡電話"></div>
+      <div class="fg"><label>信箱</label><input id="mEmail" type="email" placeholder="聯絡信箱"></div>
+      <div class="fg"><label>產品型號</label><input id="mProd" placeholder="培養皿型號"></div>
+      <div class="fg"><label>批號 / Lot No.</label><input id="mLot" placeholder="生產批號"></div>
+      <div class="fg"><label>出貨日期</label><input type="date" id="mShip"></div>
+      <div class="fg"><label>問題數量（件）</label><input type="number" id="mQty" min="0" placeholder="0"></div>
+      <div class="fg"><label>訂單號碼</label><input id="mOrder" placeholder="SO-XXXXX"></div>
+      <div class="fg"><label>客訴類別</label>
+        <select id="mCat">
+          <option>生產品質問題</option><option>包裝運輸問題</option>
+          <option>交期/數量問題</option><option>使用端問題</option>
+        </select>
+      </div>
+      <div class="fg"><label>嚴重程度</label>
+        <select id="mSev">
+          <option>輕微</option><option>中等</option><option>嚴重</option><option>緊急</option>
+        </select>
+      </div>
+      <div class="fg"><label>負責人員</label><input id="mHandler" placeholder="負責人姓名"></div>
+      <div class="fg"><label>狀態</label>
+        <select id="mStat">
+          <option>新案件</option><option>處理中</option><option>已解決</option><option>已結案</option>
+        </select>
+      </div>
+      <div class="fg ff"><label class="req">問題描述</label>
+        <textarea id="mDesc" placeholder="詳細描述客訴問題…" style="min-height:80px"></textarea>
+      </div>
+      <div class="fg ff"><label>客戶要求</label>
+        <textarea id="mDemand" placeholder="客戶提出的具體要求…" style="min-height:60px"></textarea>
+      </div>
+      <div class="fg ff"><label>備註</label>
+        <textarea id="mNote" placeholder="其他補充說明…" style="min-height:50px"></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="mf">
+    <button class="btn bs" onclick="closeModify()">取消</button>
+    <button class="btn bp" onclick="saveModify()">💾 儲存變更</button>
   </div>
 </div>
 </div>
@@ -974,12 +1026,71 @@ async function openDet(id) {
     ${c.note?`<div style="margin-top:10px;padding:10px 12px;background:#fffbeb;border-radius:8px;font-size:12.5px"><strong>備註：</strong>${esc(c.note)}</div>`:''}
     <div style="margin-top:8px;font-size:11px;color:var(--fa)">最後更新：${fmtDT(c.updated_at||c.updatedAt)}</div>`;
 
-  document.getElementById('detDel').onclick = ()=>delC(id);
-  document.getElementById('detEdit').onclick = ()=>openEdit(id);
+  document.getElementById('detDel').onclick    = ()=>delC(id);
+  document.getElementById('detEdit').onclick   = ()=>openEdit(id);
+  document.getElementById('detModify').onclick = ()=>openModify(id);
   document.getElementById('detM').style.display='flex';
 }
 
 function closeDet(){document.getElementById('detM').style.display='none';curId=null;renderList();renderDash();}
+
+// ══════════════════════════════════
+// MODIFY（編輯原始案件資料）
+// ══════════════════════════════════
+function openModify(id){
+  const c=complaints.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('mDate').value    = c.date||'';
+  document.getElementById('mCust').value    = c.customer||'';
+  document.getElementById('mContact').value = c.contact||'';
+  document.getElementById('mPhone').value   = c.phone||'';
+  document.getElementById('mEmail').value   = c.email||'';
+  document.getElementById('mProd').value    = c.product||'';
+  document.getElementById('mLot').value     = c.lot||'';
+  document.getElementById('mShip').value    = c.ship_date||'';
+  document.getElementById('mQty').value     = c.qty||'';
+  document.getElementById('mOrder').value   = c.order_no||'';
+  document.getElementById('mCat').value     = c.category||'生產品質問題';
+  document.getElementById('mSev').value     = c.severity||'中等';
+  document.getElementById('mHandler').value = c.handler||'';
+  document.getElementById('mStat').value    = c.status||'新案件';
+  document.getElementById('mDesc').value    = c.description||'';
+  document.getElementById('mDemand').value  = c.demand||'';
+  document.getElementById('mNote').value    = c.note||'';
+  document.getElementById('modifyM').style.display='flex';
+}
+function closeModify(){ document.getElementById('modifyM').style.display='none'; }
+
+async function saveModify(){
+  const c=complaints.find(x=>x.id===curId);
+  if(!c) return;
+  c.date        = document.getElementById('mDate').value;
+  c.customer    = document.getElementById('mCust').value.trim();
+  c.contact     = document.getElementById('mContact').value.trim();
+  c.phone       = document.getElementById('mPhone').value.trim();
+  c.email       = document.getElementById('mEmail').value.trim();
+  c.product     = document.getElementById('mProd').value.trim();
+  c.lot         = document.getElementById('mLot').value.trim();
+  c.ship_date   = document.getElementById('mShip').value;
+  c.qty         = parseInt(document.getElementById('mQty').value)||null;
+  c.order_no    = document.getElementById('mOrder').value.trim();
+  c.category    = document.getElementById('mCat').value;
+  c.severity    = document.getElementById('mSev').value;
+  c.handler     = document.getElementById('mHandler').value.trim();
+  c.status      = document.getElementById('mStat').value;
+  c.description = document.getElementById('mDesc').value.trim();
+  c.demand      = document.getElementById('mDemand').value.trim();
+  c.note        = document.getElementById('mNote').value.trim();
+  c.updated_at  = new Date().toISOString();
+  try {
+    await upsertComplaint(c);
+    closeModify();
+    toast('✅ 案件資料已更新','ok');
+    openDet(curId); // 重新載入詳情
+  } catch(err){
+    toast('儲存失敗：'+err.message,'err');
+  }
+}
 
 // ══════════════════════════════════
 // EDIT
@@ -1211,124 +1322,3 @@ function dlBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function fmtDateFile() {
-  const n = new Date();
-  return `${n.getFullYear()}${p2(n.getMonth()+1)}${p2(n.getDate())}`;
-}
-
-// ── ZIP 備份（附件 URL 已在 Supabase，只需備份 JSON）──────────
-async function exportZip() {
-  await loadComplaints();
-  if (!complaints.length) { toast('目前沒有客訴記錄', 'err'); return; }
-  toast('正在打包 ZIP，請稍候…', '');
-  try {
-    const zip = new JSZip();
-    zip.file('complaints.json', JSON.stringify(complaints, null, 2));
-    zip.file('README.txt', '此備份包含所有客訴文字記錄。\n附件圖片/影片已儲存於 Cloudinary 雲端，URL 記錄在 complaints.json 的 media 欄位中，無需額外備份。\n\n匯入方式：使用系統的「匯入 ZIP 備份」功能即可還原。');
-    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-    dlBlob(blob, `客訴備份_${fmtDateFile()}.zip`);
-    toast(`✅ 備份完成（${complaints.length} 筆記錄，附件 URL 已內含）`, 'ok');
-  } catch(e) {
-    toast('匯出失敗：' + e.message, 'err');
-  }
-}
-
-async function importZip(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  e.target.value = '';
-  const ok = await cfm2('確認匯入 ZIP 備份',
-    '匯入會將備份中的所有記錄還原（以案件編號為準），同編號記錄將被覆蓋，確定繼續？', '📥');
-  if (!ok) return;
-  toast('正在解壓縮，請稍候…', '');
-  try {
-    const zip = await JSZip.loadAsync(file);
-    const cJson = zip.file('complaints.json');
-    if (!cJson) { toast('ZIP 格式錯誤：找不到 complaints.json', 'err'); return; }
-    const cData = JSON.parse(await cJson.async('string'));
-    let cOk = 0, cFail = 0;
-    for (const c of cData) {
-      try { await upsertComplaint(c); cOk++; } catch(err) { cFail++; }
-    }
-    await loadComplaints();
-    renderDash(); renderList();
-    toast(`✅ 還原完成：${cOk} 筆記錄${cFail ? `（${cFail} 筆失敗）` : ''}`, 'ok');
-  } catch(e) {
-    toast('匯入失敗：' + e.message, 'err');
-  }
-}
-
-async function doClear(){
-  const ok=await cfm2('清除所有資料','將刪除所有客訴資料（Cloudinary 上的附件請至 Cloudinary 後台手動刪除），確定繼續嗎？','🗑️');
-  if(!ok) return;
-  if(!localMode && SB){
-    await SB.from('complaints').delete().neq('id','__none__');
-  }
-  complaints=[];
-  localStorage.removeItem('complaints_local');
-  toast('所有資料已清除','ok');
-  nav('dashboard');
-}
-
-// ══════════════════════════════════
-// CONFIRM / TOAST / LIGHTBOX
-// ══════════════════════════════════
-function cfm2(title,msg,icon){
-  return new Promise(res=>{
-    cfmRes=res;
-    document.getElementById('cfmI').textContent=icon||'⚠️';
-    document.getElementById('cfmN').textContent=title;
-    document.getElementById('cfmM').textContent=msg;
-    document.getElementById('cfm').style.display='flex';
-  });
-}
-function cfmR(v){document.getElementById('cfm').style.display='none';if(cfmRes){cfmRes(v);cfmRes=null;}}
-function toast(msg,type=''){
-  const el=document.createElement('div');
-  el.className='toast '+(type||'');
-  el.textContent=msg;
-  document.getElementById('tw').appendChild(el);
-  setTimeout(()=>el.remove(),3600);
-}
-function openLB(src,type){
-  document.getElementById('lbC').innerHTML=type==='image'
-    ?`<img src="${src}" style="max-width:90vw;max-height:88vh;border-radius:6px">`
-    :`<video src="${src}" controls autoplay style="max-width:90vw;max-height:88vh;border-radius:6px"></video>`;
-  document.getElementById('lb').style.display='flex';
-}
-function closeLB(){document.getElementById('lb').style.display='none';document.getElementById('lbC').innerHTML='';}
-
-// ══════════════════════════════════
-// HELPERS
-// ══════════════════════════════════
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function p2(n){return String(n).padStart(2,'0');}
-function fmtD(d){if(!d)return'—';const dt=new Date(d.includes('T')?d:d+'T00:00:00');return`${dt.getFullYear()}/${p2(dt.getMonth()+1)}/${p2(dt.getDate())}`;}
-function fmtDT(d){if(!d)return'—';const dt=new Date(d);return`${fmtD(d.split('T')[0])} ${p2(dt.getHours())}:${p2(dt.getMinutes())}`;}
-function guessType(name){const ext=name.split('.').pop().toLowerCase();const m={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',mp4:'video/mp4',mov:'video/quicktime',avi:'video/x-msvideo',webm:'video/webm'};return m[ext]||'application/octet-stream';}
-
-function statB(s){const m={'新案件':'bn','處理中':'bp2','已解決':'bg','已結案':'bc'};return`<span class="badge ${m[s]||''}">${s}</span>`;}
-function catB(c){const m={'生產品質問題':['bq','品質'],'包裝運輸問題':['bsh','運輸'],'交期/數量問題':['bdl','交期'],'使用端問題':['bu','使用端']};const[cls,l]=m[c]||['',''];return`<span class="badge ${cls}">${l||c}</span>`;}
-function sevB(s){return`<span class="badge sv-${s}">${s}</span>`;}
-
-// ══════════════════════════════════
-// INIT
-// ══════════════════════════════════
-window.addEventListener('DOMContentLoaded', ()=>{
-  loadCfg();
-  // 支援三種認證方式：sessionStorage、URL 參數 ?a=1、直接輸入密碼
-  const urlOk = new URLSearchParams(location.search).get('a') === '1';
-  if (urlOk) sessionStorage.setItem('complaint_auth', '1');
-  if (sessionStorage.getItem('complaint_auth') === '1') {
-    boot();
-  } else {
-    document.getElementById('gateScreen').style.display = 'flex';
-    setTimeout(()=>document.getElementById('pwIn').focus(), 300);
-  }
-});
-</script>
-</body>
-</html>
