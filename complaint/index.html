@@ -1322,3 +1322,157 @@ function dlBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function fmtDateFile(){
+  const n=new Date();
+  return `${n.getFullYear()}${p2(n.getMonth()+1)}${p2(n.getDate())}`;
+}
+
+async function exportZip(){
+  const zip=new JSZip();
+  zip.file('complaints.json', JSON.stringify(complaints, null, 2));
+  zip.file('README.txt', '此 ZIP 由龍冶客訴管理系統匯出。\ncomplaints.json 包含所有案件資料。\n媒體檔案儲存於 Cloudinary，URL 記錄在各案件的 media 欄位。');
+  const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
+  dlBlob(blob, `客訴備份_${fmtDateFile()}.zip`);
+  toast('✅ ZIP 備份已匯出','ok');
+}
+
+async function importZip(e){
+  const file=e.target.files[0];
+  if(!file){return;}
+  e.target.value='';
+  try{
+    const zip=await JSZip.loadAsync(file);
+    const jsonFile=zip.file('complaints.json');
+    if(!jsonFile){toast('ZIP 內找不到 complaints.json','err');return;}
+    const jsonStr=await jsonFile.async('string');
+    const imported=JSON.parse(jsonStr);
+    if(!Array.isArray(imported)){toast('資料格式錯誤','err');return;}
+    // Merge: overwrite existing by id, append new
+    const map={};
+    for(const c of complaints) map[c.id]=c;
+    for(const c of imported) map[c.id]=c;
+    complaints=Object.values(map);
+    // Upsert all to Supabase
+    let ok=0,fail=0;
+    for(const c of imported){
+      try{ await upsertComplaint(c); ok++; }catch(err){ fail++; }
+    }
+    renderList(); renderDash(); checkOverdue();
+    toast(`✅ 匯入完成：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}`, fail?'warn':'ok');
+  }catch(err){
+    toast('匯入失敗：'+err.message,'err');
+  }
+}
+
+async function doClear(){
+  const confirmed=await cfm2('清除所有資料','確定要刪除所有案件嗎？此操作無法復原！','⚠️');
+  if(!confirmed) return;
+  const ids=[...complaints.map(c=>c.id)];
+  complaints=[];
+  if(window._sb){
+    for(const id of ids){
+      try{ await window._sb.from('complaints').delete().eq('id',id); }catch(e){}
+    }
+  }
+  renderList(); renderDash(); checkOverdue();
+  toast('🗑️ 已清除所有資料','ok');
+}
+
+function cfm2(title,msg,icon='❓'){
+  return new Promise(resolve=>{
+    const m=document.getElementById('cfmM');
+    document.getElementById('cfmTitle').textContent=icon+' '+title;
+    document.getElementById('cfmMsg').textContent=msg;
+    m.style.display='flex';
+    window._cfmResolve=resolve;
+  });
+}
+function cfmR(v){
+  document.getElementById('cfmM').style.display='none';
+  if(window._cfmResolve){window._cfmResolve(v);window._cfmResolve=null;}
+}
+
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast'+(type?' '+type:'');
+  t.style.display='block';
+  clearTimeout(window._toastT);
+  window._toastT=setTimeout(()=>t.style.display='none',3000);
+}
+
+function openLB(src,type){
+  const lb=document.getElementById('lb');
+  const img=document.getElementById('lbImg');
+  const vid=document.getElementById('lbVid');
+  if(type&&type.startsWith('video/')){
+    img.style.display='none'; vid.style.display='block';
+    vid.src=src; vid.play();
+  } else {
+    vid.style.display='none'; img.style.display='block';
+    img.src=src;
+  }
+  lb.style.display='flex';
+}
+function closeLB(){
+  const lb=document.getElementById('lb');
+  lb.style.display='none';
+  const vid=document.getElementById('lbVid');
+  vid.pause(); vid.src='';
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function p2(n){ return String(n).padStart(2,'0'); }
+function fmtD(d){ if(!d) return '—'; return d.substring(0,10); }
+function fmtDT(d){
+  if(!d) return '—';
+  try{
+    const dt=new Date(d);
+    return `${dt.getFullYear()}-${p2(dt.getMonth()+1)}-${p2(dt.getDate())} ${p2(dt.getHours())}:${p2(dt.getMinutes())}`;
+  }catch(e){ return d; }
+}
+function statB(s){
+  const map={'待處理':'<span class="badge bstat bpend">待處理</span>',
+             '處理中':'<span class="badge bstat bprog">處理中</span>',
+             '已解決':'<span class="badge bstat bsolv">已解決</span>',
+             '已結案':'<span class="badge bstat bclos">已結案</span>'};
+  return map[s]||`<span class="badge">${esc(s)}</span>`;
+}
+function catB(c){
+  const map={'生產品質問題':'<span class="badge" style="background:#7c3aed22;color:#7c3aed">🏭 生產品質</span>',
+             '外觀瑕疵':'<span class="badge" style="background:#b4530022;color:#b45300">🔍 外觀瑕疵</span>',
+             '尺寸不符':'<span class="badge" style="background:#0369a122;color:#0369a1">📐 尺寸不符</span>',
+             '材質問題':'<span class="badge" style="background:#05966922;color:#059669">🧪 材質問題</span>',
+             '包裝問題':'<span class="badge" style="background:#d9770622;color:#d97706">📦 包裝問題</span>',
+             '交期問題':'<span class="badge" style="background:#dc262622;color:#dc2626">⏰ 交期問題</span>',
+             '其他':'<span class="badge" style="background:#6b728022;color:#6b7280">📋 其他</span>'};
+  return map[c]||`<span class="badge">${esc(c)}</span>`;
+}
+function sevB(s){
+  const map={'緊急':'<span class="badge bsev bur">🔴 緊急</span>',
+             '嚴重':'<span class="badge bsev bsv">🟠 嚴重</span>',
+             '中等':'<span class="badge bsev bmd">🟡 中等</span>',
+             '輕微':'<span class="badge bsev blw">🟢 輕微</span>'};
+  return map[s]||`<span class="badge">${esc(s)}</span>`;
+}
+
+// ══════════════════════════════════
+// BOOT
+// ══════════════════════════════════
+window.addEventListener('DOMContentLoaded', ()=>{
+  loadCfg();
+  const urlOk = new URLSearchParams(location.search).get('a') === '1';
+  if(urlOk) sessionStorage.setItem('complaint_auth','1');
+  if(sessionStorage.getItem('complaint_auth')==='1'){
+    boot();
+  } else {
+    document.getElementById('gateScreen').style.display='flex';
+    setTimeout(()=>document.getElementById('pwIn').focus(),300);
+  }
+});
+</script>
+</body>
+</html>
