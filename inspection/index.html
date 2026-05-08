@@ -453,6 +453,85 @@
     .stats-bar { grid-template-columns: 1fr 1fr; }
     .tab-btn { padding: 8px 10px; font-size: 0.8rem; }
   }
+
+  /* ===== Photo Upload ===== */
+  .photo-upload-area {
+    border: 2px dashed #c8dce8;
+    border-radius: 10px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f8fbfd;
+    user-select: none;
+  }
+  .photo-upload-area:hover, .photo-upload-area.drag-over {
+    border-color: #2e86c1;
+    background: #eaf4fb;
+  }
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .photo-thumb {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #eee;
+    aspect-ratio: 1;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .photo-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+  .photo-thumb .remove-btn {
+    position: absolute; top: 4px; right: 4px;
+    background: rgba(0,0,0,0.55); color: white;
+    border: none; border-radius: 50%;
+    width: 24px; height: 24px;
+    cursor: pointer; font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .photo-thumb .remove-btn:hover { background: rgba(220,50,50,0.8); }
+  .photo-thumb .upload-status {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
+    color: white; font-size: 0.78rem; font-weight: 700;
+  }
+  .photo-thumb .upload-status .status-icon { font-size: 1.4rem; margin-bottom: 4px; }
+  .photo-progress-bar {
+    height: 4px; border-radius: 2px;
+    background: #2e86c1; transition: width 0.3s;
+    margin-top: 4px;
+  }
+  .upload-summary {
+    margin-top: 10px; font-size: 0.88rem; color: #666;
+    display: flex; align-items: center; gap: 8px;
+  }
+  /* photos in detail modal */
+  .detail-photos { margin-top: 16px; }
+  .detail-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px; margin-top: 10px;
+  }
+  .detail-photos-grid a {
+    display: block; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    aspect-ratio: 1;
+  }
+  .detail-photos-grid a img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.2s;
+  }
+  .detail-photos-grid a:hover img { transform: scale(1.05); }
+
 </style>
 </head>
 <body>
@@ -657,6 +736,23 @@
             <textarea name="remarks" rows="3" placeholder="如有其他說明事項，請填寫於此..."></textarea>
           </div>
         </div>
+      </div>
+
+
+      <!-- Photos Upload -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📷</span> 檢驗照片 <span style="font-size:0.8rem;font-weight:400;color:#888;margin-left:4px;">（選填，可多張）</span></div>
+        <div class="photo-upload-area" id="photo-drop-area" onclick="document.getElementById('photo-input').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="event.preventDefault();this.classList.remove('drag-over');handlePhotoSelect(event.dataTransfer.files)">
+          <div style="font-size:2.5rem;margin-bottom:8px;">📷</div>
+          <div style="font-weight:600;color:#1a5276;font-size:0.98rem;">點擊或拖曳照片到此處</div>
+          <div style="font-size:0.83rem;color:#888;margin-top:4px;">支援 JPG、PNG、HEIC 等格式，可一次選多張</div>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(this.files)">
+        <div class="photo-grid" id="photo-grid"></div>
+        <div class="upload-summary" id="upload-summary"></div>
       </div>
 
       <div class="form-actions">
@@ -935,6 +1031,114 @@ function closePwModal() {
 }
 
 // ============ FORM SUBMIT ============
+
+// ============ PHOTO UPLOAD ============
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyBTjRcdVwq0XWC6B6aUf3_dAYuK_EkZy_l-xvSZVXMn7Rwia2bzWgpyJtOiTTxGXU5/exec';
+let selectedPhotos = []; // [{file, previewUrl, status:'pending'|'uploading'|'done'|'error', driveUrl}]
+
+function handlePhotoSelect(files) {
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      selectedPhotos.push({ file, previewUrl: e.target.result, status: 'pending', driveUrl: null });
+      renderPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  }
+  document.getElementById('photo-input').value = '';
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('photo-grid');
+  const summary = document.getElementById('upload-summary');
+  if (selectedPhotos.length === 0) {
+    grid.innerHTML = '';
+    summary.innerHTML = '';
+    return;
+  }
+  grid.innerHTML = selectedPhotos.map((p, i) => {
+    let overlay = '';
+    if (p.status === 'uploading') {
+      overlay = '<div class="upload-status"><div class="status-icon">⏳</div>上傳中</div>';
+    } else if (p.status === 'done') {
+      overlay = '<div class="upload-status" style="background:rgba(39,174,96,0.6)"><div class="status-icon">✅</div>完成</div>';
+    } else if (p.status === 'error') {
+      overlay = '<div class="upload-status" style="background:rgba(220,50,50,0.6)"><div class="status-icon">❌</div>失敗</div>';
+    }
+    const removeBtn = p.status === 'uploading' ? '' :
+      `<button class="remove-btn" type="button" onclick="removePhoto(${i})" title="移除">✕</button>`;
+    return `<div class="photo-thumb">
+      <img src="${p.previewUrl}" alt="照片${i+1}">
+      ${overlay}
+      ${removeBtn}
+    </div>`;
+  }).join('');
+  const done = selectedPhotos.filter(p => p.status === 'done').length;
+  const total = selectedPhotos.length;
+  summary.innerHTML = total > 0 ? `<span>📸 已選 ${total} 張</span>${done > 0 ? `<span style="color:#27ae60">✅ ${done} 張已上傳</span>` : ''}` : '';
+}
+
+function removePhoto(index) {
+  selectedPhotos.splice(index, 1);
+  renderPhotoGrid();
+}
+
+async function uploadOnePhoto(photoObj) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target.result.split(',')[1];
+      const now = new Date();
+      const ts = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) + '_' + now.getTime();
+      const payload = {
+        fileName: ts + '_' + photoObj.file.name,
+        fileData: base64,
+        mimeType: photoObj.file.type || 'image/jpeg',
+        subFolder: '首件檢驗照片'
+      };
+      try {
+        const resp = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const json = await resp.json();
+        if (json.success) {
+          resolve({ ok: true, url: json.url });
+        } else {
+          resolve({ ok: false, error: json.error });
+        }
+      } catch (err) {
+        resolve({ ok: false, error: err.message });
+      }
+    };
+    reader.readAsDataURL(photoObj.file);
+  });
+}
+
+async function uploadAllPhotos() {
+  const pending = selectedPhotos.filter(p => p.status === 'pending' || p.status === 'error');
+  if (pending.length === 0) {
+    return selectedPhotos.filter(p => p.status === 'done').map(p => p.driveUrl);
+  }
+  for (let i = 0; i < selectedPhotos.length; i++) {
+    if (selectedPhotos[i].status !== 'pending' && selectedPhotos[i].status !== 'error') continue;
+    selectedPhotos[i].status = 'uploading';
+    renderPhotoGrid();
+    const result = await uploadOnePhoto(selectedPhotos[i]);
+    if (result.ok) {
+      selectedPhotos[i].status = 'done';
+      selectedPhotos[i].driveUrl = result.url;
+    } else {
+      selectedPhotos[i].status = 'error';
+    }
+    renderPhotoGrid();
+  }
+  const failed = selectedPhotos.filter(p => p.status === 'error').length;
+  if (failed > 0) throw new Error(`${failed} 張照片上傳失敗，請重試`);
+  return selectedPhotos.filter(p => p.status === 'done').map(p => p.driveUrl);
+}
+
 async function submitForm(e) {
   e.preventDefault();
   const btn = document.getElementById('submit-btn');
@@ -968,12 +1172,31 @@ async function submitForm(e) {
     if (data[k] !== undefined) data[k] = parseInt(data[k]) || 0;
   });
 
+  // 上傳照片
+  if (selectedPhotos.filter(p => p.status === 'pending' || p.status === 'error').length > 0) {
+    btn.textContent = '📷 上傳照片中...';
+    try {
+      const photoUrls = await uploadAllPhotos();
+      if (photoUrls.length > 0) data.photos = photoUrls;
+    } catch (uploadErr) {
+      showAlert('form', 'error', '❌ ' + uploadErr.message);
+      btn.disabled = false;
+      btn.textContent = '✅ 送出檢驗記錄';
+      return;
+    }
+  } else {
+    const doneUrls = selectedPhotos.filter(p => p.status === 'done').map(p => p.driveUrl);
+    if (doneUrls.length > 0) data.photos = doneUrls;
+  }
+  btn.textContent = '⏳ 儲存中...';
+
   try {
     const { error } = await db.from('inspection_records').insert([data]);
     if (error) throw error;
     showAlert('form', 'success', '✅ 檢驗記錄已成功送出！感謝您的配合。');
     form.reset();
     document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
+    selectedPhotos = []; renderPhotoGrid();
     await loadProductOptions();showTab('form'); // 重新載入品名下拉（reset 會清空選單）
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
@@ -1162,6 +1385,19 @@ function showDetail(r) {
   body += '</tbody></table>';
 
   if (r.remarks) body += `<div style="margin-top:16px;padding:12px 16px;background:#f9f9f9;border-radius:8px;border-left:3px solid #2e86c1;font-size:0.9rem;"><strong>備注：</strong>${esc(r.remarks)}</div>`;
+
+  // 照片
+  if (r.photos && r.photos.length > 0) {
+    const thumbs = r.photos.map(url => {
+      const fileId = url.match(/\/d\/([^/]+)/)?.[1];
+      const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w200` : url;
+      return `<a href="${url}" target="_blank" rel="noopener"><img src="${thumbUrl}" alt="檢驗照片" loading="lazy"></a>`;
+    }).join('');
+    body += `<div class="detail-photos">
+      <div style="font-weight:700;color:#1a5276;margin-bottom:4px;">📷 檢驗照片（${r.photos.length} 張）</div>
+      <div class="detail-photos-grid">${thumbs}</div>
+    </div>`;
+  }
 
   document.getElementById('modal-body').innerHTML = body;
   document.getElementById('modal').classList.add('show');
