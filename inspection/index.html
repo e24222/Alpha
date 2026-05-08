@@ -945,7 +945,10 @@
   <div class="modal">
     <div class="modal-header">
       <h3>📋 檢驗記錄詳細資料</h3>
-      <button class="modal-close" onclick="document.getElementById(&#39;modal&#39;).classList.remove(&#39;show&#39;)">✕</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="showReport(currentDetailRecord)" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.88rem;font-weight:600;font-family:inherit;white-space:nowrap;">📄 檢驗報告</button>
+        <button class="modal-close" onclick="document.getElementById('modal').classList.remove('show')">✕</button>
+      </div>
     </div>
     <div class="modal-body" id="modal-body"></div>
   </div>
@@ -1353,7 +1356,9 @@ const ITEMS = [
   { key: 'dimension', name: '尺寸★', std: '符合圖面尺寸' },
 ];
 
+let currentDetailRecord = null;
 function showDetail(r) {
+  currentDetailRecord = r;
   let body = `<div class="detail-grid">
     <div class="detail-item"><div class="dl">廠商</div><div class="dv">${esc(r.vendor)}</div></div>
     <div class="detail-item"><div class="dl">檢驗日期</div><div class="dv">${r.inspection_date}</div></div>
@@ -1401,6 +1406,136 @@ function showDetail(r) {
 
   document.getElementById('modal-body').innerHTML = body;
   document.getElementById('modal').classList.add('show');
+}
+
+
+// ============ INSPECTION REPORT ============
+function showReport(r) {
+  if (!r) return;
+  const ngItems = ITEMS.filter(item => r[item.key + '_result'] === 'NG');
+  const hasPhotos = r.photos && r.photos.length > 0;
+
+  // 照片 HTML（盡量大）
+  let photosHtml = '';
+  if (hasPhotos) {
+    photosHtml = r.photos.map(url => {
+      const fileId = url.match(/\/d\/([^/]+)/)?.[1];
+      const imgUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200` : url;
+      return `<div style="margin-bottom:28px;">
+        <a href="${url}" target="_blank" rel="noopener">
+          <img src="${imgUrl}" alt="檢驗照片"
+            style="width:100%;max-width:900px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.18);display:block;margin:0 auto;">
+        </a>
+        <div style="text-align:center;font-size:0.8rem;color:#999;margin-top:6px;">點擊可開啟原圖</div>
+      </div>`;
+    }).join('');
+  }
+
+  // NG 項目清單
+  let ngHtml = '';
+  if (ngItems.length > 0) {
+    ngHtml = ngItems.map(item => {
+      const defects = r[item.key + '_defects'];
+      const samples = r[item.key + '_samples'];
+      return `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;
+        background:#fff5f5;border:1.5px solid #f1948a;border-radius:10px;margin-bottom:10px;">
+        <div style="font-size:1.8rem;">❌</div>
+        <div>
+          <div style="font-size:1.1rem;font-weight:800;color:#c0392b;">${item.name}</div>
+          <div style="font-size:0.88rem;color:#888;margin-top:2px;">${item.std}</div>
+          ${defects != null ? `<div style="font-size:0.88rem;color:#c0392b;margin-top:4px;">不良數：<strong>${defects}</strong> / ${samples ?? '—'}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    ngHtml = `<div style="padding:18px;background:#d4efdf;border-radius:10px;color:#1e8449;font-weight:700;font-size:1rem;text-align:center;">
+      ✅ 本次檢驗全部通過，無 NG 項目
+    </div>`;
+  }
+
+  const overall = ngItems.length > 0
+    ? `<span style="background:#e74c3c;color:white;padding:6px 20px;border-radius:20px;font-size:1.1rem;font-weight:800;">✗ NG 不合格</span>`
+    : `<span style="background:#27ae60;color:white;padding:6px 20px;border-radius:20px;font-size:1.1rem;font-weight:800;">✓ OK 合格</span>`;
+
+  const reportHtml = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>首件檢驗報告 - ${r.product_name}</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Microsoft JhengHei',Arial,sans-serif; background:#f5f6fa; color:#333; padding:24px; }
+  .report-wrap { max-width:960px; margin:0 auto; }
+  .report-header {
+    background:linear-gradient(135deg,#1a5276,#2e86c1);
+    color:white; border-radius:14px; padding:28px 32px; margin-bottom:24px;
+  }
+  .report-title { font-size:0.9rem; opacity:0.75; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+  .report-product { font-size:2rem; font-weight:900; margin-bottom:16px; line-height:1.2; }
+  .report-meta { display:flex; flex-wrap:wrap; gap:10px 28px; font-size:0.9rem; opacity:0.88; }
+  .section { background:white; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.07); padding:24px; margin-bottom:20px; }
+  .section-title { font-size:1rem; font-weight:800; color:#1a5276; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #eaf4fb; display:flex; align-items:center; gap:8px; }
+  @page { size: A4 landscape; margin: 12mm; }
+  @media print {
+    body { background:white; padding:0; }
+    .section { box-shadow:none; border:1px solid #ddd; }
+    .no-print { display:none; }
+    .report-wrap { max-width:100%; }
+    .report-product { font-size:1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="report-wrap">
+
+  <!-- Header -->
+  <div class="report-header">
+    <div class="report-title">🔬 龍冶 首件檢驗報告</div>
+    <div class="report-product">${r.product_name}</div>
+    <div class="report-meta">
+      <span>📦 廠商：${r.vendor}</span>
+      ${r.part_number ? `<span>🔢 料號：${r.part_number}</span>` : ''}
+      <span>📅 日期：${r.inspection_date}</span>
+      <span>👤 檢驗人員：${r.inspector}</span>
+      ${r.sample_size ? `<span>🎯 抽樣數：${r.sample_size}</span>` : ''}
+    </div>
+    <div style="margin-top:18px;">${overall}</div>
+  </div>
+
+  <!-- NG Items -->
+  <div class="section">
+    <div class="section-title">⚠️ NG 不合格項目（共 ${ngItems.length} 項）</div>
+    ${ngHtml}
+  </div>
+
+  ${r.remarks ? `
+  <div class="section">
+    <div class="section-title">📝 備注說明</div>
+    <div style="font-size:0.95rem;line-height:1.7;color:#555;">${r.remarks}</div>
+  </div>` : ''}
+
+  <!-- Photos -->
+  ${hasPhotos ? `
+  <div class="section">
+    <div class="section-title">📷 檢驗照片（共 ${r.photos.length} 張）</div>
+    ${photosHtml}
+  </div>` : ''}
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:16px;color:#aaa;font-size:0.8rem;" class="no-print">
+    龍冶管理系統 · 首件檢驗報告 · 列印請按 Ctrl+P
+  </div>
+  <div style="text-align:right;margin-top:16px;" class="no-print">
+    <button onclick="window.print()" style="padding:10px 24px;background:#2e86c1;color:white;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;">🖨️ 列印 / 儲存 PDF</button>
+  </div>
+</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(reportHtml);
+  win.document.close();
 }
 
 function closeModal(e) {
