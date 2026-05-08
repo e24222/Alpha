@@ -428,9 +428,9 @@ CREATE POLICY "allow_all" ON complaints
       <div class="fg"><label>案件編號前綴</label><input id="sPre" placeholder="CMP（預設）"></div>
     </div>
 
-    <div class="sec-ttl">🔔 Email 提醒設定（EmailJS）</div>
+    <div class="sec-ttl">🔔 Email 自動提醒設定（EmailJS）</div>
     <div style="font-size:12px;color:var(--mu);margin-bottom:10px;line-height:1.6">
-      免費方案每月 200 封，前往 <strong>emailjs.com</strong> 註冊後，建立 Email Service 和 Template，填入下方即可讓系統自動寄提醒信。
+      免費方案每月 200 封。系統會在每次開啟時自動檢查，對逾期未處理的案件寄出提醒信（每案每天最多寄一次）。
     </div>
     <div class="fgrid mb5">
       <div class="fg"><label>EmailJS Public Key</label><input id="ejKey" placeholder="xxxxxxxxxxxx"></div>
@@ -438,6 +438,16 @@ CREATE POLICY "allow_all" ON complaints
       <div class="fg"><label>Template ID</label><input id="ejTpl" placeholder="template_xxxxxxx"></div>
       <div class="fg"><label>提醒收件人信箱</label><input id="ejTo" type="email" placeholder="your@email.com"></div>
     </div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">⏰ 各嚴重程度自動寄信門檻（天）</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:10px">超過以下天數仍未結案，系統自動寄信提醒。填 0 表示不寄。</div>
+    <div class="fgrid mb5" style="grid-template-columns:1fr 1fr 1fr 1fr">
+      <div class="fg"><label style="color:#7c3aed">🔴 緊急（天）</label><input id="ejDayUrg"  type="number" min="0" placeholder="1"></div>
+      <div class="fg"><label style="color:#dc2626">🟠 嚴重（天）</label><input id="ejDaySvr"  type="number" min="0" placeholder="3"></div>
+      <div class="fg"><label style="color:#d97706">🟡 中等（天）</label><input id="ejDayMed"  type="number" min="0" placeholder="7"></div>
+      <div class="fg"><label style="color:#16a34a">🟢 輕微（天）</label><input id="ejDayLow"  type="number" min="0" placeholder="14"></div>
+    </div>
+
     <div style="margin-bottom:20px">
       <button class="btn bo bsm" onclick="testEmail()">📧 測試寄送</button>
     </div>
@@ -480,7 +490,6 @@ CREATE POLICY "allow_all" ON complaints
   <div class="mf">
     <button class="btn bd bsm" id="detDel">🗑️ 刪除</button>
     <div style="flex:1"></div>
-    <button class="btn bd bsm" id="detEmail" onclick="sendReminderEmail()">📧 寄提醒信</button>
     <button class="btn bs" onclick="closeDet()">關閉</button>
     <button class="btn bp" id="detEdit">✏️ 新增處理記錄</button>
   </div>
@@ -1051,12 +1060,17 @@ async function delC(id){
 // ══════════════════════════════════
 function checkOverdue(){
   const now=Date.now();
+  // 通知門檻固定；寄信門檻從設定讀取
   const rules=[
-    {sev:'緊急',days:1,label:'緊急案件超過 1 天未結案！'},
-    {sev:'嚴重',days:3,label:'嚴重案件超過 3 天未結案'},
-    {sev:'中等',days:7,label:'中等案件超過 7 天未結案'},
-    {sev:'輕微',days:14,label:'案件超過 14 天未結案'}
+    {sev:'緊急', days:1,       emailDays: cfg.ejDayUrg!=null?cfg.ejDayUrg:1,  label:'緊急案件超過 1 天未結案！'},
+    {sev:'嚴重', days:3,       emailDays: cfg.ejDaySvr!=null?cfg.ejDaySvr:3,  label:'嚴重案件超過 3 天未結案'},
+    {sev:'中等', days:7,       emailDays: cfg.ejDayMed!=null?cfg.ejDayMed:7,  label:'中等案件超過 7 天未結案'},
+    {sev:'輕微', days:14,      emailDays: cfg.ejDayLow!=null?cfg.ejDayLow:14, label:'案件超過 14 天未結案'}
   ];
+  // 讀取已寄信紀錄（避免重複寄，key = caseId, value = 上次寄信日期字串 YYYY-MM-DD）
+  let emailLog={};
+  try{ emailLog=JSON.parse(localStorage.getItem('email_log')||'{}'); }catch(e){}
+  const today=new Date().toISOString().split('T')[0];
   const overdue=[];
   for(const c of complaints){
     if(c.status==='已解決'||c.status==='已結案') continue;
@@ -1064,8 +1078,14 @@ function checkOverdue(){
     const rule=rules.find(r=>r.sev===c.severity);
     if(rule && age>=rule.days){
       overdue.push({c,age:Math.floor(age),label:rule.label});
+      // 自動寄信：符合設定天數 且 今天尚未寄過
+      if(cfg.ejKey && rule.emailDays>0 && age>=rule.emailDays && emailLog[c.id]!==today){
+        sendEmailAlert(c, `【客訴逾期提醒】${rule.label}`);
+        emailLog[c.id]=today;
+      }
     }
   }
+  localStorage.setItem('email_log', JSON.stringify(emailLog));
   // Update badge
   const badge=document.getElementById('alertBadge');
   badge.style.display=overdue.length?'':'none';
@@ -1159,13 +1179,16 @@ async function testEmail(){
 // SETTINGS
 // ══════════════════════════════════
 function loadSett(){
-  document.getElementById('sCo').value   = cfg.company||'';
-  document.getElementById('sPre').value  = cfg.prefix||'CMP';
-  document.getElementById('ejKey').value = cfg.ejKey||'';
-  document.getElementById('ejSvc').value = cfg.ejSvc||'';
-  document.getElementById('ejTpl').value = cfg.ejTpl||'';
-  document.getElementById('ejTo').value  = cfg.ejTo||'';
-  // Supabase is pre-configured
+  document.getElementById('sCo').value      = cfg.company||'';
+  document.getElementById('sPre').value     = cfg.prefix||'CMP';
+  document.getElementById('ejKey').value    = cfg.ejKey||'';
+  document.getElementById('ejSvc').value    = cfg.ejSvc||'';
+  document.getElementById('ejTpl').value    = cfg.ejTpl||'';
+  document.getElementById('ejTo').value     = cfg.ejTo||'';
+  document.getElementById('ejDayUrg').value = cfg.ejDayUrg != null ? cfg.ejDayUrg : 1;
+  document.getElementById('ejDaySvr').value = cfg.ejDaySvr != null ? cfg.ejDaySvr : 3;
+  document.getElementById('ejDayMed').value = cfg.ejDayMed != null ? cfg.ejDayMed : 7;
+  document.getElementById('ejDayLow').value = cfg.ejDayLow != null ? cfg.ejDayLow : 14;
 }
 
 async function saveSett(){
@@ -1175,6 +1198,10 @@ async function saveSett(){
   cfg.ejSvc        = document.getElementById('ejSvc').value.trim();
   cfg.ejTpl        = document.getElementById('ejTpl').value.trim();
   cfg.ejTo         = document.getElementById('ejTo').value.trim();
+  cfg.ejDayUrg     = parseInt(document.getElementById('ejDayUrg').value) || 0;
+  cfg.ejDaySvr     = parseInt(document.getElementById('ejDaySvr').value) || 0;
+  cfg.ejDayMed     = parseInt(document.getElementById('ejDayMed').value) || 0;
+  cfg.ejDayLow     = parseInt(document.getElementById('ejDayLow').value) || 0;
   saveCfg();
   document.getElementById('sbSub').textContent=cfg.company;
   toast('✅ 設定已儲存','ok');
@@ -1387,6 +1414,197 @@ window.addEventListener('DOMContentLoaded', ()=>{
   // 支援三種認證方式：sessionStorage、URL 參數 ?a=1、直接輸入密碼
   const urlOk = new URLSearchParams(location.search).get('a') === '1';
   if (urlOk) sessionStorage.setItem('complaint_auth', '1');
+  if (sessionStorage.getItem('complaint_auth') === '1') {
+    boot();
+  } else {
+    document.getElementById('gateScreen').style.display = 'flex';
+    setTimeout(()=>document.getElementById('pwIn').focus(), 300);
+  }
+});
+</script>
+</body>
+</html>
+cation/vnd.ms-excel;charset=utf-8'}), `客訴記錄_${fmtDateFile()}.xls`);
+  toast(`✅ 已匯出 ${complaints.length} 筆 Excel`, 'ok');
+}
+
+async function importCSV(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  const ok = await cfm2('確認匯入 CSV',
+    '匯入會將 CSV 中的記錄新增或覆蓋至資料庫（以案件編號為準），確定繼續？', '📥');
+  if (!ok) return;
+
+  const text = await file.text();
+  const lines = text.replace(/^﻿/,'').split('\n').filter(l=>l.trim());
+  if (lines.length < 2) { toast('CSV 格式錯誤或無資料', 'err'); return; }
+
+  const parseRow = line => {
+    const cols = []; let cur = '', inQ = false;
+    for (let i=0; i<line.length; i++) {
+      const ch = line[i];
+      if (ch==='"' && !inQ) { inQ=true; continue; }
+      if (ch==='"' && inQ) { if(line[i+1]==='"'){cur+='"';i++;}else inQ=false; continue; }
+      if (ch===',' && !inQ) { cols.push(cur); cur=''; continue; }
+      cur += ch;
+    }
+    cols.push(cur);
+    return cols;
+  };
+
+  const dataLines = lines.slice(1);
+  let success = 0, fail = 0;
+  for (const line of dataLines) {
+    if (!line.trim()) continue;
+    const cols = parseRow(line);
+    const now = new Date().toISOString();
+    const c = {
+      id: cols[0]||'', date: cols[1]||'',
+      customer: cols[2]||'', contact: cols[3]||'',
+      phone: cols[4]||'', email: cols[5]||'',
+      product: cols[6]||'', lot: cols[7]||'',
+      ship_date: cols[8]||'', qty: parseInt(cols[9])||null,
+      order_no: cols[10]||'', po: cols[11]||'',
+      category: cols[12]||'', severity: cols[13]||'',
+      description: cols[14]||'', demand: cols[15]||'',
+      handler: cols[16]||'', status: cols[17]||'新案件',
+      media_count: parseInt(cols[18])||0, media: [],
+      logs: [], created_at: cols[19]||now, updated_at: now
+    };
+    if (!c.id || !c.customer) { fail++; continue; }
+    try { await upsertComplaint(c); success++; } catch(err) { fail++; }
+  }
+  await loadComplaints();
+  renderDash(); renderList();
+  toast(`✅ 匯入完成：${success} 筆成功${fail?`，${fail} 筆失敗`:''}`, 'ok');
+}
+
+function dlBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function fmtDateFile() {
+  const n = new Date();
+  return `${n.getFullYear()}${p2(n.getMonth()+1)}${p2(n.getDate())}`;
+}
+
+// ── ZIP 備份（附件 URL 已在 Supabase，只需備份 JSON）──────────
+async function exportZip() {
+  await loadComplaints();
+  if (!complaints.length) { toast('目前沒有客訴記錄', 'err'); return; }
+  toast('正在打包 ZIP，請稍候…', '');
+  try {
+    const zip = new JSZip();
+    zip.file('complaints.json', JSON.stringify(complaints, null, 2));
+    zip.file('README.txt', '此備份包含所有客訴文字記錄。\n附件圖片/影片已儲存於 Cloudinary 雲端，URL 記錄在 complaints.json 的 media 欄位中，無需額外備份。\n\n匯入方式：使用系統的「匯入 ZIP 備份」功能即可還原。');
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    dlBlob(blob, `客訴備份_${fmtDateFile()}.zip`);
+    toast(`✅ 備份完成（${complaints.length} 筆記錄，附件 URL 已內含）`, 'ok');
+  } catch(e) {
+    toast('匯出失敗：' + e.message, 'err');
+  }
+}
+
+async function importZip(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  const ok = await cfm2('確認匯入 ZIP 備份',
+    '匯入會將備份中的所有記錄還原（以案件編號為準），同編號記錄將被覆蓋，確定繼續？', '📥');
+  if (!ok) return;
+  toast('正在解壓縮，請稍候…', '');
+  try {
+    const zip = await JSZip.loadAsync(file);
+    const cJson = zip.file('complaints.json');
+    if (!cJson) { toast('ZIP 格式錯誤：找不到 complaints.json', 'err'); return; }
+    const cData = JSON.parse(await cJson.async('string'));
+    let cOk = 0, cFail = 0;
+    for (const c of cData) {
+      try { await upsertComplaint(c); cOk++; } catch(err) { cFail++; }
+    }
+    await loadComplaints();
+    renderDash(); renderList();
+    toast(`✅ 還原完成：${cOk} 筆記錄${cFail ? `（${cFail} 筆失敗）` : ''}`, 'ok');
+  } catch(e) {
+    toast('匯入失敗：' + e.message, 'err');
+  }
+}
+
+async function doClear(){
+  const ok=await cfm2('清除所有資料','將刪除所有客訴資料（Cloudinary 上的附件請至 Cloudinary 後台手動刪除），確定繼續嗎？','🗑️');
+  if(!ok) return;
+  if(!localMode && SB){
+    await SB.from('complaints').delete().neq('id','__none__');
+  }
+  complaints=[];
+  localStorage.removeItem('complaints_local');
+  toast('所有資料已清除','ok');
+  nav('dashboard');
+}
+
+// ══════════════════════════════════
+// CONFIRM / TOAST / LIGHTBOX
+// ══════════════════════════════════
+function cfm2(title,msg,icon){
+  return new Promise(res=>{
+    cfmRes=res;
+    document.getElementById('cfmI').textContent=icon||'⚠️';
+    document.getElementById('cfmN').textContent=title;
+    document.getElementById('cfmM').textContent=msg;
+    document.getElementById('cfm').style.display='flex';
+  });
+}
+function cfmR(v){document.getElementById('cfm').style.display='none';if(cfmRes){cfmRes(v);cfmRes=null;}}
+function toast(msg,type=''){
+  const el=document.createElement('div');
+  el.className='toast '+(type||'');
+  el.textContent=msg;
+  document.getElementById('tw').appendChild(el);
+  setTimeout(()=>el.remove(),3600);
+}
+function openLB(src,type){
+  document.getElementById('lbC').innerHTML=type==='image'
+    ?`<img src="${src}" style="max-width:90vw;max-height:88vh;border-radius:6px">`
+    :`<video src="${src}" controls autoplay style="max-width:90vw;max-height:88vh;border-radius:6px"></video>`;
+  document.getElementById('lb').style.display='flex';
+}
+function closeLB(){document.getElementById('lb').style.display='none';document.getElementById('lbC').innerHTML='';}
+
+// ══════════════════════════════════
+// HELPERS
+// ══════════════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function p2(n){return String(n).padStart(2,'0');}
+function fmtD(d){if(!d)return'—';const dt=new Date(d.includes('T')?d:d+'T00:00:00');return`${dt.getFullYear()}/${p2(dt.getMonth()+1)}/${p2(dt.getDate())}`;}
+function fmtDT(d){if(!d)return'—';const dt=new Date(d);return`${fmtD(d.split('T')[0])} ${p2(dt.getHours())}:${p2(dt.getMinutes())}`;}
+
+function statB(s){const m={'新案件':'bn','處理中':'bp2','已解決':'bg','已結案':'bc'};return`<span class="badge ${m[s]||''}">${s}</span>`;}
+function catB(c){const m={'生產品質問題':['bq','品質'],'包裝運輸問題':['bsh','運輸'],'交期/數量問題':['bdl','交期'],'使用端問題':['bu','使用端']};const[cls,l]=m[c]||['',''];return`<span class="badge ${cls}">${l||c}</span>`;}
+function sevB(s){return`<span class="badge sv-${s}">${s}</span>`;}
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+window.addEventListener('DOMContentLoaded', ()=>{
+  loadCfg();
+  // 支援三種認證方式：sessionStorage、URL 參數 ?a=1、直接輸入密碼
+  const urlOk = new URLSearchParams(location.search).get('a') === '1';
+  if (urlOk) sessionStorage.setItem('complaint_auth', '1');
+  if (sessionStorage.getItem('complaint_auth') === '1') {
+    boot();
+  } else {
+    document.getElementById('gateScreen').style.display = 'flex';
+    setTimeout(()=>document.getElementById('pwIn').focus(), 300);
+  }
+});
+</script>
+</body>
+</html>
+tItem('complaint_auth', '1');
   if (sessionStorage.getItem('complaint_auth') === '1') {
     boot();
   } else {
