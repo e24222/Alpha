@@ -608,8 +608,7 @@ CREATE POLICY "allow_all" ON complaints
 // 圖片/影片上傳至 Cloudinary CDN，URL 存入 Supabase
 // 多台電腦共享、不佔 Supabase 流量
 // ══════════════════════════════════
-const CLD_CLOUD  = 'dcerihnsa';
-const CLD_PRESET = 'Alphaplus';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyBTjRcdVwq0XWC6B6aUf3_dAYuK_EkZy_l-xvSZVXMn7Rwia2bzWgpyJtOiTTxGXU5/exec';
 
 // ══════════════════════════════════
 // CONFIG & STATE
@@ -744,17 +743,31 @@ async function removeComplaint(id) {
 
 // 上傳至 Cloudinary，回傳 { url, public_id, name, type }
 async function uploadFile(id, file) {
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('upload_preset', CLD_PRESET);
-  fd.append('folder', `complaints/${id}`);
-  const resType = file.type.startsWith('video/') ? 'video' : 'image';
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLD_CLOUD}/${resType}/upload`, {
-    method: 'POST', body: fd
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const base64 = e.target.result.split(',')[1];
+        const payload = {
+          fileName: Date.now() + '_' + file.name,
+          fileData: base64,
+          mimeType: file.type || 'application/octet-stream',
+          subFolder: '客訴'
+        };
+        const resp = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const json = await resp.json();
+        if (!json.success) throw new Error(json.error || '上傳失敗');
+        const fileId = json.fileId;
+        const isImg = file.type.startsWith('image/');
+        // 圖片用 thumbnail URL，影片用 Drive view URL
+        const displayUrl = isImg
+          ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1200'
+          : 'https://drive.google.com/file/d/' + fileId + '/view';
+        resolve({ url: displayUrl, public_id: fileId, name: file.name, type: file.type });
+      } catch(err) { reject(err); }
+    };
+    reader.readAsDataURL(file);
   });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return { url: data.secure_url, public_id: data.public_id, name: file.name, type: file.type };
 }
 
 // 從 complaints 記錄中的 media 陣列取得附件（同步）
@@ -980,8 +993,12 @@ async function openDet(id) {
     <div class="txs txmu fw6 mb3">📎 附件 (${media.length})</div>
     <div class="mgrid">${media.map(m=>{
       const isImg=m.type.startsWith('image/');
-      return `<div class="mitem" onclick="openLB('${m.url}','${isImg?'image':'video'}')">
-        ${isImg?`<img src="${m.url}" alt="${esc(m.name)}">`:`<video src="${m.url}"></video>`}
+      const isDriveVideo = !isImg && m.url.includes('drive.google.com');
+      return `<div class="mitem" onclick="${isImg ? `openLB('${m.url}','image')` : `window.open('${m.url}','_blank')`}" style="cursor:pointer;">
+        ${isImg
+          ? `<img src="${m.url}" alt="${esc(m.name)}">`
+          : `<div style="width:100%;height:80px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;font-size:2rem;">🎬</div>`
+        }
         <div class="mnm">${isImg?'':'🎬 '}${esc(m.name)}</div>
       </div>`;
     }).join('')}</div></div>`:'';
@@ -1405,14 +1422,18 @@ function toast(msg,type=''){
 }
 
 function openLB(src,type){
+  // Drive 影片→開新分頁
+  if(type && type.startsWith('video/') || (src && src.includes('drive.google.com/file'))) {
+    window.open(src,'_blank'); return;
+  }
   const lb=document.getElementById('lb');
   const img=document.getElementById('lbImg');
   const vid=document.getElementById('lbVid');
-  if(type&&type.startsWith('video/')){
-    img.style.display='none'; vid.style.display='block';
-    vid.src=src; vid.play();
+  vid.style.display='none'; img.style.display='block';
+  // Drive 圖片用高解析 thumbnail
+  if(src && src.includes('drive.google.com/thumbnail')) {
+    img.src = src.replace('sz=w1200','sz=w1600');
   } else {
-    vid.style.display='none'; img.style.display='block';
     img.src=src;
   }
   lb.style.display='flex';
