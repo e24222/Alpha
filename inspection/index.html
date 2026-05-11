@@ -1062,22 +1062,29 @@ function renderVendorBadge() {
   const header = document.querySelector('.header-inner');
   const old = document.getElementById('vendor-badge');
   if (old) old.remove();
+  if (!adminUnlocked) return;
+
+  const badge = document.createElement('div');
+  badge.id = 'vendor-badge';
+  badge.style.cssText = 'background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:4px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;color:white;display:flex;align-items:center;gap:6px;';
+  badge.title = '點擊切換帳號';
+
   if (currentVendorFilter) {
-    const badge = document.createElement('div');
-    badge.id = 'vendor-badge';
-    badge.style.cssText = 'background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:4px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;';
-    badge.title = '點擊切換帳號';
-    badge.textContent = '👤 ' + (Array.isArray(currentVendorFilter) ? currentVendorFilter.join(' / ') : currentVendorFilter);
-    badge.onclick = () => {
-      if (confirm('要切換帳號嗎？')) {
-        adminUnlocked = false;
-        currentVendorFilter = null;
-        renderVendorBadge();
-        showTab('form');
-      }
-    };
-    header.appendChild(badge);
+    const label = Array.isArray(currentVendorFilter) ? currentVendorFilter.join(' / ') : currentVendorFilter;
+    badge.textContent = '👤 ' + label;
+  } else {
+    badge.textContent = '🔑 管理員';
   }
+
+  badge.onclick = () => {
+    if (confirm('要切換帳號嗎？')) {
+      adminUnlocked = false;
+      currentVendorFilter = null;
+      renderVendorBadge();
+      showTab('form');
+    }
+  };
+  header.appendChild(badge);
 }
 
 function closePwModal() {
