@@ -1350,7 +1350,7 @@ function fmtDateFile(){
 async function exportZip(){
   const zip=new JSZip();
   zip.file('complaints.json', JSON.stringify(complaints, null, 2));
-  zip.file('README.txt', '此 ZIP 由龍冶客訴管理系統匯出。\ncomplaints.json 包含所有案件資料。\n媒體檔案儲存於 Cloudinary，URL 記錄在各案件的 media 欄位。');
+  zip.file('README.txt', '此 ZIP 由龍冶客訴管理系統匯出。\ncomplaints.json 包含所有案件資料。\n媒體檔案儲存於 Google Drive，URL 記錄在各案件的 media 欄位。');
   const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
   dlBlob(blob, `客訴備份_${fmtDateFile()}.zip`);
   toast('✅ ZIP 備份已匯出','ok');
