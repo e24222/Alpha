@@ -484,6 +484,7 @@ CREATE POLICY "allow_all" ON complaints
     <button class="btn bo bsm" id="detModify">📝 編輯案件</button>
     <div style="flex:1"></div>
     <button class="btn bs" onclick="closeDet()">關閉</button>
+    <button class="btn" style="background:#0f766e;color:#fff" onclick="printComplaintReport(curId)">🖨️ 匯出客訴單</button>
     <button class="btn bp" id="detEdit">✏️ 新增處理記錄</button>
   </div>
 </div>
@@ -1439,6 +1440,139 @@ function sevB(s){
              '中等':'<span class="badge bsev bmd">🟡 中等</span>',
              '輕微':'<span class="badge bsev blw">🟢 輕微</span>'};
   return map[s]||`<span class="badge">${esc(s)}</span>`;
+}
+
+// ══════════════════════════════════
+// PRINT COMPLAINT REPORT
+// ══════════════════════════════════
+function printComplaintReport(id){
+  const c = complaints.find(x=>x.id===id);
+  if(!c) return;
+  const media = getMediaForComplaint(id);
+  const imgs = media.filter(m=>m.type&&m.type.startsWith('image/'));
+  const logs = Array.isArray(c.logs)?c.logs:[];
+
+  const sevColor = {'緊急':'#dc2626','嚴重':'#ea580c','中等':'#ca8a04','輕微':'#16a34a'};
+  const color = sevColor[c.severity]||'#374151';
+
+  const logsHtml = logs.length ? logs.map((lg,i)=>`
+    <tr>
+      <td style="white-space:nowrap;color:#6b7280;font-size:10px;padding:5px 8px;vertical-align:top;border:1px solid #e5e7eb">${lg.time?lg.time.replace('T',' ').substring(0,16):''}</td>
+      <td style="padding:5px 8px;font-size:10px;border:1px solid #e5e7eb">${lg.handler||''}</td>
+      <td style="padding:5px 8px;font-size:10px;border:1px solid #e5e7eb">${lg.status||''}</td>
+      <td style="padding:5px 8px;font-size:10px;border:1px solid #e5e7eb;white-space:pre-wrap">${lg.action||''}${lg.rca?'\n根本原因：'+lg.rca:''}${lg.capa?'\nCAPA：'+lg.capa:''}</td>
+    </tr>`).join('') : '<tr><td colspan="4" style="padding:8px;font-size:10px;color:#9ca3af;border:1px solid #e5e7eb;text-align:center">尚無處理記錄</td></tr>';
+
+  const photoCols = imgs.length>=4?3:imgs.length>=2?2:1;
+  const photoSize = imgs.length>=4?'calc(33%-6px)':imgs.length>=2?'calc(50%-6px)':'100%';
+  const imgsHtml = imgs.length ? `
+    <div style="margin-top:14px">
+      <div style="font-size:10px;font-weight:700;color:#374151;border-bottom:1px solid #d1d5db;padding-bottom:4px;margin-bottom:8px">附件照片（${imgs.length} 張）</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${imgs.map(m=>`<img src="${m.url}" style="width:${photoSize};max-height:160px;object-fit:contain;border:1px solid #e5e7eb;border-radius:4px;background:#f9fafb">`).join('')}
+      </div>
+    </div>` : '';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>客訴單 ${id}</title>
+<style>
+  @page{size:A4 portrait;margin:12mm 14mm}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Microsoft JhengHei',Arial,sans-serif;font-size:11px;color:#111;background:#fff}
+  .page{width:100%;max-width:182mm}
+  /* header */
+  .hd{display:flex;align-items:center;justify-content:space-between;border-bottom:2.5px solid #0f766e;padding-bottom:8px;margin-bottom:12px}
+  .hd-co{font-size:15px;font-weight:900;color:#0f766e;letter-spacing:1px}
+  .hd-title{font-size:18px;font-weight:900;color:#111;text-align:center}
+  .hd-no{font-size:10px;color:#6b7280;text-align:right}
+  /* info grid */
+  .igrid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #d1d5db;border-radius:6px;overflow:hidden;margin-bottom:12px}
+  .irow{display:contents}
+  .ilbl{background:#f0fdf4;color:#065f46;font-weight:700;font-size:9.5px;padding:5px 10px;border-bottom:1px solid #d1d5db;border-right:1px solid #d1d5db}
+  .ival{background:#fff;font-size:10.5px;padding:5px 10px;border-bottom:1px solid #d1d5db}
+  .irow:last-child .ilbl,.irow:last-child .ival{border-bottom:none}
+  /* sev badge */
+  .sev{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;color:#fff;background:${color}}
+  /* section */
+  .sec{margin-bottom:12px}
+  .sec-ttl{font-size:10px;font-weight:700;color:#374151;border-bottom:1px solid #d1d5db;padding-bottom:3px;margin-bottom:6px}
+  .desc-box{background:#f8fafc;border:1px solid #e5e7eb;border-radius:5px;padding:8px 10px;font-size:10.5px;line-height:1.7;white-space:pre-wrap}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:10px}
+  th{background:#f0fdf4;color:#065f46;font-size:9px;font-weight:700;padding:5px 8px;border:1px solid #e5e7eb;text-align:left}
+  /* sign */
+  .sign{display:flex;gap:20px;margin-top:16px}
+  .sign-box{flex:1;border-top:1px solid #374151;padding-top:4px;text-align:center;font-size:9px;color:#6b7280}
+  /* footer */
+  .foot{margin-top:10px;border-top:1px solid #e5e7eb;padding-top:6px;font-size:9px;color:#9ca3af;display:flex;justify-content:space-between}
+</style>
+</head><body><div class="page">
+
+  <!-- 標題列 -->
+  <div class="hd">
+    <div class="hd-co">龍冶科技股份有限公司</div>
+    <div class="hd-title">客　訴　單</div>
+    <div class="hd-no">
+      <div>${id}</div>
+      <div>建立：${(c.created_at||c.createdAt||'').substring(0,10)}</div>
+    </div>
+  </div>
+
+  <!-- 基本資料 -->
+  <div class="igrid">
+    <div class="irow"><div class="ilbl">客戶名稱</div><div class="ival">${c.customer||'—'}</div></div>
+    <div class="irow"><div class="ilbl">客訴日期</div><div class="ival">${c.date||'—'}</div></div>
+    <div class="irow"><div class="ilbl">聯絡人</div><div class="ival">${c.contact||'—'}</div></div>
+    <div class="irow"><div class="ilbl">電話</div><div class="ival">${c.phone||'—'}</div></div>
+    <div class="irow"><div class="ilbl">產品型號</div><div class="ival">${c.product||'—'}</div></div>
+    <div class="irow"><div class="ilbl">批號</div><div class="ival">${c.lot||'—'}</div></div>
+    <div class="irow"><div class="ilbl">出貨日期</div><div class="ival">${c.ship_date||'—'}</div></div>
+    <div class="irow"><div class="ilbl">問題數量</div><div class="ival">${c.qty?c.qty+' 件':'—'}</div></div>
+    <div class="irow"><div class="ilbl">訂單號碼</div><div class="ival">${c.order_no||'—'}</div></div>
+    <div class="irow"><div class="ilbl">嚴重程度</div><div class="ival"><span class="sev">${c.severity||'—'}</span></div></div>
+    <div class="irow"><div class="ilbl">客訴類別</div><div class="ival">${c.category||'—'}</div></div>
+    <div class="irow"><div class="ilbl">負責人員</div><div class="ival">${c.handler||'—'}</div></div>
+  </div>
+
+  <!-- 問題描述 -->
+  <div class="sec">
+    <div class="sec-ttl">問題描述</div>
+    <div class="desc-box">${c.description||'（無）'}</div>
+    ${c.demand?`<div style="margin-top:6px;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:6px 10px;font-size:10px"><strong>客戶要求：</strong>${c.demand}</div>`:''}
+    ${c.note?`<div style="margin-top:6px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:5px;padding:6px 10px;font-size:10px"><strong>備註：</strong>${c.note}</div>`:''}
+  </div>
+
+  <!-- 處理歷程 -->
+  <div class="sec">
+    <div class="sec-ttl">處理歷程</div>
+    <table>
+      <thead><tr><th style="width:100px">時間</th><th style="width:70px">處理人</th><th style="width:60px">狀態</th><th>處理內容 / 根本原因 / CAPA</th></tr></thead>
+      <tbody>${logsHtml}</tbody>
+    </table>
+  </div>
+
+  <!-- 照片 -->
+  ${imgsHtml}
+
+  <!-- 簽核 -->
+  <div class="sign">
+    <div class="sign-box">客訴接收 / 業務</div>
+    <div class="sign-box">品管確認</div>
+    <div class="sign-box">主管核准</div>
+    <div class="sign-box">客戶回簽</div>
+  </div>
+
+  <div class="foot">
+    <span>龍冶科技股份有限公司　客訴管理系統</span>
+    <span>列印日期：${new Date().toLocaleDateString('zh-TW')}</span>
+  </div>
+</div>
+<script>window.onload=()=>window.print();<\/script>
+</body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
 }
 
 // ══════════════════════════════════
