@@ -243,8 +243,6 @@ CREATE POLICY "allow_all" ON complaints
     <div class="ni on" onclick="nav('dashboard')"><span class="ico">📊</span>儀表板<span id="alertBadge" class="alert-badge" style="display:none">0</span></div>
     <div class="ni" onclick="nav('list')"><span class="ico">📋</span>客訴列表</div>
     <div class="ni" onclick="nav('new')"><span class="ico">➕</span>新增客訴</div>
-    <div class="nsep">資料備份</div>
-    <div class="ni" onclick="exportZip()"><span class="ico">📦</span>匯出 ZIP（含附件）</div>
     <div class="nsep">通知</div>
     <div class="ni" onclick="requestNotif()"><span class="ico">🔔</span>開啟桌面通知</div>
     <div class="ni" onclick="checkOverdue()"><span class="ico">⏰</span>檢查逾期案件</div>
@@ -1345,14 +1343,6 @@ function fmtDateFile(){
   return `${n.getFullYear()}${p2(n.getMonth()+1)}${p2(n.getDate())}`;
 }
 
-async function exportZip(){
-  const zip=new JSZip();
-  zip.file('complaints.json', JSON.stringify(complaints, null, 2));
-  zip.file('README.txt', '此 ZIP 由龍冶客訴管理系統匯出。\ncomplaints.json 包含所有案件資料。\n媒體檔案儲存於 Google Drive，URL 記錄在各案件的 media 欄位。');
-  const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
-  dlBlob(blob, `客訴備份_${fmtDateFile()}.zip`);
-  toast('✅ ZIP 備份已匯出','ok');
-}
 
 
 async function doClear(){
