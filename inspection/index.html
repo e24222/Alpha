@@ -786,7 +786,7 @@
     <div class="card">
       <div class="card-title"><span class="icon">🔎</span> 搜尋篩選</div>
       <div class="admin-filters">
-        <div class="filter-group">
+        <div class="filter-group" id="vendor-filter-group">
           <label>廠商名稱</label>
           <input type="text" id="f-vendor" placeholder="搜尋廠商...">
         </div>
@@ -965,6 +965,7 @@ let currentPage = 1;
 let allRecords = [];
 let adminUnlocked = false;
 let pendingTab = null;
+let currentVendorFilter = null; // null=全部, string=只看此廠商
 let currentSubTab = 'admin';
 const BACKEND_SUBS = ['admin', 'exception', 'products'];
 
@@ -1014,17 +1015,68 @@ function showTab(tab) {
   if (tab === 'exception') loadExceptionFilters();
 }
 
-function checkPw() {
-  const val = document.getElementById('pw-input').value;
-  if (val === '22505047') {
+async function checkPw() {
+  const val = document.getElementById('pw-input').value.trim();
+  const btn = document.querySelector('#pw-modal .btn-primary');
+  btn.disabled = true;
+  btn.textContent = '驗證中...';
+
+  // 管理員密碼 → 看全部
+  if (val === '0000') {
     adminUnlocked = true;
+    currentVendorFilter = null;
     document.getElementById('pw-modal').classList.remove('show');
+    renderVendorBadge();
     showTab(pendingTab || 'admin');
     pendingTab = null;
-  } else {
-    document.getElementById('pw-error').style.display = 'block';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
+    btn.disabled = false;
+    btn.textContent = '確認';
+    return;
+  }
+
+  // 查 vendor_passwords 資料表
+  try {
+    const { data, error } = await db.from('vendor_passwords').select('vendor_name').eq('password', val);
+    if (!error && data && data.length > 0) {
+      adminUnlocked = true;
+      currentVendorFilter = data.map(d => d.vendor_name); // 陣列，支援多名稱
+      document.getElementById('pw-modal').classList.remove('show');
+      renderVendorBadge();
+      showTab(pendingTab || 'admin');
+      pendingTab = null;
+      btn.disabled = false;
+      btn.textContent = '確認';
+      return;
+    }
+  } catch(e) {}
+
+  // 密碼錯誤
+  document.getElementById('pw-error').style.display = 'block';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-input').focus();
+  btn.disabled = false;
+  btn.textContent = '確認';
+}
+
+function renderVendorBadge() {
+  const header = document.querySelector('.header-inner');
+  const old = document.getElementById('vendor-badge');
+  if (old) old.remove();
+  if (currentVendorFilter) {
+    const badge = document.createElement('div');
+    badge.id = 'vendor-badge';
+    badge.style.cssText = 'background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:4px 14px;font-size:0.85rem;font-weight:700;cursor:pointer;';
+    badge.title = '點擊切換帳號';
+    badge.textContent = '👤 ' + (Array.isArray(currentVendorFilter) ? currentVendorFilter.join(' / ') : currentVendorFilter);
+    badge.onclick = () => {
+      if (confirm('要切換帳號嗎？')) {
+        adminUnlocked = false;
+        currentVendorFilter = null;
+        renderVendorBadge();
+        showTab('form');
+      }
+    };
+    header.appendChild(badge);
   }
 }
 
@@ -1219,6 +1271,9 @@ function resetForm() {
 
 // ============ ADMIN ============
 async function loadRecords() {
+  // 廠商模式：隱藏廠商搜尋欄
+  const vfg = document.getElementById('vendor-filter-group');
+  if (vfg) vfg.style.display = currentVendorFilter ? 'none' : '';
   document.getElementById('records-container').innerHTML =
     '<div class="loading"><div class="spinner"></div><p>載入中...</p></div>';
   document.getElementById('pagination').innerHTML = '';
@@ -1230,7 +1285,14 @@ async function loadRecords() {
 
   try {
     let q = db.from('inspection_records').select('*').order('inspection_date', { ascending: false }).order('created_at', { ascending: false });
-    if (vendor) q = q.ilike('vendor', `%${vendor}%`);
+    // 廠商帳號限制：只能看自己的記錄
+    if (currentVendorFilter) {
+      const vendors = Array.isArray(currentVendorFilter) ? currentVendorFilter : [currentVendorFilter];
+      q = q.in('vendor', vendors);
+      // 廠商模式下忽略 vendor 搜尋欄
+    } else {
+      if (vendor) q = q.ilike('vendor', `%${vendor}%`);
+    }
     if (product) q = q.ilike('product_name', `%${product}%`);
     if (dateFrom) q = q.gte('inspection_date', dateFrom);
     if (dateTo) q = q.lte('inspection_date', dateTo);
