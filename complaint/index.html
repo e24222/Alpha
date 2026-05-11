@@ -245,8 +245,6 @@ CREATE POLICY "allow_all" ON complaints
     <div class="ni" onclick="nav('new')"><span class="ico">➕</span>新增客訴</div>
     <div class="nsep">資料備份</div>
     <div class="ni" onclick="exportZip()"><span class="ico">📦</span>匯出 ZIP（含附件）</div>
-    <div class="ni" onclick="document.getElementById('importZipIn').click()"><span class="ico">📥</span>匯入 ZIP 備份</div>
-    <input type="file" id="importZipIn" accept=".zip" style="display:none" onchange="importZip(event)">
     <div class="nsep">通知</div>
     <div class="ni" onclick="requestNotif()"><span class="ico">🔔</span>開啟桌面通知</div>
     <div class="ni" onclick="checkOverdue()"><span class="ico">⏰</span>檢查逾期案件</div>
@@ -1356,33 +1354,6 @@ async function exportZip(){
   toast('✅ ZIP 備份已匯出','ok');
 }
 
-async function importZip(e){
-  const file=e.target.files[0];
-  if(!file){return;}
-  e.target.value='';
-  try{
-    const zip=await JSZip.loadAsync(file);
-    const jsonFile=zip.file('complaints.json');
-    if(!jsonFile){toast('ZIP 內找不到 complaints.json','err');return;}
-    const jsonStr=await jsonFile.async('string');
-    const imported=JSON.parse(jsonStr);
-    if(!Array.isArray(imported)){toast('資料格式錯誤','err');return;}
-    // Merge: overwrite existing by id, append new
-    const map={};
-    for(const c of complaints) map[c.id]=c;
-    for(const c of imported) map[c.id]=c;
-    complaints=Object.values(map);
-    // Upsert all to Supabase
-    let ok=0,fail=0;
-    for(const c of imported){
-      try{ await upsertComplaint(c); ok++; }catch(err){ fail++; }
-    }
-    renderList(); renderDash(); checkOverdue();
-    toast(`✅ 匯入完成：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}`, fail?'warn':'ok');
-  }catch(err){
-    toast('匯入失敗：'+err.message,'err');
-  }
-}
 
 async function doClear(){
   const confirmed=await cfm2('清除所有資料','確定要刪除所有案件嗎？此操作無法復原！','⚠️');
