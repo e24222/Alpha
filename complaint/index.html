@@ -1384,7 +1384,7 @@ function cfmR(v){
 function toast(msg,type=''){
   const t=document.getElementById('toast');
   t.textContent=msg;
-  t.className='toast'+(type?' '+type:'');
+  t.className='tw toast'+(type?' '+type:'');
   t.style.display='block';
   clearTimeout(window._toastT);
   if(type!=='loading'){window._toastT=setTimeout(()=>t.style.display='none',3000);}
