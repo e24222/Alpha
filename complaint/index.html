@@ -887,10 +887,10 @@ async function submitNew(e) {
 
   let mediaList = Array.isArray(complaints.find(x=>x.id===id)?.media) ? complaints.find(x=>x.id===id).media : [];
   if(pendingNew.length > 0){
-    toast('上傳附件中…', '');
+    const _tot=pendingNew.length; let _idx=0;
     for(const f of pendingNew){
       try {
-        const m = await uploadFile(id, f.blob);
+        toast('📤 上傳 '+(++_idx)+'/'+_tot+'…','loading'); const m = await uploadFile(id, f.blob);
         mediaList.push(m);
       } catch(uploadErr) {
         toast('⚠️ 附件「'+f.name+'」上傳失敗，已略過：'+uploadErr.message, 'warn');
@@ -1144,8 +1144,8 @@ async function saveEdit(){
   // 上傳追加附件至 Cloudinary
   const newMedia = [];
   for(const f of pendingEdit){
-    toast('上傳附件中…', '');
-    const m = await uploadFile(id, f.blob);
+    const _tot=pendingNew.length; let _idx=0;
+    toast('📤 上傳 '+(++_idx)+'/'+_tot+'…','loading'); const m = await uploadFile(id, f.blob);
     newMedia.push(m);
   }
 
@@ -1369,15 +1369,15 @@ async function doClear(){
 
 function cfm2(title,msg,icon='❓'){
   return new Promise(resolve=>{
-    const m=document.getElementById('cfmM');
-    document.getElementById('cfmTitle').textContent=icon+' '+title;
-    document.getElementById('cfmMsg').textContent=msg;
+    const m=document.getElementById('cfm');
+    document.getElementById('cfmN').textContent=icon+' '+title;
+    document.getElementById('cfmM').textContent=msg;
     m.style.display='flex';
     window._cfmResolve=resolve;
   });
 }
 function cfmR(v){
-  document.getElementById('cfmM').style.display='none';
+  document.getElementById('cfm').style.display='none';
   if(window._cfmResolve){window._cfmResolve(v);window._cfmResolve=null;}
 }
 
@@ -1387,7 +1387,7 @@ function toast(msg,type=''){
   t.className='toast'+(type?' '+type:'');
   t.style.display='block';
   clearTimeout(window._toastT);
-  window._toastT=setTimeout(()=>t.style.display='none',3000);
+  if(type!=='loading'){window._toastT=setTimeout(()=>t.style.display='none',3000);}
 }
 
 function openLB(src,type){
