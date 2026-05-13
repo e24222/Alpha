@@ -580,7 +580,7 @@ CREATE POLICY "allow_all" ON complaints
 <!-- ══ LIGHTBOX ══ -->
 <div id="lb" class="lb" style="display:none" onclick="closeLB()">
   <button class="lbx" onclick="closeLB()">✕</button>
-  <div id="lbC" onclick="event.stopPropagation()"></div>
+  <div id="lbC" onclick="event.stopPropagation()"><img id="lbImg" style="max-width:90vw;max-height:90vh;border-radius:6px"><video id="lbVid" controls style="max-width:90vw;max-height:90vh;display:none"></video></div>
 </div>
 
 <!-- ══ CONFIRM ══ -->
