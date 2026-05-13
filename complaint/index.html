@@ -245,7 +245,7 @@ CREATE POLICY "allow_all" ON complaints
     <div class="ni" onclick="nav('new')"><span class="ico">➕</span>新增客訴</div>
     <div class="nsep">通知</div>
     <div class="ni" onclick="requestNotif()"><span class="ico">🔔</span>開啟桌面通知</div>
-    <div class="ni" onclick="checkOverdue()"><span class="ico">⏰</span>檢查逾期案件</div>
+    <div class="ni" onclick="checkOverdue(true)"><span class="ico">⏰</span>檢查逾期案件</div>
     <div class="nsep">設定</div>
     <div class="ni" onclick="nav('settings')"><span class="ico">⚙️</span>系統設定</div>
     <div class="ni" onclick="logout()"><span class="ico">🚪</span>登出</div>
@@ -1186,7 +1186,7 @@ async function delC(id){
 // ══════════════════════════════════
 // OVERDUE ALERTS
 // ══════════════════════════════════
-function checkOverdue(){
+function checkOverdue(manual=false){
   const now=Date.now();
   // 通知門檻固定；寄信門檻從設定讀取
   const rules=[
@@ -1217,7 +1217,7 @@ function checkOverdue(){
   // Update badge
   const badge=document.getElementById('alertBadge');
   badge.style.display=overdue.length?'':'none';
-  badge.textContent=overdue.length;
+  badge.textContent=overdue.length;  if(manual) toast(overdue.length?`⚠️ 有 ${overdue.length} 筆逾期案件`:'✅ 目前沒有逾期案件',overdue.length?'warn':'ok');
   // Render alerts on dashboard
   const sec=document.getElementById('overdueSection');
   sec.innerHTML=overdue.map(({c,age,label})=>`
