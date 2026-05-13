@@ -141,6 +141,10 @@ textarea{resize:vertical;min-height:80px}
 .lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;align-items:center;justify-content:center}
 .lbx{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .lbx:hover{background:rgba(255,255,255,.3)}
+.lbn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:none;color:#fff;font-size:2rem;width:50px;height:50px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:301;transition:background .2s}
+.lbn:hover{background:rgba(255,255,255,.4)}
+.lbp{left:16px}.lbf{right:16px}
+#lbNum{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.8);font-size:.85rem;background:rgba(0,0,0,.4);padding:3px 10px;border-radius:10px;pointer-events:none}
 .cfm{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center}
 .cfmb{background:#fff;border-radius:12px;padding:26px 22px;max-width:340px;width:90%;text-align:center}
 .cfmb .ci{font-size:36px;margin-bottom:8px}
@@ -580,6 +584,9 @@ CREATE POLICY "allow_all" ON complaints
 <!-- ══ LIGHTBOX ══ -->
 <div id="lb" class="lb" style="display:none" onclick="closeLB()">
   <button class="lbx" onclick="closeLB()">✕</button>
+  <button class="lbn lbp" onclick="event.stopPropagation();lbNav(-1)">&#8249;</button>
+  <button class="lbn lbf" onclick="event.stopPropagation();lbNav(1)">&#8250;</button>
+  <div id="lbNum"></div>
   <div id="lbC" onclick="event.stopPropagation()"><img id="lbImg" style="max-width:90vw;max-height:90vh;border-radius:6px"><video id="lbVid" controls style="max-width:90vw;max-height:90vh;display:none"></video></div>
 </div>
 
@@ -993,12 +1000,13 @@ async function openDet(id) {
   // 從 complaint 記錄讀取附件 URL（Cloudinary）
   const media=getMediaForComplaint(id);
 
-  const mHtml=media.length?`<div class="mt4">
+  window._lbUrls=media.filter(m=>m.type&&m.type.startsWith('image/')).map(m=>m.url);
+      const mHtml=media.length?`<div class="mt4">
     <div class="txs txmu fw6 mb3">📎 附件 (${media.length})</div>
     <div class="mgrid">${media.map(m=>{
       const isImg=m.type.startsWith('image/');
       const isDriveVideo = !isImg && m.url.includes('drive.google.com');
-      return `<div class="mitem" onclick="${isImg ? `openLB('${m.url}','image')` : `window.open('${m.url}','_blank')`}" style="cursor:pointer;">
+      return `<div class="mitem" onclick="${isImg ? `openLB(window._lbUrls.indexOf('${m.url}'))` : `window.open('${m.url}','_blank')`}" style="cursor:pointer;">
         ${isImg
           ? `<img src="${m.url}" alt="${esc(m.name)}">`
           : `<div style="width:100%;height:80px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;font-size:2rem;">🎬</div>`
@@ -1390,23 +1398,49 @@ function toast(msg,type=''){
   if(type!=='loading'){window._toastT=setTimeout(()=>t.style.display='none',3000);}
 }
 
-function openLB(src,type){
-  // Drive 影片→開新分頁
-  if(type && type.startsWith('video/') || (src && src.includes('drive.google.com/file'))) {
-    window.open(src,'_blank'); return;
+window._lbIdx=0;
+function openLB(idxOrUrl,type){
+  if(typeof idxOrUrl==='string'){
+    if(type&&type.startsWith('video/')||(idxOrUrl&&idxOrUrl.includes('drive.google.com/file'))){
+      window.open(idxOrUrl,'_blank'); return;
+    }
+    window._lbUrls=[idxOrUrl]; window._lbIdx=0;
+  } else {
+    window._lbIdx=idxOrUrl;
   }
+  lbShow(window._lbIdx);
+}
+function lbShow(idx){
+  const urls=window._lbUrls||[];
+  if(!urls.length) return;
+  idx=Math.max(0,Math.min(idx,urls.length-1));
+  window._lbIdx=idx;
+  const src=urls[idx];
   const lb=document.getElementById('lb');
   const img=document.getElementById('lbImg');
   const vid=document.getElementById('lbVid');
+  const num=document.getElementById('lbNum');
   vid.style.display='none'; img.style.display='block';
-  // Drive 圖片用高解析 thumbnail
-  if(src && src.includes('drive.google.com/thumbnail')) {
-    img.src = src.replace('sz=w1200','sz=w1600');
-  } else {
-    img.src=src;
-  }
+  if(src&&src.includes('drive.google.com/thumbnail')){
+    img.src=src.replace('sz=w1200','sz=w1600');
+  } else { img.src=src; }
+  if(num) num.textContent=urls.length>1?(idx+1)+' / '+urls.length:'';
+  const lbp=lb.querySelector('.lbp'); const lbf=lb.querySelector('.lbf');
+  if(lbp) lbp.style.display=urls.length>1?'flex':'none';
+  if(lbf) lbf.style.display=urls.length>1?'flex':'none';
   lb.style.display='flex';
 }
+function lbNav(dir){
+  const urls=window._lbUrls||[];
+  lbShow((window._lbIdx+dir+urls.length)%urls.length);
+}
+document.addEventListener('keydown',function(e){
+  const lb=document.getElementById('lb');
+  if(!lb||lb.style.display==='none') return;
+  if(e.key==='ArrowLeft') lbNav(-1);
+  else if(e.key==='ArrowRight') lbNav(1);
+  else if(e.key==='Escape') closeLB();
+});
 function closeLB(){
   const lb=document.getElementById('lb');
   lb.style.display='none';
