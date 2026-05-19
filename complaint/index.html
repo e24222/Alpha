@@ -1227,7 +1227,7 @@ function checkOverdue(manual=false){
   const overdue=[];
   for(const c of complaints){
     if(c.status==='已解決'||c.status==='已結案') continue;
-    const age=(now-new Date(c.created_at||c.createdAt))/86400000;
+    const age=(now-new Date(c.updated_at||c.created_at||c.createdAt))/86400000;
     const rule=rules.find(r=>r.sev===c.severity);
     if(rule && age>=rule.days){
       overdue.push({c,age:Math.floor(age),label:rule.label});
