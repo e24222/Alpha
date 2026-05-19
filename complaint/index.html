@@ -581,6 +581,23 @@ CREATE POLICY "allow_all" ON complaints
 </div>
 </div>
 
+<!-- ══ OVERDUE MODAL ══ -->
+<div id="overdueM" class="overlay" style="display:none" onclick="if(event.target===this)document.getElementById('overdueM').style.display='none'">
+<div class="modal" style="max-width:700px" onclick="event.stopPropagation()">
+  <div class="mh">
+    <div>
+      <div class="mt2">⏰ 逾期案件清單</div>
+      <div class="txs txmu mt4" id="overdueModalSub"></div>
+    </div>
+    <button class="mx" onclick="document.getElementById('overdueM').style.display='none'">✕</button>
+  </div>
+  <div style="padding:16px 20px;max-height:60vh;overflow-y:auto" id="overdueModalBody"></div>
+  <div class="mf">
+    <button class="btn bs" onclick="document.getElementById('overdueM').style.display='none'">關閉</button>
+  </div>
+</div>
+</div>
+
 <!-- ══ LIGHTBOX ══ -->
 <div id="lb" class="lb" style="display:none" onclick="closeLB()">
   <button class="lbx" onclick="closeLB()">✕</button>
@@ -1228,15 +1245,23 @@ function checkOverdue(manual=false){
   badge.textContent=overdue.length;  if(manual) toast(overdue.length?`⚠️ 有 ${overdue.length} 筆逾期案件`:'✅ 目前沒有逾期案件',overdue.length?'warn':'ok');
   // Render alerts on dashboard
   const sec=document.getElementById('overdueSection');
-  sec.innerHTML=overdue.map(({c,age,label})=>`
-    <div class="alert-row">
-      <div class="alert-ico">🚨</div>
-      <div style="flex:1">
-        <strong>${esc(c.customer)}</strong> <code>${c.id}</code> — ${label}
-        <span style="color:var(--mu);font-size:12px">（已 ${age} 天，${catB(c.category)} ${sevB(c.severity)}）</span>
-      </div>
-      <button class="btn bo bxs" onclick="openDet('${c.id}')">查看</button>
-    </div>`).join('');
+  sec.innerHTML='';
+  // 開啟逾期案件 modal
+  if(manual && overdue.length){
+    const body=document.getElementById('overdueModalBody');
+    const sub=document.getElementById('overdueModalSub');
+    sub.textContent='共 '+overdue.length+' 筆案件逾期未處理';
+    body.innerHTML=overdue.map(({c,age,label})=>`
+      <div class="alert-row" style="margin-bottom:10px">
+        <div class="alert-ico">🚨</div>
+        <div style="flex:1">
+          <div><strong>${esc(c.customer)}</strong> <code>${c.id}</code></div>
+          <div style="margin-top:4px">${label} <span style="color:var(--mu);font-size:12px">（已逾期 ${age} 天，${catB(c.category)} ${sevB(c.severity)}）</span></div>
+        </div>
+        <button class="btn bo bxs" onclick="document.getElementById('overdueM').style.display='none';openDet('${c.id}')">查看</button>
+      </div>`).join('');
+    document.getElementById('overdueM').style.display='flex';
+  }
   // Browser notifications
   if(overdue.length && Notification.permission==='granted'){
     overdue.slice(0,3).forEach(({c,label})=>{
