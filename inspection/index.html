@@ -1372,7 +1372,7 @@ function renderRecords() {
       <td>${esc(r.inspector)}</td>
       <td>${getOverallBadge(r)}</td>
       <td style="display:flex;gap:6px;">
-        <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;" onclick='showDetail(${JSON.stringify(r).replace(/'/g,"\\'")} )'>詳細</button>
+        <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;" onclick="showDetailById('${r.id}')">詳細</button>
         <button class="btn" style="padding:5px 12px;font-size:0.82rem;background:#fadbd8;color:#c0392b;border:1px solid #f1948a;" onclick="deleteRecord('${r.id}', '${esc(r.vendor)}', '${esc(r.product_name)}')">刪除</button>
       </td>
     </tr>`;
@@ -1477,6 +1477,10 @@ function showDetail(r) {
   document.getElementById('modal').classList.add('show');
 }
 
+function showDetailById(id) {
+  const r = allRecords.find(x => x.id === id);
+  if (r) showDetail(r);
+}
 
 // ============ INSPECTION REPORT ============
 function showReport(r) {
