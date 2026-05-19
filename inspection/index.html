@@ -1478,8 +1478,11 @@ function showDetail(r) {
 }
 
 function showDetailById(id) {
-  const r = allRecords.find(x => x.id === id);
-  if (r) showDetail(r);
+  try {
+    const r = allRecords.find(x => x.id === id);
+    if (!r) { alert('找不到記錄 (allRecords長度:' + allRecords.length + ')'); return; }
+    showDetail(r);
+  } catch(e) { alert('showDetail錯誤: ' + e.message); }
 }
 
 // ============ INSPECTION REPORT ============
