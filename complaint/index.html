@@ -293,7 +293,7 @@ CREATE POLICY "allow_all" ON complaints
   <div class="card">
     <div class="ch"><div class="ct">🕐 最近 10 筆</div><button class="btn bo bsm" onclick="nav('list')">查看全部</button></div>
     <div class="tbl-w">
-      <table><thead><tr><th>案件編號</th><th>客戶</th><th>類別</th><th>嚴重度</th><th>狀態</th><th>日期</th><th>附件</th></tr></thead>
+      <table><thead><tr><th>客戶</th><th>產品料號</th><th>類別</th><th>嚴重度</th><th>狀態</th><th>日期</th><th>附件</th></tr></thead>
       <tbody id="dashTb"></tbody></table>
       <div id="dashEmpty" class="empty" style="display:none"><i>📭</i>尚無客訴記錄</div>
     </div>
@@ -315,7 +315,7 @@ CREATE POLICY "allow_all" ON complaints
   <div class="card">
     <div class="ch"><div class="ct">客訴記錄</div><span class="txs txmu" id="listCnt"></span></div>
     <div class="tbl-w">
-      <table><thead><tr><th>案件編號</th><th>客戶</th><th>類別</th><th>嚴重度</th><th>描述摘要</th><th>狀態</th><th>日期</th><th>附件</th><th></th></tr></thead>
+      <table><thead><tr><th>客戶</th><th>產品料號</th><th>類別</th><th>嚴重度</th><th>描述摘要</th><th>狀態</th><th>日期</th><th>附件</th><th></th></tr></thead>
       <tbody id="listTb"></tbody></table>
       <div id="listEmpty" class="empty" style="display:none"><i>🔎</i>沒有符合條件的記錄</div>
     </div>
@@ -847,7 +847,8 @@ function renderDash() {
   if(!recent.length){ tb.innerHTML=''; document.getElementById('dashEmpty').style.display='block'; return; }
   document.getElementById('dashEmpty').style.display='none';
   tb.innerHTML=recent.map(c=>`<tr onclick="openDet('${c.id}')">
-    <td><code>${c.id}</code></td><td>${esc(c.customer)}</td>
+    <td>${esc(c.customer)}</td>
+    <td>${esc(c.product||'—')}</td>
     <td>${catB(c.category)}</td><td>${sevB(c.severity)}</td>
     <td>${statB(c.status)}</td><td>${fmtD(c.date)}</td>
     <td>${(c.media_count||0)?'📎 '+(c.media_count||0):''}</td>
@@ -881,7 +882,8 @@ function renderList() {
   if(!data.length){ tb.innerHTML=''; em.style.display='block'; return; }
   em.style.display='none';
   tb.innerHTML=data.map(c=>`<tr onclick="openDet('${c.id}')">
-    <td><code>${c.id}</code></td><td>${esc(c.customer)}</td>
+    <td>${esc(c.customer)}</td>
+    <td>${esc(c.product||'—')}</td>
     <td>${catB(c.category)}</td><td>${sevB(c.severity)}</td>
     <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.description||'')}</td>
     <td>${statB(c.status)}</td><td>${fmtD(c.date)}</td>
