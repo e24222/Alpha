@@ -273,10 +273,10 @@ CREATE POLICY "allow_all" ON complaints
   <div id="overdueSection"></div>
 
   <div class="stats mb4">
-    <div class="stat"><div class="slbl">本月新增</div><div class="sval cb" id="sNew">—</div><div class="ssub">筆客訴</div></div>
-    <div class="stat"><div class="slbl">處理中</div><div class="sval cw" id="sOpen">—</div><div class="ssub">尚未結案</div></div>
-    <div class="stat"><div class="slbl">已解決/結案</div><div class="sval cg" id="sDone">—</div><div class="ssub">筆</div></div>
-    <div class="stat"><div class="slbl">緊急案件</div><div class="sval cr" id="sUrg">—</div><div class="ssub">需立即處理</div></div>
+    <div class="stat" style="cursor:pointer" onclick="navList('')"><div class="slbl">本月新增</div><div class="sval cb" id="sNew">—</div><div class="ssub">筆客訴</div></div>
+    <div class="stat" style="cursor:pointer" onclick="navList('處理中')"><div class="slbl">處理中</div><div class="sval cw" id="sOpen">—</div><div class="ssub">尚未結案</div></div>
+    <div class="stat" style="cursor:pointer" onclick="navList('已解決')"><div class="slbl">已解決/結案</div><div class="sval cg" id="sDone">—</div><div class="ssub">筆</div></div>
+    <div class="stat" style="cursor:pointer" onclick="navList('緊急')"><div class="slbl">緊急案件</div><div class="sval cr" id="sUrg">—</div><div class="ssub">需立即處理</div></div>
   </div>
 
   <div class="g2 mb4">
@@ -816,6 +816,15 @@ function nav(pg) {
   if (pg==='list')      renderList();
   if (pg==='new')       initNew();
   if (pg==='settings')  loadSett();
+}
+
+function navList(statusFilter) {
+  // 緊急案件 → 用嚴重度篩選
+  const isSev = statusFilter === '緊急';
+  document.getElementById('fSt').value = isSev ? '' : statusFilter;
+  document.getElementById('fSv').value = isSev ? '緊急' : '';
+  document.getElementById('fCat').value = '';
+  nav('list');
 }
 
 // ══════════════════════════════════
