@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0037)file:///D:/admin/Downloads/index.html -->
+<!-- saved from url=(0040)file:///D:/admin/Downloads/index_13.html -->
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>龍冶首件檢驗記錄系統</title>
-<script src="./index_files/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Microsoft JhengHei', '微軟正黑體',h Arial, sans-serif; background: #f0f2f5; color: #333; }
@@ -545,14 +545,14 @@
   </div>
 </div>
 <div class="tabs">
-  <button class="tab-btn active" onclick="showTab(&#39;form&#39;)">📝 填寫檢驗記錄</button>
-  <button class="tab-btn" onclick="showTab(&#39;backend&#39;)">🔧 後台管理</button>
+  <button class="tab-btn" onclick="showTab(&#39;form&#39;)">📝 填寫檢驗記錄</button>
+  <button class="tab-btn active" onclick="showTab(&#39;backend&#39;)">🔧 後台管理</button>
 </div>
 
 <div class="main">
 
   <!-- ============ FORM TAB ============ -->
-  <div id="tab-form" style="display: block;">
+  <div id="tab-form" style="display: none;">
     <div id="alert-form" class="alert"></div>
 
     <form id="inspection-form" onsubmit="submitForm(event)">
@@ -570,7 +570,7 @@
           </div>
           <div class="form-group">
             <label>品名 <span class="req">*</span></label>
-            <select name="product_name" id="product-name-select" required=""><option value="">請選擇品名...</option><option value="3.5公分培養皿">3.5公分培養皿</option><option value="5公分 培養皿">5公分 培養皿</option><option value="6.5公分培養皿 凸面可扣">6.5公分培養皿 凸面可扣</option><option value="6.5公分培養皿 平面">6.5公分培養皿 平面</option><option value="6公分有環培養皿">6公分有環培養皿</option><option value="9公分 Gplus培養皿">9公分 Gplus培養皿</option><option value="9公分熱澆道培養皿">9公分熱澆道培養皿</option><option value="9公分熱澆道培養皿  (大陸製)">9公分熱澆道培養皿  (大陸製)</option><option value="15公分培養皿">15公分培養皿</option><option value="90*20 培養皿">90*20 培養皿</option><option value="150*20 培養皿">150*20 培養皿</option></select>
+            <select name="product_name" id="product-name-select" required=""><option value="">請選擇品名...</option><option value="3.5公分培養皿">3.5公分培養皿</option><option value="5公分 培養皿">5公分 培養皿</option><option value="6.5公分培養皿">6.5公分培養皿</option><option value="6公分有環培養皿">6公分有環培養皿</option><option value="9公分 Gplus培養皿">9公分 Gplus培養皿</option><option value="9公分熱澆道培養皿">9公分熱澆道培養皿</option><option value="15公分培養皿">15公分培養皿</option><option value="90*20 培養皿">90*20 培養皿</option><option value="150*20 培養皿">150*20 培養皿</option></select>
           </div>
           <div class="form-group">
             <label>料號</label>
@@ -613,7 +613,7 @@
                 <td class="standard">清澈透明、無霧化</td>
                 <td><input type="number" name="transparency_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="transparency_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="transparency_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="transparency_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -622,7 +622,7 @@
                 <td class="standard">無翹曲、扭曲</td>
                 <td><input type="number" name="deformation_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="deformation_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="deformation_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="deformation_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -631,7 +631,7 @@
                 <td class="standard">同批顏色一致</td>
                 <td><input type="number" name="color_diff_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="color_diff_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="color_diff_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="color_diff_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -640,7 +640,7 @@
                 <td class="standard">不得有肉眼可見異物</td>
                 <td><input type="number" name="foreign_matter_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="foreign_matter_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="foreign_matter_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="foreign_matter_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -649,7 +649,7 @@
                 <td class="standard">灌點不可過大或破裂</td>
                 <td><input type="number" name="gate_defect_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="gate_defect_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="gate_defect_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="gate_defect_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -658,7 +658,7 @@
                 <td class="standard">不得有明顯刮痕</td>
                 <td><input type="number" name="scratch_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="scratch_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="scratch_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="scratch_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -667,7 +667,7 @@
                 <td class="standard">邊緣平整、不割手</td>
                 <td><input type="number" name="burr_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="burr_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="burr_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="burr_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -676,7 +676,7 @@
                 <td class="standard">底部不可凹下或凸起或有水波紋</td>
                 <td><input type="number" name="flatness_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="flatness_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="flatness_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="flatness_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -685,7 +685,7 @@
                 <td class="standard">使用水平儀量測不可歪斜</td>
                 <td><input type="number" name="skewness_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="skewness_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="skewness_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="skewness_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -700,7 +700,7 @@
                 <td class="standard">堆疊不可晃動</td>
                 <td><input type="number" name="stacking_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="stacking_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="stacking_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="stacking_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -709,7 +709,7 @@
                 <td class="standard">相扣時不會滑出</td>
                 <td><input type="number" name="locking_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="locking_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="locking_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="locking_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -718,7 +718,7 @@
                 <td class="standard">符合圖面尺寸</td>
                 <td><input type="number" name="dimension_defects" min="0" placeholder="0"></td>
                 <td><div class="result-group">
-                  <label><input type="radio" name="dimension_result" value="OK" checked="">✓ OK</label>
+                  <label><input type="radio" name="dimension_result" value="OK" checked>✓ OK</label>
                   <label><input type="radio" name="dimension_result" value="NG">✗ NG</label>
                 </div></td>
               </tr>
@@ -742,12 +742,15 @@
       <!-- Photos Upload -->
       <div class="card">
         <div class="card-title"><span class="icon">📷</span> 檢驗照片 <span style="font-size:0.8rem;font-weight:400;color:#888;margin-left:4px;">（選填，可多張）</span></div>
-        <div class="photo-upload-area" id="photo-drop-area" onclick="document.getElementById(&#39;photo-input&#39;).click()" ondragover="event.preventDefault();this.classList.add(&#39;drag-over&#39;)" ondragleave="this.classList.remove(&#39;drag-over&#39;)" ondrop="event.preventDefault();this.classList.remove(&#39;drag-over&#39;);handlePhotoSelect(event.dataTransfer.files)">
+        <div class="photo-upload-area" id="photo-drop-area" onclick="document.getElementById('photo-input').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="event.preventDefault();this.classList.remove('drag-over');handlePhotoSelect(event.dataTransfer.files)">
           <div style="font-size:2.5rem;margin-bottom:8px;">📷</div>
           <div style="font-weight:600;color:#1a5276;font-size:0.98rem;">點擊或拖曳照片到此處</div>
           <div style="font-size:0.83rem;color:#888;margin-top:4px;">支援 JPG、PNG、HEIC 等格式，可一次選多張</div>
         </div>
-        <input type="file" id="photo-input" accept="image/*" multiple="" style="display:none" onchange="handlePhotoSelect(this.files)">
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(this.files)">
         <div class="photo-grid" id="photo-grid"></div>
         <div class="upload-summary" id="upload-summary"></div>
       </div>
@@ -760,9 +763,9 @@
   </div>
 
   <!-- ============ BACKEND WRAPPER ============ -->
-  <div id="backend-wrapper" style="display: none;">
+  <div id="backend-wrapper" style="display: block;">
     <div class="sub-tabs">
-      <button class="sub-tab-btn" data-subtab="admin" onclick="showTab(&#39;admin&#39;)">📊 查詢管理</button>
+      <button class="sub-tab-btn active" data-subtab="admin" onclick="showTab(&#39;admin&#39;)">📊 查詢管理</button>
       <button class="sub-tab-btn" data-subtab="exception" onclick="showTab(&#39;exception&#39;)">⚠️ 異常處理</button>
       <button class="sub-tab-btn" data-subtab="products" onclick="showTab(&#39;products&#39;)">🏷️ 品名管理</button>
     </div>
@@ -944,7 +947,7 @@
       <h3>📋 檢驗記錄詳細資料</h3>
       <div style="display:flex;align-items:center;gap:10px;">
         <button onclick="showReport(currentDetailRecord)" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.88rem;font-weight:600;font-family:inherit;white-space:nowrap;">📄 檢驗報告</button>
-        <button class="modal-close" onclick="document.getElementById(&#39;modal&#39;).classList.remove(&#39;show&#39;)">✕</button>
+        <button class="modal-close" onclick="document.getElementById('modal').classList.remove('show')">✕</button>
       </div>
     </div>
     <div class="modal-body" id="modal-body"></div>
@@ -1976,7 +1979,6 @@ function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
-
 
 
 </body></html>
