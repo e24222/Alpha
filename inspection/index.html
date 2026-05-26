@@ -1464,13 +1464,18 @@ function showDetail(r) {
 
   // 照片
   if (r.photos && r.photos.length > 0) {
-    const thumbs = r.photos.filter(url => url != null).map(url => {
+    const thumbs = r.photos.filter(url => url != null).map((url, i) => {
       const fileId = url.match(/\/d\/([^/]+)/)?.[1];
-      const thumbUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
-      return `<a href="${url}" target="_blank" rel="noopener"><img src="${thumbUrl}" alt="檢驗照片" loading="lazy"></a>`;
+      const viewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : url;
+      const previewUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : url;
+      return `<a href="${viewUrl}" target="_blank" rel="noopener" style="display:inline-block;margin:4px;">
+        <img src="${previewUrl}" alt="檢驗照片${i+1}" loading="lazy"
+          onerror="this.onerror=null;this.parentElement.innerHTML='<span style=\'padding:8px 14px;background:#eaf4fb;border-radius:6px;font-size:0.88rem;color:#1a5276;\'>📷 照片${i+1}（點擊開啟）</span>';"
+          style="max-width:160px;max-height:160px;border-radius:8px;object-fit:cover;border:1px solid #dde;">
+      </a>`;
     }).join('');
     body += `<div class="detail-photos">
-      <div style="font-weight:700;color:#1a5276;margin-bottom:4px;">📷 檢驗照片（${r.photos.length} 張）</div>
+      <div style="font-weight:700;color:#1a5276;margin-bottom:8px;">📷 檢驗照片（${r.photos.length} 張）</div>
       <div class="detail-photos-grid">${thumbs}</div>
     </div>`;
   }
