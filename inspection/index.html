@@ -1466,7 +1466,7 @@ function showDetail(r) {
   if (r.photos && r.photos.length > 0) {
     const thumbs = r.photos.filter(url => url != null).map(url => {
       const fileId = url.match(/\/d\/([^/]+)/)?.[1];
-      const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w200` : url;
+      const thumbUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
       return `<a href="${url}" target="_blank" rel="noopener"><img src="${thumbUrl}" alt="檢驗照片" loading="lazy"></a>`;
     }).join('');
     body += `<div class="detail-photos">
@@ -1498,7 +1498,7 @@ function showReport(r) {
     const cols = photoCount === 1 ? 1 : photoCount <= 4 ? 2 : 3;
     const imgs = r.photos.filter(url => url != null).map(url => {
       const fileId = url.match(/\/d\/([^/]+)/)?.[1];
-      const imgUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200` : url;
+      const imgUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
       return `<a href="${url}" target="_blank" rel="noopener" style="display:block;overflow:hidden;border-radius:6px;background:#eee;">
         <img src="${imgUrl}" alt="檢驗照片" style="width:100%;height:100%;object-fit:cover;display:block;">
       </a>`;
