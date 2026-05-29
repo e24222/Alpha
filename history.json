@@ -3,23 +3,8 @@
     "id": "1780040733192",
     "date": "2026/05/29 下午03:45",
     "boxes": "",
-    "totalKm": 103.3,
+    "totalKm": 108.1,
     "stops": [
-      {
-        "code": "A9029",
-        "name": "恩揚生物科技股份有限公司",
-        "address": "新竹縣關西鎮東安里13鄰糞箕窩1之7號"
-      },
-      {
-        "code": "Z005",
-        "name": "傅太太",
-        "address": "桃園市楊梅區民有路一段198號"
-      },
-      {
-        "code": "A5017",
-        "name": "台灣田邊製藥股份有限公司",
-        "address": "新竹縣湖口鄉光復北路97號"
-      },
       {
         "code": "383",
         "name": "宗城儀器商行",
@@ -34,11 +19,26 @@
         "code": "733",
         "name": "立騰玻璃儀器企業社",
         "address": "新竹市東區食品路331號"
+      },
+      {
+        "code": "A5017",
+        "name": "台灣田邊製藥股份有限公司",
+        "address": "新竹縣湖口鄉光復北路97號"
+      },
+      {
+        "code": "A9029",
+        "name": "恩揚生物科技股份有限公司",
+        "address": "新竹縣關西鎮東安里13鄰糞箕窩1之7號"
+      },
+      {
+        "code": "Z005",
+        "name": "傅太太",
+        "address": "桃園市楊梅區民有路一段198號"
       }
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E7%AB%B9%E7%B8%A3%E9%97%9C%E8%A5%BF%E9%8E%AE%E6%9D%B1%E5%AE%89%E9%87%8C13%E9%84%B0%E7%B3%9E%E7%AE%95%E7%AA%A91%E4%B9%8B7%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%B9%96%E5%8F%A3%E9%84%89%E5%85%89%E5%BE%A9%E5%8C%97%E8%B7%AF97%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%85%89%E8%8F%AF%E4%BA%8C%E8%A1%97108%E5%B7%B716-7%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E9%A3%9F%E5%93%81%E8%B7%AF331%E8%99%9F&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%85%89%E8%8F%AF%E4%BA%8C%E8%A1%97108%E5%B7%B716-7%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E9%A3%9F%E5%93%81%E8%B7%AF331%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%B9%96%E5%8F%A3%E9%84%89%E5%85%89%E5%BE%A9%E5%8C%97%E8%B7%AF97%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E9%97%9C%E8%A5%BF%E9%8E%AE%E6%9D%B1%E5%AE%89%E9%87%8C13%E9%84%B0%E7%B3%9E%E7%AE%95%E7%AA%A91%E4%B9%8B7%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ]
