@@ -1020,7 +1020,8 @@
     <div class="mgmt-toolbar">
       <button class="add-cust-btn" onclick="openModal()">＋ 新增客戶</button>
       <button class="tool-btn" onclick="openImport()">📥 匯入</button>
-      <button class="tool-btn" onclick="exportCSV()">📤 匯出</button>
+      <button class="tool-btn" onclick="exportCSV()">📤 匯出客戶</button>
+      <button class="tool-btn" onclick="exportHistory()">📋 匯出歷史</button>
     </div>
     <div class="cust-table" id="custTable">
       <div class="cust-row">
@@ -2562,6 +2563,24 @@
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
     a.download = `客戶資料_${date}.csv`;
+    a.click();
+  }
+
+  function exportHistory() {
+    if (routeHistory.length===0) { alert('還沒有歷史紀錄！'); return; }
+    const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+    const rows = routeHistory.map(r => {
+      const label = esc(r.label || r.date || '');
+      const km = r.totalKm != null ? r.totalKm : '';
+      const stops = r.stops.length;
+      const boxes = r.boxes || '';
+      const names = esc(r.stops.map(s=>s.name).join('、'));
+      return `${label},${km},${stops},${boxes},${names}`;
+    });
+    const csv = '\uFEFF' + '日期標籤,里程(km),站數,箱數,客戶清單\n' + rows.join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = `歷史紀錄_${date}.csv`;
     a.click();
   }
 
