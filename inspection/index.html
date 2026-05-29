@@ -547,7 +547,6 @@
 <div class="tabs">
   <button class="tab-btn" onclick="showTab(&#39;form&#39;)">📝 填寫檢驗記錄</button>
   <button class="tab-btn active" onclick="showTab(&#39;backend&#39;)">🔧 後台管理</button>
-  <button class="tab-btn" id="accounts-tab-btn" onclick="showTab(&#39;accounts&#39;)" style="display:none">👤 帳號管理</button>
 </div>
 
 <div class="main">
@@ -769,7 +768,7 @@
       <button class="sub-tab-btn active" data-subtab="admin" onclick="showTab(&#39;admin&#39;)">📊 查詢管理</button>
       <button class="sub-tab-btn" data-subtab="exception" onclick="showTab(&#39;exception&#39;)">⚠️ 異常處理</button>
       <button class="sub-tab-btn" data-subtab="products" onclick="showTab(&#39;products&#39;)">🏷️ 品名管理</button>
-
+      <button class="sub-tab-btn" data-subtab="accounts" id="accounts-tab-btn" onclick="showTab(&#39;accounts&#39;)" style="display:none">👤 帳號管理</button>
     </div>
 
   <!-- ============ ADMIN TAB ============ -->
@@ -920,32 +919,32 @@
     </div>
   </div>
 
-  </div><!-- /backend-wrapper -->
+  <!-- ============ ACCOUNTS TAB ============ -->
+  <div id="tab-accounts" style="display:none;">
+    <div id="alert-accounts" class="alert"></div>
+    <div class="card">
+      <div class="card-title"><span class="icon">➕</span> 新增帳號</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="form-group" style="flex:1;min-width:180px;">
+          <label>廠商名稱</label>
+          <input type="text" id="new-acc-vendor" placeholder="廠商名稱（需與記錄一致）">
+        </div>
+        <div class="form-group" style="flex:1;min-width:140px;">
+          <label>密碼</label>
+          <input type="text" id="new-acc-pw" placeholder="設定密碼">
+        </div>
+        <button class="btn btn-primary" onclick="addAccount()">➕ 新增</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> 帳號清單</div>
+      <div id="accounts-container">
+        <div class="loading"><div class="spinner"></div><p>載入中...</p></div>
+      </div>
+    </div>
+  </div>
 
-<!-- ============ ACCOUNTS TAB ============ -->
-<div id="tab-accounts" style="display:none;">
-  <div id="alert-accounts" class="alert"></div>
-  <div class="card">
-    <div class="card-title"><span class="icon">➕</span> 新增帳號</div>
-    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-      <div class="form-group" style="flex:1;min-width:180px;">
-        <label>廠商名稱</label>
-        <input type="text" id="new-acc-vendor" placeholder="廠商名稱（需與記錄一致）">
-      </div>
-      <div class="form-group" style="flex:1;min-width:140px;">
-        <label>密碼</label>
-        <input type="text" id="new-acc-pw" placeholder="設定密碼">
-      </div>
-      <button class="btn btn-primary" onclick="addAccount()">➕ 新增</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title"><span class="icon">📋</span> 帳號清單</div>
-    <div id="accounts-container">
-      <div class="loading"><div class="spinner"></div><p>載入中...</p></div>
-    </div>
-  </div>
-</div>
+  </div><!-- /backend-wrapper -->
 
 </div><!-- /main -->
 
@@ -994,7 +993,7 @@ let adminUnlocked = false;
 let pendingTab = null;
 let currentVendorFilter = null; // null=全部, string=只看此廠商
 let currentSubTab = 'admin';
-const BACKEND_SUBS = ['admin', 'exception', 'products'];
+const BACKEND_SUBS = ['admin', 'exception', 'products', 'accounts'];
 
 document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
 loadProductOptions();showTab('form');
@@ -1015,10 +1014,9 @@ function showTab(tab) {
     return;
   }
 
-  // 顯示/隱藏 form 與 backend-wrapper 與 accounts
+  // 顯示/隱藏 form 與 backend-wrapper
   document.getElementById('tab-form').style.display = tab === 'form' ? 'block' : 'none';
   document.getElementById('backend-wrapper').style.display = isBackend ? 'block' : 'none';
-  document.getElementById('tab-accounts').style.display = tab === 'accounts' ? 'block' : 'none';
 
   // 切換後台子分頁
   if (isBackend) {
@@ -1026,16 +1024,12 @@ function showTab(tab) {
     document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
     document.getElementById('tab-exception').style.display = tab === 'exception' ? 'block' : 'none';
     document.getElementById('tab-products').style.display = tab === 'products' ? 'block' : 'none';
+    document.getElementById('tab-accounts').style.display = tab === 'accounts' ? 'block' : 'none';
   }
 
-  // 主分頁 active 狀態
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    const oc = btn.getAttribute('onclick') || '';
-    btn.classList.toggle('active',
-      (oc.includes("'form'") && tab === 'form') ||
-      (oc.includes("'backend'") && isBackend) ||
-      (oc.includes("'accounts'") && tab === 'accounts')
-    );
+  // 主分頁 active 狀態：填寫(0) / 後台(1)
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', (i === 0 && tab === 'form') || (i === 1 && isBackend));
   });
 
   // 子分頁 active 狀態
@@ -1046,7 +1040,7 @@ function showTab(tab) {
   if (tab === 'admin') loadRecords();
   if (tab === 'products') loadProductsList();
   if (tab === 'exception') loadExceptionFilters();
-  if (tab === 'accounts' && adminUnlocked && !currentVendorFilter) loadAccountsList();
+  if (tab === 'accounts') loadAccountsList();
 }
 
 async function checkPw() {
@@ -1122,7 +1116,7 @@ function renderVendorBadge() {
 
   // 只有管理員才顯示帳號管理分頁
   const accBtn = document.getElementById('accounts-tab-btn');
-  if (accBtn) accBtn.style.display = (adminUnlocked && !currentVendorFilter) ? 'inline-flex' : 'none';
+  if (accBtn) accBtn.style.display = (adminUnlocked && !currentVendorFilter) ? '' : 'none';
 }
 
 function closePwModal() {
@@ -1534,7 +1528,7 @@ function showReport(r) {
     const cols = photoCount === 1 ? 1 : photoCount <= 4 ? 2 : 3;
     const imgs = r.photos.filter(url => url != null).map(url => {
       const fileId = url.match(/\/d\/([^/]+)/)?.[1];
-      const imgUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
+      const imgUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200` : url;
       return `<a href="${url}" target="_blank" rel="noopener" style="display:block;overflow:hidden;border-radius:6px;background:#eee;">
         <img src="${imgUrl}" alt="檢驗照片" style="width:100%;height:100%;object-fit:cover;display:block;">
       </a>`;
