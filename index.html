@@ -118,8 +118,15 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
 
 <script>
 const CORRECT = '22505047';
+const PW_TTL = 5 * 60 * 1000; // 5 分鐘有效
 let pwTarget = '';
+function isAuthed() {
+  const t = sessionStorage.getItem('auth_time');
+  return t && (Date.now() - parseInt(t)) < PW_TTL;
+}
+function setAuthed() { sessionStorage.setItem('auth_time', Date.now()); }
 function openComplaint() {
+  if (isAuthed()) { window.location.href = 'complaint/index.html?a=1'; return; }
   pwTarget = 'complaint';
   document.getElementById('pwTitle').textContent = '客訴管理系統';
   document.getElementById('pwModal').style.display = 'flex';
@@ -128,6 +135,7 @@ function openComplaint() {
   setTimeout(() => document.getElementById('pwInput').focus(), 100);
 }
 function openDelivery() {
+  if (isAuthed()) { window.location.href = '送貨路線規劃.html'; return; }
   pwTarget = 'delivery';
   document.getElementById('pwTitle').textContent = '送貨路線規劃';
   document.getElementById('pwModal').style.display = 'flex';
@@ -138,6 +146,7 @@ function openDelivery() {
 function checkPw() {
   const v = document.getElementById('pwInput').value;
   if (v === CORRECT) {
+    setAuthed();
     if (pwTarget === 'delivery') {
       window.location.href = '送貨路線規劃.html';
     } else {
