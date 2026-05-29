@@ -2533,7 +2533,7 @@
     if (!text) { alert('請貼上資料！'); return; }
     let added=0, skipped=0;
     text.split('\n').filter(l=>l.trim()).forEach(line=>{
-      if (line.startsWith('客戶編號')) return;
+      if (line.startsWith('客戶編號') || line.startsWith('【') || line.startsWith('日期')) return;
       const parts=line.split(/\t|，|,/).map(s=>s.trim()).filter(Boolean);
       if (parts.length<2) return;
       let code='',name='',address='';
@@ -2557,32 +2557,11 @@
   function exportCSV() {
     if (customers.length===0) { alert('還沒有客戶資料可以匯出！'); return; }
     const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
-
-    // 客戶資料
     const custRows = customers.map(c=>`${esc(c.code)},${esc(c.name)},${esc(c.address)}`);
-
-    // 歷史紀錄
-    const histRows = routeHistory.map(r => {
-      const label = esc(r.label || r.date || '');
-      const km    = r.totalKm != null ? r.totalKm : '';
-      const stops = r.stops.length;
-      const boxes = r.boxes || '';
-      const names = esc(r.stops.map(s=>s.name).join('、'));
-      return `${label},${km},${stops},${boxes},${names}`;
-    });
-
-    const csv =
-      '\uFEFF' +
-      '【客戶資料】\n' +
-      '客戶編號,客戶名稱,送貨地址\n' +
-      custRows.join('\n') +
-      '\n\n【歷史紀錄】\n' +
-      '日期標籤,里程(km),站數,箱數,客戶清單\n' +
-      (histRows.length ? histRows.join('\n') : '（無歷史紀錄）');
-
+    const csv = '\uFEFF' + '客戶編號,客戶名稱,送貨地址\n' + custRows.join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-    a.download = `出貨系統資料_${date}.csv`;
+    a.download = `客戶資料_${date}.csv`;
     a.click();
   }
 
