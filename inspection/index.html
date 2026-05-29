@@ -1497,12 +1497,12 @@ function showDetail(r) {
   // 照片
   const validPhotos = (r.photos || []).filter(url => url != null && url !== '');
   if (validPhotos.length > 0) {
-    const thumbs = validPhotos.map((url, i) => {
+    const thumbs = validPhotos.map(url => {
       const fileId = url.match(/\/d\/([^/]+)/)?.[1];
-      const viewUrl = fileId ? 'https://drive.google.com/file/d/' + fileId + '/view' : url;
-      return '<a href="' + viewUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#eaf4fb;border-radius:8px;color:#1a5276;font-size:0.9rem;font-weight:600;text-decoration:none;border:1px solid #c8dce8;margin:4px;">📷 照片 ' + (i+1) + '（點擊開啟）</a>';
+      const thumbUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w200` : url;
+      return `<a href="${url}" target="_blank" rel="noopener"><img src="${thumbUrl}" alt="檢驗照片" loading="lazy" style="width:100px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #dde;"></a>`;
     }).join('');
-    body += '<div class="detail-photos"><div style="font-weight:700;color:#1a5276;margin-bottom:8px;">📷 檢驗照片（' + validPhotos.length + ' 張）</div><div style="display:flex;flex-wrap:wrap;gap:8px;">' + thumbs + '</div></div>';
+    body += `<div class="detail-photos"><div style="font-weight:700;color:#1a5276;margin-bottom:8px;">📷 檢驗照片（${validPhotos.length} 張）</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${thumbs}</div></div>`;
   }
 
   document.getElementById('modal-body').innerHTML = body;
