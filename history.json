@@ -11,6 +11,11 @@
         "address": "苗栗縣頭份市尖豐路206巷92號"
       },
       {
+        "code": "A9029",
+        "name": "恩揚生物科技股份有限公司",
+        "address": "新竹縣關西鎮東安里13鄰糞箕窩"
+      },
+      {
         "code": "383",
         "name": "宗城儀器商行",
         "address": "新竹市建功一路51巷20號2樓"
@@ -31,11 +36,6 @@
         "address": "桃園市楊梅區民有路一段198號"
       },
       {
-        "code": "A9029",
-        "name": "恩揚生物科技股份有限公司",
-        "address": "新竹縣關西鎮東安里13鄰糞箕窩"
-      },
-      {
         "code": "A3002",
         "name": "佳格食品(股)公司",
         "address": "桃園市大園區和平西路一段369號#568"
@@ -43,7 +43,7 @@
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E8%8B%97%E6%A0%97%E7%B8%A3%E9%A0%AD%E4%BB%BD%E5%B8%82%E5%B0%96%E8%B1%90%E8%B7%AF206%E5%B7%B792%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E9%A3%9F%E5%93%81%E8%B7%AF331%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%B9%96%E5%8F%A3%E9%84%89%E5%85%89%E5%BE%A9%E5%8C%97%E8%B7%AF97%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E9%97%9C%E8%A5%BF%E9%8E%AE%E6%9D%B1%E5%AE%89%E9%87%8C13%E9%84%B0%E7%B3%9E%E7%AE%95%E7%AA%A9|%E6%A1%83%E5%9C%92%E5%B8%82%E5%A4%A7%E5%9C%92%E5%8D%80%E5%92%8C%E5%B9%B3%E8%A5%BF%E8%B7%AF%E4%B8%80%E6%AE%B5369%E8%99%9F%23568&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E8%8B%97%E6%A0%97%E7%B8%A3%E9%A0%AD%E4%BB%BD%E5%B8%82%E5%B0%96%E8%B1%90%E8%B7%AF206%E5%B7%B792%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E9%97%9C%E8%A5%BF%E9%8E%AE%E6%9D%B1%E5%AE%89%E9%87%8C13%E9%84%B0%E7%B3%9E%E7%AE%95%E7%AA%A9|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E9%A3%9F%E5%93%81%E8%B7%AF331%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%B9%96%E5%8F%A3%E9%84%89%E5%85%89%E5%BE%A9%E5%8C%97%E8%B7%AF97%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E5%A4%A7%E5%9C%92%E5%8D%80%E5%92%8C%E5%B9%B3%E8%A5%BF%E8%B7%AF%E4%B8%80%E6%AE%B5369%E8%99%9F%23568&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ]
