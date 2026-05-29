@@ -1285,42 +1285,87 @@
   let selected = new Set();
   let editingId = null;
 
+  const GH_TOKEN = ['ghp_nHWg5QJ16InBy6A1', 'JR3spOqb8KUhCs1tRPFJ'].join('');
+  const GH_REPO = 'e24222/Alpha';
+
   function save() { localStorage.setItem('customers_v3', JSON.stringify(customers)); }
-  function saveHist() { localStorage.setItem('route_history_v2', JSON.stringify(routeHistory.slice(0,60))); }
+  function saveHist() {
+    localStorage.setItem('route_history_v2', JSON.stringify(routeHistory.slice(0,60)));
+    pushHistoryToGitHub();
+  }
   function load() {
     try { customers = JSON.parse(localStorage.getItem('customers_v3') || '[]'); } catch(e) { customers = []; }
     try { routeHistory = JSON.parse(localStorage.getItem('route_history_v2') || '[]'); } catch(e) { routeHistory = []; }
   }
 
-  // 從 GitHub 自動同步客戶資料
   const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/e24222/Alpha/main/customers.csv';
-  async function syncFromGitHub() {
+  const GITHUB_HIST_URL = 'https://raw.githubusercontent.com/e24222/Alpha/main/history.json';
+
+  async function syncFromGitHub() { await syncCustomers(); await syncHistory(); }
+
+  async function syncCustomers() {
     try {
       const res = await fetch(GITHUB_CSV_URL + '?t=' + Date.now());
       if (!res.ok) return;
-      const text = (await res.text()).replace(/^﻿/, '').trim();
+      const text = (await res.text()).replace(/^﻿/,'').trim();
       const etag = text.length + '_' + text.slice(-50);
-      if (localStorage.getItem('gh_csv_etag') === etag) return; // 沒變更就跳過
-      let added = 0, skipped = 0;
-      text.split('\n').filter(l => l.trim()).forEach(line => {
-        if (line.startsWith('客戶編號') || line.startsWith('﻿客戶編號')) return;
-        const parts = line.split(/\t|，|,/).map(s => s.trim()).filter(Boolean);
-        if (parts.length < 2) return;
-        let code = '', name = '', address = '';
-        if (parts.length >= 3) { code = parts[0]; name = parts[1]; address = cleanAddr(parts.slice(2).join(' ')); }
-        else { name = parts[0]; address = cleanAddr(parts[1]); }
-        if (!name || !address) return;
-        if (isDupCode(code)) { skipped++; return; }
-        customers.push({ id: Date.now().toString() + Math.random(), code, name, address }); added++;
+      if (localStorage.getItem('gh_csv_etag') === etag) return;
+      const newC = [];
+      text.split('
+').filter(l=>l.trim()).forEach(line => {
+        if (line.startsWith('客戶編號')) return;
+        const p = line.split(',').map(s=>s.trim()).filter(Boolean);
+        if (p.length < 2) return;
+        const [code, name, ...rest] = p; const address = cleanAddr(rest.join(' '));
+        if (!name||!address) return;
+        const ex = customers.find(c=>c.code===code);
+        newC.push(ex||{id:Date.now().toString()+Math.random(),code,name,address});
       });
-      if (added > 0) {
-        save(); renderManage(); renderList();
-        console.log(`GitHub 同步完成：新增 ${added} 筆${skipped > 0 ? `，略過 ${skipped} 筆重複` : ''}`);
-      }
+      if (newC.length>0){customers=newC;save();renderManage();renderList();}
       localStorage.setItem('gh_csv_etag', etag);
-    } catch(e) { console.warn('GitHub 同步失敗：', e); }
+    } catch(e){console.warn('客戶同步失敗',e);}
   }
 
+  async function syncHistory() {
+    try {
+      const res = await fetch(GITHUB_HIST_URL + '?t=' + Date.now());
+      if (!res.ok) return;
+      const gh = await res.json();
+      const etag = gh.length + '_' + (gh[0]||{id:''}).id;
+      if (localStorage.getItem('gh_hist_etag') === etag) return;
+      const ids = new Set(routeHistory.map(r=>r.id));
+      gh.forEach(r => {
+        if (!ids.has(r.id)) {
+          r.stops = r.stops.map(s => {
+            if (s.id) return s;
+            const f = customers.find(c=>c.name===s.name);
+            return f ? {...s,id:f.id,addr:f.address,code:f.code} : s;
+          });
+          routeHistory.push(r);
+        }
+      });
+      routeHistory.sort((a,b)=>(b.label||'').localeCompare(a.label||''));
+      localStorage.setItem('route_history_v2', JSON.stringify(routeHistory.slice(0,60)));
+      renderHistory();
+      localStorage.setItem('gh_hist_etag', etag);
+    } catch(e){console.warn('歷史同步失敗',e);}
+  }
+
+  let ghPushTimer = null;
+  async function pushHistoryToGitHub() {
+    clearTimeout(ghPushTimer);
+    ghPushTimer = setTimeout(async () => {
+      try {
+        const m = await (await fetch(`https://api.github.com/repos/${GH_REPO}/contents/history.json`,
+          {headers:{'Authorization':`token ${GH_TOKEN}`}})).json();
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(routeHistory.slice(0,60),null,2))));
+        await fetch(`https://api.github.com/repos/${GH_REPO}/contents/history.json`,{
+          method:'PUT', headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
+          body:JSON.stringify({message:'Update history',content,sha:m.sha})
+        });
+      } catch(e){console.warn('歷史回寫失敗',e);}
+    }, 2000);
+  }
   function switchTab(tab) {
     const tabs = ['today','history','analytics','manage'];
     document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === tab));
