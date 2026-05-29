@@ -768,6 +768,7 @@
       <button class="sub-tab-btn active" data-subtab="admin" onclick="showTab(&#39;admin&#39;)">📊 查詢管理</button>
       <button class="sub-tab-btn" data-subtab="exception" onclick="showTab(&#39;exception&#39;)">⚠️ 異常處理</button>
       <button class="sub-tab-btn" data-subtab="products" onclick="showTab(&#39;products&#39;)">🏷️ 品名管理</button>
+      <button class="sub-tab-btn" data-subtab="accounts" id="accounts-tab-btn" onclick="showTab(&#39;accounts&#39;)" style="display:none">👤 帳號管理</button>
     </div>
 
   <!-- ============ ADMIN TAB ============ -->
@@ -918,6 +919,31 @@
     </div>
   </div>
 
+  <!-- ============ ACCOUNTS TAB ============ -->
+  <div id="tab-accounts" style="display:none;">
+    <div id="alert-accounts" class="alert"></div>
+    <div class="card">
+      <div class="card-title"><span class="icon">➕</span> 新增帳號</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="form-group" style="flex:1;min-width:180px;">
+          <label>廠商名稱</label>
+          <input type="text" id="new-acc-vendor" placeholder="廠商名稱（需與記錄一致）">
+        </div>
+        <div class="form-group" style="flex:1;min-width:140px;">
+          <label>密碼</label>
+          <input type="text" id="new-acc-pw" placeholder="設定密碼">
+        </div>
+        <button class="btn btn-primary" onclick="addAccount()">➕ 新增</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> 帳號清單</div>
+      <div id="accounts-container">
+        <div class="loading"><div class="spinner"></div><p>載入中...</p></div>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /backend-wrapper -->
 
 </div><!-- /main -->
@@ -967,7 +993,7 @@ let adminUnlocked = false;
 let pendingTab = null;
 let currentVendorFilter = null; // null=全部, string=只看此廠商
 let currentSubTab = 'admin';
-const BACKEND_SUBS = ['admin', 'exception', 'products'];
+const BACKEND_SUBS = ['admin', 'exception', 'products', 'accounts'];
 
 document.querySelector('input[name="inspection_date"]').valueAsDate = new Date();
 loadProductOptions();showTab('form');
@@ -998,6 +1024,7 @@ function showTab(tab) {
     document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
     document.getElementById('tab-exception').style.display = tab === 'exception' ? 'block' : 'none';
     document.getElementById('tab-products').style.display = tab === 'products' ? 'block' : 'none';
+    document.getElementById('tab-accounts').style.display = tab === 'accounts' ? 'block' : 'none';
   }
 
   // 主分頁 active 狀態：填寫(0) / 後台(1)
@@ -1013,6 +1040,7 @@ function showTab(tab) {
   if (tab === 'admin') loadRecords();
   if (tab === 'products') loadProductsList();
   if (tab === 'exception') loadExceptionFilters();
+  if (tab === 'accounts') loadAccountsList();
 }
 
 async function checkPw() {
@@ -1085,6 +1113,10 @@ function renderVendorBadge() {
     }
   };
   header.appendChild(badge);
+
+  // 只有管理員才顯示帳號管理分頁
+  const accBtn = document.getElementById('accounts-tab-btn');
+  if (accBtn) accBtn.style.display = (adminUnlocked && !currentVendorFilter) ? '' : 'none';
 }
 
 function closePwModal() {
@@ -1661,6 +1693,90 @@ function showReport(r) {
   win.document.close();
 }
 
+
+// ============ ACCOUNT MANAGEMENT ============
+async function loadAccountsList() {
+  const container = document.getElementById('accounts-container');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入中...</p></div>';
+  try {
+    const { data, error } = await db.from('vendor_passwords').select('*').order('vendor_name');
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>尚無帳號，請在上方新增</p></div>';
+      return;
+    }
+    let html = '<div class="records-table-wrap"><table class="records-table"><thead><tr><th>#</th><th>廠商名稱</th><th>密碼</th><th style="width:180px;">操作</th></tr></thead><tbody>';
+    data.forEach((acc, i) => {
+      html += `<tr data-id="${acc.id}">
+        <td>${i + 1}</td>
+        <td id="acc-vendor-${acc.id}">${esc(acc.vendor_name)}</td>
+        <td id="acc-pw-${acc.id}">${esc(acc.password)}</td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;" onclick="editAccount('${acc.id}','${esc(acc.vendor_name).replace(/'/g,"\'")}','${esc(acc.password).replace(/'/g,"\'")}')">✏️ 編輯</button>
+          <button class="btn" style="padding:5px 12px;font-size:0.82rem;background:#fadbd8;color:#c0392b;border:1px solid #f1948a;" onclick="deleteAccount('${acc.id}')">刪除</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>載入失敗：${err.message}</p></div>`;
+  }
+}
+
+async function addAccount() {
+  const vendor = document.getElementById('new-acc-vendor').value.trim();
+  const pw = document.getElementById('new-acc-pw').value.trim();
+  if (!vendor || !pw) { showAlert('accounts','error','⚠️ 請填寫廠商名稱與密碼'); return; }
+  try {
+    const { error } = await db.from('vendor_passwords').insert([{ vendor_name: vendor, password: pw }]);
+    if (error) throw error;
+    document.getElementById('new-acc-vendor').value = '';
+    document.getElementById('new-acc-pw').value = '';
+    showAlert('accounts','success','✅ 帳號已新增');
+    loadAccountsList();
+  } catch (err) {
+    showAlert('accounts','error','❌ 新增失敗：' + err.message);
+  }
+}
+
+function editAccount(id, vendor, pw) {
+  const vCell = document.getElementById('acc-vendor-' + id);
+  const pCell = document.getElementById('acc-pw-' + id);
+  vCell.innerHTML = `<input type="text" value="${esc(vendor)}" id="edit-v-${id}" style="padding:4px 8px;border:1px solid #2e86c1;border-radius:6px;font-size:0.88rem;width:100%;">`;
+  pCell.innerHTML = `<input type="text" value="${esc(pw)}" id="edit-p-${id}" style="padding:4px 8px;border:1px solid #2e86c1;border-radius:6px;font-size:0.88rem;width:100%;">`;
+  const row = vCell.closest('tr');
+  const btnCell = row.querySelector('td:last-child');
+  btnCell.innerHTML = `
+    <button class="btn btn-primary" style="padding:5px 12px;font-size:0.82rem;" onclick="saveAccount('${id}')">💾 儲存</button>
+    <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.82rem;" onclick="loadAccountsList()">取消</button>`;
+}
+
+async function saveAccount(id) {
+  const vendor = document.getElementById('edit-v-' + id).value.trim();
+  const pw = document.getElementById('edit-p-' + id).value.trim();
+  if (!vendor || !pw) { showAlert('accounts','error','⚠️ 廠商名稱與密碼不可空白'); return; }
+  try {
+    const { error } = await db.from('vendor_passwords').update({ vendor_name: vendor, password: pw }).eq('id', id);
+    if (error) throw error;
+    showAlert('accounts','success','✅ 已更新');
+    loadAccountsList();
+  } catch (err) {
+    showAlert('accounts','error','❌ 更新失敗：' + err.message);
+  }
+}
+
+async function deleteAccount(id) {
+  if (!confirm('確定刪除此帳號？')) return;
+  try {
+    const { error } = await db.from('vendor_passwords').delete().eq('id', id);
+    if (error) throw error;
+    showAlert('accounts','success','✅ 已刪除');
+    loadAccountsList();
+  } catch (err) {
+    showAlert('accounts','error','❌ 刪除失敗：' + err.message);
+  }
+}
 
 function closeModal(e) {
   if (e.target === document.getElementById('modal')) {
