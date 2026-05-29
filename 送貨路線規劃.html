@@ -2619,4 +2619,57 @@
       <div class="sub">${subParts}</div>
       <table>
         <tr>
-          <th style="width:36
+          <th style="width:36px">站</th>
+          <th style="width:160px">公司名稱</th>
+          <th>送貨地址</th>
+          <th style="width:50px">編號</th>
+          <th style="width:50px">備註</th>
+        </tr>
+        ${rows}
+      </table>
+      <div class="qr-section">
+        <div class="qr-label">📱 Google Maps 導航 QR Code</div>
+        ${qrBlocks}
+      </div>
+      <script>
+        const urls = ${JSON.stringify(segUrls)};
+        async function shortenUrl(url) {
+          try {
+            const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
+            if (res.ok) { const txt = await res.text(); if (txt.startsWith('http')) return txt.trim(); }
+          } catch(e) {}
+          return url; // fallback 原始 URL
+        }
+        async function init() {
+          for (let i = 0; i < urls.length; i++) {
+            const el = document.getElementById('qr-seg-' + i);
+            if (!el) continue;
+            const short = await shortenUrl(urls[i]);
+            new QRCode(el, { text: short, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.L });
+          }
+          setTimeout(() => { window.focus(); window.print(); }, 600);
+        }
+        init();
+      <\/script>
+    </body></html>`;
+
+    const w = window.open('','_blank');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function updateBoxCount(v) {
+    if (!editingHistoryId) return;
+    const idx = routeHistory.findIndex(r => r.id === editingHistoryId);
+    if (idx !== -1) {
+      routeHistory[idx].boxes = v || '';
+      saveHist();
+    }
+  }
+
+  load(); renderList();
+  syncFromGitHub();
+</script>
+
+
+</body></html>
