@@ -1311,8 +1311,7 @@
       const etag = text.length + '_' + text.slice(-50);
       if (localStorage.getItem('gh_csv_etag') === etag) return;
       const newC = [];
-      text.split('
-').filter(l=>l.trim()).forEach(line => {
+      text.split('\n').filter(l=>l.trim()).forEach(line => {
         if (line.startsWith('客戶編號')) return;
         const p = line.split(',').map(s=>s.trim()).filter(Boolean);
         if (p.length < 2) return;
