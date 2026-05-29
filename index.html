@@ -87,11 +87,11 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
       <div class="name">首件檢驗記錄</div>
       <div class="desc">首件檢驗紀錄與查詢</div>
     </a>
-    <a class="card" href="送貨路線規劃.html">
+    <div class="card" onclick="openDelivery()">
       <div class="icon">🚛</div>
       <div class="name">送貨路線規劃</div>
       <div class="desc">路線規劃與導航列印</div>
-    </a>
+    </div>
     <div class="card" onclick="openComplaint()">
       <div class="icon">📋</div>
       <div class="name">客訴管理系統</div>
@@ -103,7 +103,7 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
   <div class="pw-overlay" id="pwModal" style="display:none">
     <div class="pw-box">
       <div class="pw-icon">🔒</div>
-      <div class="pw-title">客訴管理系統</div>
+      <div class="pw-title" id="pwTitle">客訴管理系統</div>
       <div class="pw-sub">請輸入密碼以繼續</div>
       <input class="pw-input" type="password" id="pwInput" placeholder="請輸入密碼"
         onkeydown="if(event.key==='Enter')checkPw()">
@@ -118,7 +118,18 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
 
 <script>
 const CORRECT = '22505047';
+let pwTarget = '';
 function openComplaint() {
+  pwTarget = 'complaint';
+  document.getElementById('pwTitle').textContent = '客訴管理系統';
+  document.getElementById('pwModal').style.display = 'flex';
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwErr').style.display = 'none';
+  setTimeout(() => document.getElementById('pwInput').focus(), 100);
+}
+function openDelivery() {
+  pwTarget = 'delivery';
+  document.getElementById('pwTitle').textContent = '送貨路線規劃';
   document.getElementById('pwModal').style.display = 'flex';
   document.getElementById('pwInput').value = '';
   document.getElementById('pwErr').style.display = 'none';
@@ -127,8 +138,12 @@ function openComplaint() {
 function checkPw() {
   const v = document.getElementById('pwInput').value;
   if (v === CORRECT) {
-    sessionStorage.setItem('complaint_auth', '1');
-    window.location.href = 'complaint/index.html?a=1';
+    if (pwTarget === 'delivery') {
+      window.location.href = '送貨路線規劃.html';
+    } else {
+      sessionStorage.setItem('complaint_auth', '1');
+      window.location.href = 'complaint/index.html?a=1';
+    }
   } else {
     document.getElementById('pwErr').style.display = 'block';
     document.getElementById('pwInput').value = '';
