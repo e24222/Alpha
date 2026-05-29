@@ -627,6 +627,9 @@
 
   <!-- 歷史紀錄 -->
   <div class="page" id="page-history">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="tool-btn" onclick="exportHistory()">📋 匯出歷史紀錄</button>
+    </div>
     <div id="historyList">
       <div class="history-item">
         <div class="history-header" onclick="toggleHDetail(&#39;1777443081091&#39;)">
@@ -1020,8 +1023,7 @@
     <div class="mgmt-toolbar">
       <button class="add-cust-btn" onclick="openModal()">＋ 新增客戶</button>
       <button class="tool-btn" onclick="openImport()">📥 匯入</button>
-      <button class="tool-btn" onclick="exportCSV()">📤 匯出客戶</button>
-      <button class="tool-btn" onclick="exportHistory()">📋 匯出歷史</button>
+      <button class="tool-btn" onclick="exportCSV()">📤 匯出</button>
     </div>
     <div class="cust-table" id="custTable">
       <div class="cust-row">
