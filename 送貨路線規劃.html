@@ -2602,13 +2602,11 @@
     const bc = document.getElementById('boxCount').value;
 
     // 預計總里程（同區域 < 0.1km 不計入，含回程）
-    const totalKm = (() => {
-      const stopSum = lastSorted.reduce((acc, c) => acc + (c.dist != null && c.dist >= 0.1 ? c.dist : 0), 0);
-      const last = lastSorted[lastSorted.length - 1];
-      const lastCoord = last ? getCoordFromAddress(last.address) : null;
-      const returnDist = lastCoord ? haversine(lastCoord[0], lastCoord[1], DEPOT_LAT, DEPOT_LNG) : 0;
-      return Math.round((stopSum + returnDist) * 10) / 10;
-    })();
+    const stopSum = lastSorted.reduce((acc, c) => acc + (c.dist != null && c.dist >= 0.1 ? c.dist : 0), 0);
+    const last = lastSorted[lastSorted.length - 1];
+    const lastCoord = last ? getCoordFromAddress(last.address) : null;
+    const returnDist = lastCoord ? await getRoadDistance(lastCoord[0], lastCoord[1], DEPOT_LAT, DEPOT_LNG) : 0;
+    const totalKm = Math.round((stopSum + returnDist) * 10) / 10;
 
     const rows = lastSorted.map((c,i) => `
       <tr>
