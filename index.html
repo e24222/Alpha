@@ -77,12 +77,12 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
   <h1>龍冶管理系統</h1>
   <p>請選擇要使用的系統</p>
   <div class="cards">
-    <a class="card" href="mold/index.html">
+    <a class="card" href="模組管理系統/index.html">
       <div class="icon">🔧</div>
       <div class="name">模具清冊管理</div>
       <div class="desc">模具資料管理與追蹤</div>
     </a>
-    <a class="card" href="inspection/index.html">
+    <a class="card" href="首件驗證系統/index.html">
       <div class="icon">🔍</div>
       <div class="name">首件檢驗記錄</div>
       <div class="desc">首件檢驗紀錄與查詢</div>
@@ -135,7 +135,7 @@ function openComplaint() {
   setTimeout(() => document.getElementById('pwInput').focus(), 100);
 }
 function openDelivery() {
-  if (isAuthed()) { window.location.href = 'delivery/送貨路線規劃.html'; return; }
+  if (isAuthed()) { window.location.href = '出貨管理系統/送貨路線規劃.html'; return; }
   pwTarget = 'delivery';
   document.getElementById('pwTitle').textContent = '送貨路線規劃';
   document.getElementById('pwModal').style.display = 'flex';
@@ -148,7 +148,7 @@ function checkPw() {
   if (v === CORRECT) {
     setAuthed();
     if (pwTarget === 'delivery') {
-      window.location.href = 'delivery/送貨路線規劃.html';
+      window.location.href = '出貨管理系統/送貨路線規劃.html';
     } else {
       sessionStorage.setItem('complaint_auth', '1');
       window.location.href = '客訴管理系統/index.html?a=1';
