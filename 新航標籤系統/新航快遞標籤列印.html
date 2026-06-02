@@ -190,7 +190,9 @@ td.actions button:hover { opacity:0.8; }
     <!-- 第 1 格 -->
     <div class="label-col">
       <div class="cust-bar">
-        <label>客戶編號</label>
+        <select id="co-1" style="border:none;outline:none;font-size:13px;font-family:sans-serif;color:#1a5fa8;font-weight:bold;background:transparent;cursor:pointer;">
+          <option value="AL">AL</option><option value="GM">GM</option>
+        </select>
         <input type="text" id="custid-1" placeholder="輸入編號後按 Enter" autocomplete="off">
         <span class="cust-hint" id="custhint-1"></span>
       </div>
@@ -212,7 +214,9 @@ td.actions button:hover { opacity:0.8; }
     <!-- 第 2 格 -->
     <div class="label-col">
       <div class="cust-bar">
-        <label>客戶編號</label>
+        <select id="co-2" style="border:none;outline:none;font-size:13px;font-family:sans-serif;color:#1a5fa8;font-weight:bold;background:transparent;cursor:pointer;">
+          <option value="AL">AL</option><option value="GM">GM</option>
+        </select>
         <input type="text" id="custid-2" placeholder="輸入編號後按 Enter" autocomplete="off">
         <span class="cust-hint" id="custhint-2"></span>
       </div>
@@ -234,7 +238,9 @@ td.actions button:hover { opacity:0.8; }
     <!-- 第 3 格 -->
     <div class="label-col">
       <div class="cust-bar">
-        <label>客戶編號</label>
+        <select id="co-3" style="border:none;outline:none;font-size:13px;font-family:sans-serif;color:#1a5fa8;font-weight:bold;background:transparent;cursor:pointer;">
+          <option value="AL">AL</option><option value="GM">GM</option>
+        </select>
         <input type="text" id="custid-3" placeholder="輸入編號後按 Enter" autocomplete="off">
         <span class="cust-hint" id="custhint-3"></span>
       </div>
@@ -256,7 +262,9 @@ td.actions button:hover { opacity:0.8; }
     <!-- 第 4 格 -->
     <div class="label-col">
       <div class="cust-bar">
-        <label>客戶編號</label>
+        <select id="co-4" style="border:none;outline:none;font-size:13px;font-family:sans-serif;color:#1a5fa8;font-weight:bold;background:transparent;cursor:pointer;">
+          <option value="AL">AL</option><option value="GM">GM</option>
+        </select>
         <input type="text" id="custid-4" placeholder="輸入編號後按 Enter" autocomplete="off">
         <span class="cust-hint" id="custhint-4"></span>
       </div>
@@ -283,7 +291,14 @@ td.actions button:hover { opacity:0.8; }
      頁面 2：客戶管理
      ════════════════════════════════ -->
 <div class="page" id="page-mgmt">
-  <div class="mgmt-bar" style="margin-top:14px;">
+  <!-- AL/GM 子分頁 -->
+  <div style="display:flex;gap:0;margin-top:14px;margin-bottom:14px;border-bottom:2px solid #1a5fa8;">
+    <button type="button" id="btn-co-AL" onclick="switchCompany('AL')"
+      style="padding:8px 28px;font-size:15px;font-family:sans-serif;font-weight:bold;border:none;background:#1a5fa8;color:#fff;cursor:pointer;border-radius:6px 6px 0 0;">AL</button>
+    <button type="button" id="btn-co-GM" onclick="switchCompany('GM')"
+      style="padding:8px 28px;font-size:15px;font-family:sans-serif;font-weight:bold;border:none;background:#e0e8f5;color:#1a5fa8;cursor:pointer;border-radius:6px 6px 0 0;margin-left:4px;">GM</button>
+  </div>
+  <div class="mgmt-bar">
     <input type="text" id="searchInput" placeholder="搜尋編號 / 姓名 / 電話..." oninput="renderTable()">
     <button type="button" class="primary" onclick="openModal(null)">＋ 新增客戶</button>
     <button type="button" onclick="exportCSV()">⬇ 匯出 CSV</button>
@@ -343,7 +358,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(function(b){
     if (b.textContent.includes(tab === 'print' ? '標籤' : '客戶')) b.classList.add('active');
   });
-  if (tab === 'mgmt') renderTable(custCache);
+  if (tab === 'mgmt') renderTable();
 }
 
 // ════════════ Supabase 客戶資料 ════════════
@@ -352,12 +367,26 @@ var _supa = supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ'
 );
 
-var custCache = []; // 記憶體快取，頁面載入後從 Supabase 抓一次
+var custCache = { AL: [], GM: [] };
+var currentCompany = 'AL'; // 客戶管理目前選擇的公司
+
+async function fetchCompany(co) {
+  var res = await _supa.from('customers').select('*').eq('company', co).order('id');
+  if (!res.error) custCache[co] = res.data || [];
+}
 
 async function fetchAllCustomers() {
-  var res = await _supa.from('customers').select('*').order('id');
-  if (!res.error) custCache = res.data || [];
-  return custCache;
+  await Promise.all([fetchCompany('AL'), fetchCompany('GM')]);
+}
+
+function switchCompany(co) {
+  currentCompany = co;
+  document.getElementById('btn-co-AL').style.background = co === 'AL' ? '#1a5fa8' : '#e0e8f5';
+  document.getElementById('btn-co-AL').style.color      = co === 'AL' ? '#fff'    : '#1a5fa8';
+  document.getElementById('btn-co-GM').style.background = co === 'GM' ? '#1a5fa8' : '#e0e8f5';
+  document.getElementById('btn-co-GM').style.color      = co === 'GM' ? '#fff'    : '#1a5fa8';
+  document.getElementById('searchInput').value = '';
+  renderTable();
 }
 
 // ID 正規化：英文字母轉大寫，純數字補到3碼
@@ -367,9 +396,10 @@ function normalizeId(raw) {
   return s;
 }
 
-function findCustomer(rawId) {
+function findCustomer(rawId, company) {
   var id = normalizeId(rawId);
-  return custCache.find(function(c){ return c.id.toUpperCase() === id; });
+  var list = custCache[company] || [];
+  return list.find(function(c){ return c.id.toUpperCase() === id; });
 }
 
 // ════════════ 客戶編號自動帶入 ════════════
@@ -386,12 +416,12 @@ for (var ci = 1; ci <= 4; ci++) {
 
 function applyCustomer(n) {
   var raw   = document.getElementById('custid-'+n).value.trim();
+  var co    = document.getElementById('co-'+n).value;
   var hint  = document.getElementById('custhint-'+n);
   if (!raw) { hint.textContent = ''; return; }
   var normId = normalizeId(raw);
-  // 顯示補零後的編號
   document.getElementById('custid-'+n).value = normId;
-  var cust = findCustomer(normId);
+  var cust = findCustomer(normId, co);
   if (cust) {
     document.getElementById('receiver-'+n).value = cust.name + (cust.addr ? '\n' + cust.addr : '');
     if (cust.sname || cust.saddr)
@@ -409,17 +439,16 @@ function applyCustomer(n) {
 // ════════════ 客戶管理表格 ════════════
 var editingId = null;
 
-function renderTable(data) {
-  data = data || custCache;
+function renderTable() {
+  var data = custCache[currentCompany] || [];
   var q = (document.getElementById('searchInput').value || '').toLowerCase();
-  var filtered = data.filter(function(c) {
+  data = data.filter(function(c) {
     return !q || c.id.toLowerCase().includes(q) ||
       c.name.toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q);
   });
-  document.getElementById('custCount').textContent = '共 ' + data.length + ' 筆';
+  document.getElementById('custCount').textContent = '共 ' + (custCache[currentCompany]||[]).length + ' 筆';
   var tbody = document.getElementById('custTbody');
   tbody.innerHTML = '';
-  var data = filtered;
   data.forEach(function(c) {
     var tr = document.createElement('tr');
     tr.innerHTML =
@@ -442,7 +471,7 @@ function openModal(id) {
   editingId = id;
   document.getElementById('modalTitle').textContent = id ? '編輯客戶' : '新增客戶';
   if (id) {
-    var c = findCustomer(id);
+    var c = findCustomer(id, currentCompany);
     document.getElementById('mId').value     = c ? c.id         : '';
     document.getElementById('mName').value   = c ? c.name       : '';
     document.getElementById('mAddr').value   = c ? c.addr       : '';
@@ -471,30 +500,31 @@ async function saveModal() {
   var phone = document.getElementById('mPhone').value.trim();
   if (!id || !name) { alert('請填入客戶編號與收件人姓名'); return; }
 
-  if (!editingId && custCache.some(function(c){ return c.id.toUpperCase() === id.toUpperCase(); })) {
+  var list = custCache[currentCompany] || [];
+  if (!editingId && list.some(function(c){ return c.id.toUpperCase() === id.toUpperCase(); })) {
     alert('客戶編號已存在'); return;
   }
 
-  var rec = { id:id, name:name, addr:addr, sname:sname, phone:phone, updated_at: new Date().toISOString() };
+  var rec = { company: currentCompany, id:id, name:name, addr:addr, sname:sname, phone:phone, updated_at: new Date().toISOString() };
   var res = await _supa.from('customers').upsert(rec);
   if (res.error) { alert('儲存失敗：' + res.error.message); return; }
 
-  await fetchAllCustomers();
+  await fetchCompany(currentCompany);
   closeModal();
   renderTable();
 }
 
 async function deleteCustomer(id) {
   if (!confirm('確定刪除客戶「' + id + '」？')) return;
-  var res = await _supa.from('customers').delete().eq('id', id);
+  var res = await _supa.from('customers').delete().eq('company', currentCompany).eq('id', id);
   if (res.error) { alert('刪除失敗：' + res.error.message); return; }
-  custCache = custCache.filter(function(c){ return c.id !== id; });
+  custCache[currentCompany] = (custCache[currentCompany]||[]).filter(function(c){ return c.id !== id; });
   renderTable();
 }
 
 // ════════════ CSV 匯入匯出 ════════════
 function exportCSV() {
-  var data = custCache;
+  var data = custCache[currentCompany] || [];
   var rows = ['客戶編號,收件人姓名,收件地址,寄件人姓名,電話'];
   data.forEach(function(c) {
     rows.push([c.id, c.name, c.addr, c.sname||'', c.phone].map(function(v){
@@ -531,10 +561,11 @@ async function importCSV(e) {
       }
     }
     if (!imported.length) { alert('無法讀取任何資料，請確認格式：客戶編號,姓名,地址,電話'); return; }
-    imported.forEach(function(c){ if (!c.sname) c.sname = '龍冶股份有限公司'; });
+    var snameDefault = currentCompany === 'AL' ? '龍冶股份有限公司' : '龍台貿易有限公司';
+    imported.forEach(function(c){ c.company = currentCompany; if (!c.sname) c.sname = snameDefault; });
     var res = await _supa.from('customers').upsert(imported);
     if (res.error) { alert('匯入失敗：' + res.error.message); return; }
-    await fetchAllCustomers();
+    await fetchCompany(currentCompany);
     renderTable();
     alert('匯入完成，共 ' + imported.length + ' 筆。');
   };
@@ -654,64 +685,4 @@ printArea.id = 'print-area'; printArea.style.display = 'none';
 document.body.appendChild(printArea);
 
 function buildPrintArea() {
-  var top = parseInt(document.getElementById('sTop').value);
-  var left= parseInt(document.getElementById('sLeft').value);
-  var lw  = parseInt(document.getElementById('sLW').value);
-  var gap = parseInt(document.getElementById('sGap').value);
-  var footOff = parseInt(document.getElementById('sFoot').value);
-  var cntL    = parseInt(document.getElementById('sCnt').value);
-  var phnL    = parseInt(document.getElementById('sPhn').value);
-  printArea.innerHTML = '';
-  for (var i = 1; i <= 4; i++) {
-    var ls = left + (i-1) * (lw + gap);
-    function mkDiv(txt, t, l, w, h, vert) {
-      if (!txt) return;
-      var d = document.createElement('div');
-      d.className = 'pf' + (vert ? ' vert' : '');
-      d.style.top = t+'mm'; d.style.left = l+'mm'; d.style.width = w+'mm';
-      if (h) d.style.height = h+'mm';
-      d.textContent = txt; printArea.appendChild(d);
-    }
-    mkDiv(document.getElementById('sender-'+i).value,   top+17,           ls+1,    16,     86, true);
-    mkDiv(document.getElementById('receiver-'+i).value, top+17,           ls+17,   lw-18,  86, true);
-    mkDiv(document.getElementById('count-'+i).value,    top+113+footOff,  ls+cntL, 10,     null, false);
-    mkDiv(document.getElementById('phone-'+i).value,    top+113+footOff,  ls+phnL, lw-phnL,null, false);
-  }
-}
-
-document.getElementById('btnPrint').addEventListener('click', function(e) {
-  e.preventDefault();
-  buildPrintArea();
-  setTimeout(function() {
-    window.print();
-    setTimeout(function(){ printArea.innerHTML=''; }, 500);
-  }, 100);
-});
-
-document.getElementById('btnCopy').addEventListener('click', function(e) {
-  e.preventDefault();
-  fields.forEach(function(f) {
-    var val = document.getElementById(f+'-4').value;
-    for (var i=1;i<=3;i++) document.getElementById(f+'-'+i).value = val;
-  });
-  drawPreview();
-});
-
-document.getElementById('btnClear').addEventListener('click', function(e) {
-  e.preventDefault();
-  for (var i=1;i<=4;i++) {
-    fields.forEach(function(f){ document.getElementById(f+'-'+i).value=''; });
-    document.getElementById('custid-'+i).value='';
-    document.getElementById('custhint-'+i).textContent='';
-  }
-  drawPreview();
-});
-
-// 折疊預覽
-var previewWrap = document.getElementById('preview-wrap');
-var btnToggle   = document.getElementById('btnTogglePreview');
-var previewOpen = false;
-btnToggle.addEventListener('click', function() {
-  previewOpen = !previewOpen;
-  previewWrap.style.display = previewOpen ? '' : 'none';
-  btnToggle.textContent = (previewOpen?'▼':'▶') + ' 列印預覽 & 偏移
+  
