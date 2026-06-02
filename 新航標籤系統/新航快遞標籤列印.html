@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>新航快遞 - 標籤列印工具</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "標楷體","DFKai-SB",serif; background: #e8e8d8; min-height: 100vh; }
+
+/* ── 分頁 ── */
+.tabs { display:flex; gap:0; background:#1a3c6e; padding:0 20px; }
+.tab-btn {
+  padding:12px 28px; font-size:15px; cursor:pointer;
+  border:none; background:transparent; color:#aac4e8; font-family:sans-serif;
+  border-bottom:3px solid transparent;
+}
+.tab-btn.active { color:#fff; border-bottom:3px solid #fff; font-weight:bold; }
+.tab-btn:hover { color:#fff; }
+
+.page { display:none; padding:20px; }
+.page.active { display:block; }
+
+/* ── 標籤列印頁 ── */
+.controls {
+  display:flex; align-items:center; justify-content:center;
+  gap:14px; margin-bottom:16px; flex-wrap:wrap;
+  font-family:sans-serif; font-size:13px;
+}
+.controls button {
+  padding:8px 18px; font-size:14px; cursor:pointer;
+  border-radius:5px; border:1px solid #999; background:#fff; font-family:sans-serif;
+}
+.controls button.primary { background:#1a5fa8; color:#fff; border-color:#1a5fa8; font-weight:bold; }
+.controls button:hover { opacity:0.82; }
+.og { display:flex; align-items:center; gap:5px; }
+.og input[type=range] { width:80px; }
+.og span { display:inline-block; width:42px; text-align:right; font-weight:bold; }
+
+.sheet-wrap { display:flex; gap:12px; justify-content:center; flex-wrap:nowrap; }
+
+.label-col { display:flex; flex-direction:column; align-items:center; gap:6px; }
+
+/* 客戶編號輸入框 */
+.cust-bar {
+  display:flex; align-items:center; gap:6px;
+  background:#fff; border:2px solid #1a5fa8; border-radius:5px;
+  padding:5px 8px; width:262px; font-family:sans-serif;
+}
+.cust-bar label { font-size:12px; color:#1a5fa8; white-space:nowrap; }
+.cust-bar input {
+  flex:1; border:none; outline:none; font-size:14px;
+  font-family:sans-serif; color:#111;
+}
+.cust-bar .cust-hint { font-size:11px; color:#888; min-width:60px; text-align:right; }
+
+/* 標籤 */
+.label { width:260px; border:2px solid #1a5fa8; background:#fff; display:flex; flex-direction:column; color:#1a5fa8; }
+.label-title { text-align:center; font-size:16px; letter-spacing:5px; padding:5px 2px; border-bottom:1.5px solid #1a5fa8; font-weight:bold; }
+.header-row { display:flex; border-bottom:1.5px solid #1a5fa8; }
+.header-cell { flex:1; text-align:center; padding:3px 0; font-size:13px; letter-spacing:2px; }
+.header-cell.sh { border-right:1.5px solid #1a5fa8; flex:0 0 75px; }
+.body-row { display:flex; border-bottom:1.5px solid #1a5fa8; height:300px; }
+.body-cell { flex:1; padding:4px; display:flex; }
+.body-cell.sc { border-right:1.5px solid #1a5fa8; flex:0 0 75px; }
+.body-cell textarea {
+  width:100%; height:100%; border:none; outline:none; resize:none;
+  font-family:"標楷體","DFKai-SB",serif; font-size:18px; color:#111; background:transparent;
+  writing-mode:vertical-rl; line-height:1.8;
+}
+.footer-row { display:flex; border-bottom:1.5px solid #1a5fa8; min-height:50px; }
+.footer-left { width:75px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-right:1.5px solid #1a5fa8; padding:4px; font-size:13px; letter-spacing:2px; gap:3px; }
+.footer-left input { width:48px; border:none; border-bottom:1.5px solid #1a5fa8; outline:none; text-align:center; font-family:"標楷體","DFKai-SB",serif; font-size:18px; color:#111; background:transparent; }
+.footer-right { flex:1; padding:5px 8px; display:flex; flex-direction:column; justify-content:center; gap:4px; }
+.footer-right .pl { font-size:13px; }
+.footer-right input { width:100%; border:none; border-bottom:1.5px solid #1a5fa8; outline:none; font-family:"標楷體","DFKai-SB",serif; font-size:18px; color:#111; background:transparent; }
+.station { text-align:center; font-size:12px; padding:4px 0; color:#1a5fa8; }
+.copy-btn { display:block; width:100%; padding:4px 0; background:#e8f0fb; border:none; border-top:1px solid #1a5fa8; color:#1a5fa8; font-size:12px; cursor:pointer; font-family:sans-serif; }
+.copy-btn:hover { background:#c8d8f8; }
+
+/* ── 客戶管理頁 ── */
+.mgmt-bar {
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  margin-bottom:14px; font-family:sans-serif;
+}
+.mgmt-bar input[type=text] {
+  padding:7px 12px; font-size:14px; border:1px solid #aaa; border-radius:5px; outline:none; width:220px;
+}
+.mgmt-bar button {
+  padding:7px 16px; font-size:14px; cursor:pointer;
+  border-radius:5px; border:1px solid #999; background:#fff; font-family:sans-serif;
+}
+.mgmt-bar button.primary { background:#1a5fa8; color:#fff; border-color:#1a5fa8; }
+.mgmt-bar button.danger  { background:#fff; color:#c00; border-color:#c00; }
+.mgmt-bar button:hover { opacity:0.85; }
+
+.cust-table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-family:sans-serif; font-size:14px; background:#fff; }
+th { background:#1a3c6e; color:#fff; padding:10px 12px; text-align:left; white-space:nowrap; }
+td { padding:9px 12px; border-bottom:1px solid #ddd; vertical-align:top; }
+tr:hover td { background:#f0f6ff; }
+tr.selected td { background:#ddeeff; }
+td.actions { white-space:nowrap; }
+td.actions button {
+  padding:3px 10px; font-size:12px; cursor:pointer; border-radius:4px;
+  border:1px solid #aaa; background:#fff; font-family:sans-serif; margin-right:4px;
+}
+td.actions button.del { border-color:#c00; color:#c00; }
+td.actions button:hover { opacity:0.8; }
+
+/* 編輯 Modal */
+.modal-bg {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;
+}
+.modal-bg.open { display:flex; }
+.modal {
+  background:#fff; border-radius:8px; padding:24px; width:420px; max-width:95vw;
+  font-family:sans-serif; box-shadow:0 4px 24px rgba(0,0,0,0.2);
+}
+.modal h2 { font-size:16px; margin-bottom:16px; color:#1a3c6e; }
+.modal label { display:block; font-size:13px; color:#444; margin-bottom:3px; margin-top:10px; }
+.modal input, .modal textarea {
+  width:100%; padding:7px 10px; font-size:14px;
+  border:1px solid #bbb; border-radius:4px; outline:none; font-family:sans-serif;
+}
+.modal textarea { height:60px; resize:vertical; }
+.modal .modal-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+.modal .modal-btns button {
+  padding:8px 20px; font-size:14px; cursor:pointer;
+  border-radius:5px; border:1px solid #999; background:#fff; font-family:sans-serif;
+}
+.modal .modal-btns button.primary { background:#1a5fa8; color:#fff; border-color:#1a5fa8; }
+
+/* ── 列印 ── */
+@media print {
+  body { background:none; margin:0; padding:0; }
+  .tabs, .controls, #preview-wrap, .sheet-wrap, .cust-bar, h1 { display:none !important; }
+  @page { size: 274mm 140mm; margin: 0; }
+  #print-area {
+    display: block !important;
+    position: relative; width: 274mm; height: 140mm;
+  }
+  #print-area .pf {
+    position: absolute;
+    font-family: "標楷體","DFKai-SB",serif;
+    font-size: 13pt; color: #000; overflow: hidden;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  #print-area .pf.vert { writing-mode: vertical-rl; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── 分頁標籤 ── -->
+<div class="tabs">
+  <button class="tab-btn active" type="button" onclick="switchTab('print')">🖨️ 標籤列印</button>
+  <button class="tab-btn" type="button" onclick="switchTab('mgmt')">👥 客戶管理</button>
+</div>
+
+<!-- ════════════════════════════════
+     頁面 1：標籤列印
+     ════════════════════════════════ -->
+<div class="page active" id="page-print">
+
+  <div class="controls" style="margin-top:14px;">
+    <button type="button" id="btnPrint" class="primary">🖨️ 列印</button>
+    <button type="button" id="btnClear" style="border-color:#c00;color:#c00;">清除全部</button>
+    <button type="button" id="btnTogglePreview" style="border-color:#888;">▶ 列印預覽 &amp; 偏移設定</button>
+  </div>
+
+  <!-- 預覽區（折疊） -->
+  <div id="preview-wrap" style="display:none; margin:0 auto 16px; border:1px solid #aaa; background:#f0ede0; width:fit-content; padding:10px;">
+    <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; font-family:sans-serif; font-size:13px; margin-bottom:10px;">
+      <div class="og"><label>↕ 上下</label><input type="range" id="sTop" min="-20" max="20" value="12" oninput="sync('sTop','vTop')"><span id="vTop">12mm</span></div>
+      <div class="og"><label>↔ 左右</label><input type="range" id="sLeft" min="-10" max="30" value="14" oninput="sync('sLeft','vLeft')"><span id="vLeft">14mm</span></div>
+      <div class="og"><label>📐 格寬</label><input type="range" id="sLW" min="55" max="75" value="63" oninput="sync('sLW','vLW')"><span id="vLW">63mm</span></div>
+      <div class="og"><label>⬜ 間距</label><input type="range" id="sGap" min="0" max="10" value="8" oninput="sync('sGap','vGap')"><span id="vGap">8mm</span></div>
+      <div class="og"><label>↕ 件數/電話上下</label><input type="range" id="sFoot" min="-15" max="15" value="-3" oninput="sync('sFoot','vFoot')"><span id="vFoot">-3mm</span></div>
+      <div class="og"><label>↔ 件數左右</label><input type="range" id="sCnt" min="-5" max="15" value="10" oninput="sync('sCnt','vCnt')"><span id="vCnt">10mm</span></div>
+      <div class="og"><label>↔ 電話左右</label><input type="range" id="sPhn" min="10" max="40" value="34" oninput="sync('sPhn','vPhn')"><span id="vPhn">34mm</span></div>
+    </div>
+    <canvas id="preview" style="display:block; margin:0 auto;"></canvas>
+  </div>
+
+  <!-- 四格標籤 + 客戶編號輸入 -->
+  <div class="sheet-wrap" id="sheet-wrap">
+
+    <!-- 第 1 格 -->
+    <div class="label-col">
+      <div class="cust-bar">
+        <label>客戶編號</label>
+        <input type="text" id="custid-1" placeholder="輸入編號後按 Enter" autocomplete="off">
+        <span class="cust-hint" id="custhint-1"></span>
+      </div>
+      <div class="label">
+        <div class="label-title">新 航 快 遞</div>
+        <div class="header-row"><div class="header-cell sh">寄件人</div><div class="header-cell">收 件 人</div></div>
+        <div class="body-row">
+          <div class="body-cell sc"><textarea id="sender-1"></textarea></div>
+          <div class="body-cell"><textarea id="receiver-1" placeholder="姓名&#10;地址"></textarea></div>
+        </div>
+        <div class="footer-row">
+          <div class="footer-left"><span>共 件</span><input type="text" id="count-1" placeholder="1"></div>
+          <div class="footer-right"><div class="pl">電話：</div><input type="text" id="phone-1" placeholder="0912-345-678"></div>
+        </div>
+        <div class="station">中壢站：(03)451-8844</div>
+      </div>
+    </div>
+
+    <!-- 第 2 格 -->
+    <div class="label-col">
+      <div class="cust-bar">
+        <label>客戶編號</label>
+        <input type="text" id="custid-2" placeholder="輸入編號後按 Enter" autocomplete="off">
+        <span class="cust-hint" id="custhint-2"></span>
+      </div>
+      <div class="label">
+        <div class="label-title">新 航 快 遞</div>
+        <div class="header-row"><div class="header-cell sh">寄件人</div><div class="header-cell">收 件 人</div></div>
+        <div class="body-row">
+          <div class="body-cell sc"><textarea id="sender-2"></textarea></div>
+          <div class="body-cell"><textarea id="receiver-2" placeholder="姓名&#10;地址"></textarea></div>
+        </div>
+        <div class="footer-row">
+          <div class="footer-left"><span>共 件</span><input type="text" id="count-2" placeholder="1"></div>
+          <div class="footer-right"><div class="pl">電話：</div><input type="text" id="phone-2" placeholder="0912-345-678"></div>
+        </div>
+        <div class="station">中壢站：(03)451-8844</div>
+      </div>
+    </div>
+
+    <!-- 第 3 格 -->
+    <div class="label-col">
+      <div class="cust-bar">
+        <label>客戶編號</label>
+        <input type="text" id="custid-3" placeholder="輸入編號後按 Enter" autocomplete="off">
+        <span class="cust-hint" id="custhint-3"></span>
+      </div>
+      <div class="label">
+        <div class="label-title">新 航 快 遞</div>
+        <div class="header-row"><div class="header-cell sh">寄件人</div><div class="header-cell">收 件 人</div></div>
+        <div class="body-row">
+          <div class="body-cell sc"><textarea id="sender-3"></textarea></div>
+          <div class="body-cell"><textarea id="receiver-3" placeholder="姓名&#10;地址"></textarea></div>
+        </div>
+        <div class="footer-row">
+          <div class="footer-left"><span>共 件</span><input type="text" id="count-3" placeholder="1"></div>
+          <div class="footer-right"><div class="pl">電話：</div><input type="text" id="phone-3" placeholder="0912-345-678"></div>
+        </div>
+        <div class="station">中壢站：(03)451-8844</div>
+      </div>
+    </div>
+
+    <!-- 第 4 格 -->
+    <div class="label-col">
+      <div class="cust-bar">
+        <label>客戶編號</label>
+        <input type="text" id="custid-4" placeholder="輸入編號後按 Enter" autocomplete="off">
+        <span class="cust-hint" id="custhint-4"></span>
+      </div>
+      <div class="label">
+        <div class="label-title">新 航 快 遞</div>
+        <div class="header-row"><div class="header-cell sh">寄件人</div><div class="header-cell">收 件 人</div></div>
+        <div class="body-row">
+          <div class="body-cell sc"><textarea id="sender-4"></textarea></div>
+          <div class="body-cell"><textarea id="receiver-4" placeholder="姓名&#10;地址"></textarea></div>
+        </div>
+        <div class="footer-row">
+          <div class="footer-left"><span>共 件</span><input type="text" id="count-4" placeholder="1"></div>
+          <div class="footer-right"><div class="pl">電話：</div><input type="text" id="phone-4" placeholder="0912-345-678"></div>
+        </div>
+        <div class="station">中壢站：(03)451-8844</div>
+        <button type="button" class="copy-btn" id="btnCopy">複製此格到其他格</button>
+      </div>
+    </div>
+
+  </div><!-- /sheet-wrap -->
+</div><!-- /page-print -->
+
+<!-- ════════════════════════════════
+     頁面 2：客戶管理
+     ════════════════════════════════ -->
+<div class="page" id="page-mgmt">
+  <div class="mgmt-bar" style="margin-top:14px;">
+    <input type="text" id="searchInput" placeholder="搜尋編號 / 姓名 / 電話..." oninput="renderTable()">
+    <button type="button" class="primary" onclick="openModal(null)">＋ 新增客戶</button>
+    <button type="button" onclick="exportCSV()">⬇ 匯出 CSV</button>
+    <button type="button" onclick="document.getElementById('importFile').click()">⬆ 匯入 CSV</button>
+    <input type="file" id="importFile" accept=".csv" style="display:none" onchange="importCSV(event)">
+    <span style="font-family:sans-serif;font-size:12px;color:#666;" id="custCount"></span>
+  </div>
+  <div class="cust-table-wrap">
+    <table id="custTable">
+      <thead>
+        <tr>
+          <th>客戶編號</th>
+          <th>收件人姓名</th>
+          <th>收件地址</th>
+          <th>寄件人姓名</th>
+          <th>寄件人電話</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="custTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">新增客戶</h2>
+    <label>客戶編號（唯一）</label>
+    <input type="text" id="mId" placeholder="例：006">
+    <hr style="margin:14px 0;border-color:#eee;">
+    <div style="font-weight:bold;font-size:13px;color:#1a3c6e;margin-bottom:4px;">📦 收件人</div>
+    <label>姓名／公司</label>
+    <input type="text" id="mName" placeholder="龍冶股份有限公司">
+    <label>地址</label>
+    <textarea id="mAddr" placeholder="台北市中山區..."></textarea>
+    <hr style="margin:14px 0;border-color:#eee;">
+    <div style="font-weight:bold;font-size:13px;color:#1a3c6e;margin-bottom:4px;">🏠 寄件人</div>
+    <label>姓名／公司</label>
+    <input type="text" id="mSname" placeholder="龍冶股份有限公司">
+    <hr style="margin:14px 0;border-color:#eee;">
+    <label>寄件人電話</label>
+    <input type="text" id="mPhone" placeholder="0912-345-678">
+    <div class="modal-btns">
+      <button type="button" onclick="closeModal()">取消</button>
+      <button type="button" class="primary" onclick="saveModal()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════ 分頁 ════════════
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('page-'+tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    if (b.textContent.includes(tab === 'print' ? '標籤' : '客戶')) b.classList.add('active');
+  });
+  if (tab === 'mgmt') renderTable();
+}
+
+// ════════════ 客戶資料 ════════════
+
+// 首次開啟：確保 localStorage 有 customers 鍵
+if (!localStorage.getItem('customers')) {
+  localStorage.setItem('customers', '[]');
+}
+
+function loadCustomers() {
+  try { return JSON.parse(localStorage.getItem('customers') || '[]'); } catch(e){ return []; }
+}
+function saveCustomers(data) {
+  localStorage.setItem('customers', JSON.stringify(data));
+}
+
+// ID 正規化：英文字母轉大寫，純數字補到3碼
+function normalizeId(raw) {
+  var s = raw.trim().toUpperCase();
+  if (/^\d+$/.test(s)) s = s.padStart(3, '0');
+  return s;
+}
+
+function findCustomer(rawId) {
+  var id = normalizeId(rawId);
+  return loadCustomers().find(function(c){ return c.id.toUpperCase() === id; });
+}
+
+// ════════════ 客戶編號自動帶入 ════════════
+for (var ci = 1; ci <= 4; ci++) {
+  (function(n) {
+    document.getElementById('custid-'+n).addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') applyCustomer(n);
+    });
+    document.getElementById('custid-'+n).addEventListener('blur', function() {
+      applyCustomer(n);
+    });
+  })(ci);
+}
+
+function applyCustomer(n) {
+  var raw   = document.getElementById('custid-'+n).value.trim();
+  var hint  = document.getElementById('custhint-'+n);
+  if (!raw) { hint.textContent = ''; return; }
+  var normId = normalizeId(raw);
+  // 顯示補零後的編號
+  document.getElementById('custid-'+n).value = normId;
+  var cust = findCustomer(normId);
+  if (cust) {
+    document.getElementById('receiver-'+n).value = cust.name + (cust.addr ? '\n' + cust.addr : '');
+    if (cust.sname || cust.saddr)
+      document.getElementById('sender-'+n).value = (cust.sname||'') + (cust.saddr ? '\n' + cust.saddr : '');
+    if (cust.phone) document.getElementById('phone-'+n).value = cust.phone;
+    hint.style.color = '#1a5fa8';
+    hint.textContent = '✓ ' + cust.name;
+    drawPreview();
+  } else {
+    hint.style.color = '#c00';
+    hint.textContent = '找不到';
+  }
+}
+
+// ════════════ 客戶管理表格 ════════════
+var editingId = null; // null = 新增, string = 編輯中的原始 id
+
+function renderTable() {
+  var q    = (document.getElementById('searchInput').value || '').toLowerCase();
+  var data = loadCustomers().filter(function(c) {
+    return !q || c.id.toLowerCase().includes(q) ||
+      c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q);
+  });
+  document.getElementById('custCount').textContent = '共 ' + loadCustomers().length + ' 筆';
+  var tbody = document.getElementById('custTbody');
+  tbody.innerHTML = '';
+  data.forEach(function(c) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + esc(c.id) + '</td>' +
+      '<td>' + esc(c.name) + '</td>' +
+      '<td style="max-width:260px;white-space:pre-wrap">' + esc(c.addr) + '</td>' +
+      '<td>' + esc(c.sname||'') + '</td>' +
+      '<td>' + esc(c.phone) + '</td>' +
+      '<td class="actions">' +
+        '<button onclick="openModal(\'' + esc(c.id) + '\')">編輯</button>' +
+        '<button class="del" onclick="deleteCustomer(\'' + esc(c.id) + '\')">刪除</button>' +
+      '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function openModal(id) {
+  editingId = id;
+  document.getElementById('modalTitle').textContent = id ? '編輯客戶' : '新增客戶';
+  if (id) {
+    var c = findCustomer(id);
+    document.getElementById('mId').value     = c ? c.id         : '';
+    document.getElementById('mName').value   = c ? c.name       : '';
+    document.getElementById('mAddr').value   = c ? c.addr       : '';
+    document.getElementById('mSname').value  = c ? (c.sname||'龍冶股份有限公司') : '龍冶股份有限公司';
+    document.getElementById('mPhone').value  = c ? c.phone      : '';
+    document.getElementById('mId').readOnly = true;
+  } else {
+    document.getElementById('mId').value    = '';
+    document.getElementById('mName').value  = '';
+    document.getElementById('mAddr').value  = '';
+    document.getElementById('mSname').value = '龍冶股份有限公司';
+    document.getElementById('mPhone').value = '';
+    document.getElementById('mId').readOnly = false;
+  }
+  document.getElementById('modalBg').classList.add('open');
+  document.getElementById('mId').focus();
+}
+
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+
+function saveModal() {
+  var id    = normalizeId(document.getElementById('mId').value);
+  var name  = document.getElementById('mName').value.trim();
+  var addr  = document.getElementById('mAddr').value.trim();
+  var sname = document.getElementById('mSname').value.trim() || '龍冶股份有限公司';
+  var phone = document.getElementById('mPhone').value.trim();
+  if (!id || !name) { alert('請填入客戶編號與收件人姓名'); return; }
+
+  var data = loadCustomers();
+  var rec = { id:id, name:name, addr:addr, sname:sname, phone:phone };
+  if (editingId) {
+    var idx = data.findIndex(function(c){ return c.id.toUpperCase() === editingId.toUpperCase(); });
+    if (idx >= 0) data[idx] = rec;
+  } else {
+    if (data.some(function(c){ return c.id.toUpperCase() === id.toUpperCase(); })) { alert('客戶編號已存在'); return; }
+    data.push(rec);
+  }
+  saveCustomers(data);
+  closeModal();
+  renderTable();
+}
+
+function deleteCustomer(id) {
+  if (!confirm('確定刪除客戶「' + id + '」？')) return;
+  var data = loadCustomers().filter(function(c){ return c.id !== id; });
+  saveCustomers(data);
+  renderTable();
+}
+
+// ════════════ CSV 匯入匯出 ════════════
+function exportCSV() {
+  var data = loadCustomers();
+  var rows = ['客戶編號,收件人姓名,收件地址,寄件人姓名,寄件地址,電話'];
+  data.forEach(function(c) {
+    rows.push([c.id, c.name, c.addr, c.sname||'', c.saddr||'', c.phone].map(function(v){
+      return '"' + String(v).replace(/"/g,'""') + '"';
+    }).join(','));
+  });
+  var blob = new Blob(['﻿' + rows.join('\r\n')], { type:'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '新航快遞客戶資料.csv';
+  a.click();
+}
+
+function importCSV(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var text = ev.target.result.replace(/^﻿/, ''); // 去 BOM
+    var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+    if (lines.length < 2) { alert('CSV 格式錯誤或無資料'); return; }
+    var imported = [];
+    for (var i = 1; i < lines.length; i++) {
+      var cols = parseCSVLine(lines[i]);
+      if (cols.length >= 3) {
+        var rawId = cols[0] || '';
+        var nId   = normalizeId(rawId);
+        imported.push({
+          id:    nId,
+          name:  cols[1] || '',
+          addr:  cols[2] || '',
+          phone: cols[3] || ''
+        });
+      }
+    }
+    if (!imported.length) { alert('無法讀取任何資料，請確認格式：客戶編號,姓名,地址,電話'); return; }
+    var action = confirm(
+      '匯入 ' + imported.length + ' 筆資料。\n\n確定 = 合併（相同編號覆蓋）\n取消 = 清空後匯入'
+    );
+    var existing = action ? loadCustomers() : [];
+    imported.forEach(function(n) {
+      var idx = existing.findIndex(function(c){ return c.id === n.id; });
+      if (idx >= 0) existing[idx] = n; else existing.push(n);
+    });
+    saveCustomers(existing);
+    renderTable();
+    alert('匯入完成，共 ' + existing.length + ' 筆。');
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+
+function clearAllCustomers() {
+  if (!confirm('確定要刪除全部 ' + loadCustomers().length + ' 筆客戶資料？\n此動作無法復原。')) return;
+  saveCustomers([]);
+  renderTable();
+}
+
+function parseCSVLine(line) {
+  var result = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else { inQ = !inQ; }
+    } else if (ch === ',' && !inQ) {
+      result.push(cur.trim()); cur = '';
+    } else { cur += ch; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+// ════════════ 標籤列印 ════════════
+var fields = ['sender','receiver','count','phone'];
+
+var SCALE = 3.0, SHEET_W = 274, SHEET_H = 140;
+var canvas = document.getElementById('preview');
+canvas.width  = Math.round(SHEET_W * SCALE);
+canvas.height = Math.round(SHEET_H * SCALE);
+
+function drawPreview() {
+  var ctx = canvas.getContext('2d');
+  var top  = parseInt(document.getElementById('sTop').value);
+  var left = parseInt(document.getElementById('sLeft').value);
+  var lw   = parseInt(document.getElementById('sLW').value);
+  var gap  = parseInt(document.getElementById('sGap').value);
+  var s    = SCALE;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#e8e4c8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  var fixedLeft = 5, senderW = 16;
+  for (var i = 0; i < 4; i++) {
+    var fx = (fixedLeft + i * (lw + gap)) * s;
+    ctx.fillStyle = '#fff'; ctx.fillRect(fx, 0, lw*s, SHEET_H*s);
+    ctx.strokeStyle = '#1a5fa8'; ctx.lineWidth = 1.5; ctx.strokeRect(fx, 0, lw*s, SHEET_H*s);
+    ctx.fillStyle = '#ddeeff'; ctx.fillRect(fx, 0, lw*s, 11*s);
+    ctx.strokeStyle = '#1a5fa8'; ctx.lineWidth = 0.5; ctx.strokeRect(fx, 0, lw*s, 11*s);
+    ctx.fillStyle = '#1a5fa8'; ctx.font = 'bold ' + Math.round(8*s) + 'px serif';
+    ctx.textAlign = 'center'; ctx.fillText('新航快遞', fx + lw*s/2, 8.5*s);
+    ctx.fillStyle = '#eef4ff'; ctx.fillRect(fx, 11*s, lw*s, 6*s); ctx.strokeRect(fx, 11*s, lw*s, 6*s);
+    ctx.beginPath(); ctx.moveTo(fx + senderW*s, 11*s); ctx.lineTo(fx + senderW*s, 17*s); ctx.stroke();
+    ctx.fillStyle = '#1a5fa8'; ctx.font = Math.round(5.5*s) + 'px serif'; ctx.textAlign = 'center';
+    ctx.fillText('寄件人', fx + senderW*s/2, 15.5*s);
+    ctx.fillText('收件人', fx + (senderW + (lw-senderW)/2)*s, 15.5*s);
+    ctx.strokeStyle = '#1a5fa8'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(fx + senderW*s, 17*s); ctx.lineTo(fx + senderW*s, 113*s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(fx, 113*s); ctx.lineTo(fx + lw*s, 113*s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(fx + senderW*s, 113*s); ctx.lineTo(fx + senderW*s, 130*s); ctx.stroke();
+    ctx.fillStyle = '#1a5fa8'; ctx.font = Math.round(5*s) + 'px serif'; ctx.textAlign = 'center';
+    ctx.fillText('共件', fx + senderW*s/2, 123*s);
+    ctx.fillText('電話', fx + (senderW + (lw-senderW)/2)*s, 123*s);
+    ctx.beginPath(); ctx.moveTo(fx, 130*s); ctx.lineTo(fx + lw*s, 130*s); ctx.stroke();
+    ctx.font = Math.round(4.5*s) + 'px serif';
+    ctx.fillText('中壢站：(03)451-8844', fx + lw*s/2, 137*s);
+  }
+  function drawVertical(ctx, text, x, y, maxH) {
+    var charH = 7.5 * s, cx = x, cy = y + charH;
+    text.split('').forEach(function(c) {
+      ctx.fillText(c, cx, cy); cy += charH;
+      if (cy > y + maxH) { cx -= charH; cy = y + charH; }
+    });
+  }
+  var footOff2 = parseInt(document.getElementById('sFoot').value);
+  var cntL2    = parseInt(document.getElementById('sCnt').value);
+  var phnL2    = parseInt(document.getElementById('sPhn').value);
+  for (var i = 0; i < 4; i++) {
+    var n = i + 1, tx = (left + i * (lw + gap)) * s;
+    var sVal = document.getElementById('sender-'+n).value;
+    var rVal = document.getElementById('receiver-'+n).value;
+    var cVal = document.getElementById('count-'+n).value;
+    var pVal = document.getElementById('phone-'+n).value;
+    ctx.font = Math.round(6*s) + 'px serif'; ctx.textAlign = 'left';
+    if (sVal) { ctx.fillStyle = '#c00033'; drawVertical(ctx, sVal, tx + 1*s, top*s + 17*s, 86*s); }
+    if (rVal) { ctx.fillStyle = '#c00033'; drawVertical(ctx, rVal, tx + (lw-8)*s, top*s + 17*s, 86*s); }
+    if (cVal) { ctx.fillStyle = '#c00033'; ctx.fillText(cVal, tx + cntL2*s, top*s + (113+footOff2+8)*s); }
+    if (pVal) { ctx.fillStyle = '#c00033'; ctx.fillText(pVal, tx + phnL2*s, top*s + (113+footOff2+8)*s); }
+  }
+}
+
+var sliderMap = [
+  ['sTop','vTop'],['sLeft','vLeft'],['sLW','vLW'],['sGap','vGap'],
+  ['sFoot','vFoot'],['sCnt','vCnt'],['sPhn','vPhn']
+];
+function sync(id, span) {
+  var v = document.getElementById(id).value;
+  document.getElementById(span).textContent = v + 'mm';
+  localStorage.setItem('label_' + id, v);
+  drawPreview();
+}
+sliderMap.forEach(function(p) {
+  var saved = localStorage.getItem('label_' + p[0]);
+  if (saved !== null) {
+    document.getElementById(p[0]).value = saved;
+    document.getElementById(p[1]).textContent = saved + 'mm';
+  }
+});
+
+// 列印
+var printArea = document.createElement('div');
+printArea.id = 'print-area'; printArea.style.display = 'none';
+document.body.appendChild(printArea);
+
+function buildPrintArea() {
+  var top = parseInt(document.getElementById('sTop').value);
+  var left= parseInt(document.getElementById('sLeft').value);
+  var lw  = parseInt(document.getElementById('sLW').value);
+  var gap = parseInt(document.getElementById('sGap').value);
+  var footOff = parseInt(document.getElementById('sFoot').value);
+  var cntL    = parseInt(document.getElementById('sCnt').value);
+  var phnL    = parseInt(document.getElementById('sPhn').value);
+  printArea.innerHTML = '';
+  for (var i = 1; i <= 4; i++) {
+    var ls = left + (i-1) * (lw + gap);
+    function mkDiv(txt, t, l, w, h, vert) {
+      if (!txt) return;
+      var d = document.createElement('div');
+      d.className = 'pf' + (vert ? ' vert' : '');
+      d.style.top = t+'mm'; d.style.left = l+'mm'; d.style.width = w+'mm';
+      if (h) d.style.height = h+'mm';
+      d.textContent = txt; printArea.appendChild(d);
+    }
+    mkDiv(document.getElementById('sender-'+i).value,   top+17,           ls+1,    16,     86, true);
+    mkDiv(document.getElementById('receiver-'+i).value, top+17,           ls+17,   lw-18,  86, true);
+    mkDiv(document.getElementById('count-'+i).value,    top+113+footOff,  ls+cntL, 10,     null, false);
+    mkDiv(document.getElementById('phone-'+i).value,    top+113+footOff,  ls+phnL, lw-phnL,null, false);
+  }
+}
+
+document.getElementById('btnPrint').addEventListener('click', function(e) {
+  e.preventDefault();
+  buildPrintArea();
+  setTimeout(function() {
+    window.print();
+    setTimeout(function(){ printArea.innerHTML=''; }, 500);
+  }, 100);
+});
+
+document.getElementById('btnCopy').addEventListener('click', function(e) {
+  e.preventDefault();
+  fields.forEach(function(f) {
+    var val = document.getElementById(f+'-4').value;
+    for (var i=1;i<=3;i++) document.getElementById(f+'-'+i).value = val;
+  });
+  drawPreview();
+});
+
+document.getElementById('btnClear').addEventListener('click', function(e) {
+  e.preventDefault();
+  for (var i=1;i<=4;i++) {
+    fields.forEach(function(f){ document.getElementById(f+'-'+i).value=''; });
+    document.getElementById('custid-'+i).value='';
+    document.getElementById('custhint-'+i).textContent='';
+  }
+  drawPreview();
+});
+
+// 折疊預覽
+var previewWrap = document.getElementById('preview-wrap');
+var btnToggle   = document.getElementById('btnTogglePreview');
+var previewOpen = false;
+btnToggle.addEventListener('click', function() {
+  previewOpen = !previewOpen;
+  previewWrap.style.display = previewOpen ? '' : 'none';
+  btnToggle.textContent = (previewOpen?'▼':'▶') + ' 列印預覽 & 偏移設定';
+});
+
+// 輸入時更新預覽
+for (var pi=1;pi<=4;pi++) {
+  fields.forEach(function(f) {
+    document.getElementById(f+'-'+pi).addEventListener('input', drawPreview);
+  });
+}
+drawPreview();
+</script>
+</body>
+</html>
