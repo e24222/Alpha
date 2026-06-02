@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>新航快遞 - 標籤列印工具</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "標楷體","DFKai-SB",serif; background: #e8e8d8; min-height: 100vh; }
@@ -362,15 +362,19 @@ function switchTab(tab) {
 }
 
 // ════════════ Supabase 客戶資料 ════════════
-var _supa = supabase.createClient(
-  'https://achrezfjtyjjgoyaaowr.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ'
-);
+var _supa = null;
+try {
+  _supa = supabase.createClient(
+    'https://achrezfjtyjjgoyaaowr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ'
+  );
+} catch(e) { console.error('Supabase init error:', e); }
 
 var custCache = { AL: [], GM: [] };
 var currentCompany = 'AL'; // 客戶管理目前選擇的公司
 
 async function fetchCompany(co) {
+  if (!_supa) return;
   var res = await _supa.from('customers').select('*').eq('company', co).order('id');
   if (!res.error) custCache[co] = res.data || [];
 }
@@ -681,8 +685,4 @@ sliderMap.forEach(function(p) {
 
 // 列印
 var printArea = document.createElement('div');
-printArea.id = 'print-area'; printArea.style.display = 'none';
-document.body.appendChild(printArea);
-
-function buildPrintArea() {
-  
+printArea.id = 'print-area'; printArea.style.displ
