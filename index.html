@@ -126,7 +126,7 @@ function isAuthed() {
 }
 function setAuthed() { sessionStorage.setItem('auth_time', Date.now()); }
 function openComplaint() {
-  if (isAuthed()) { window.location.href = 'complaint/index.html?a=1'; return; }
+  if (isAuthed()) { window.location.href = '客訴管理系統/index.html?a=1'; return; }
   pwTarget = 'complaint';
   document.getElementById('pwTitle').textContent = '客訴管理系統';
   document.getElementById('pwModal').style.display = 'flex';
@@ -151,7 +151,7 @@ function checkPw() {
       window.location.href = 'delivery/送貨路線規劃.html';
     } else {
       sessionStorage.setItem('complaint_auth', '1');
-      window.location.href = 'complaint/index.html?a=1';
+      window.location.href = '客訴管理系統/index.html?a=1';
     }
   } else {
     document.getElementById('pwErr').style.display = 'block';
