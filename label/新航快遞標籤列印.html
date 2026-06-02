@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>新航快遞 - 標籤列印工具</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "標楷體","DFKai-SB",serif; background: #e8e8d8; min-height: 100vh; }
@@ -189,7 +190,9 @@ td.actions button:hover { opacity:0.8; }
     <!-- 第 1 格 -->
     <div class="label-col">
       <div class="cust-bar">
-        <label>客戶編號</label>
+        <select id="co-1" style="border:none;outline:none;font-size:13px;font-family:sans-serif;color:#1a5fa8;font-weight:bold;background:transparent;cursor:pointer;">
+          <option value="AL">AL</option><option value="GM">GM</option>
+        </select>
         <input type="text" id="custid-1" placeholder="輸入編號後按 Enter" autocomplete="off">
         <span class="cust-hint" id="custhint-1"></span>
       </div>
@@ -211,7 +214,9 @@ td.actions button:hover { opacity:0.8; }
     <!-- 第 2 格 -->
     <div class="label-col">
       <div class="cust-bar">
-        <label>客戶編號</label>
+        <select id="co-2" style="border:none;outline:none;font-size:13px;font-family:sans-serif;color:#1a5fa8;font-weight:bold;background:transparent;cursor:pointer;">
+          <option value="AL">AL</option><option value="GM">GM</option>
+        </select>
         <input type="text" id="custid-2" placeholder="輸入編號後按 Enter" autocomplete="off">
         <span class="cust-hint" id="custhint-2"></span>
       </div>
@@ -233,7 +238,9 @@ td.actions button:hover { opacity:0.8; }
     <!-- 第 3 格 -->
     <div class="label-col">
       <div class="cust-bar">
-        <label>客戶編號</label>
+        <select id="co-3" style="border:none;outline:none;font-size:13px;font-family:sans-serif;color:#1a5fa8;font-weight:bold;background:transparent;cursor:pointer;">
+          <option value="AL">AL</option><option value="GM">GM</option>
+        </select>
         <input type="text" id="custid-3" placeholder="輸入編號後按 Enter" autocomplete="off">
         <span class="cust-hint" id="custhint-3"></span>
       </div>
@@ -255,7 +262,9 @@ td.actions button:hover { opacity:0.8; }
     <!-- 第 4 格 -->
     <div class="label-col">
       <div class="cust-bar">
-        <label>客戶編號</label>
+        <select id="co-4" style="border:none;outline:none;font-size:13px;font-family:sans-serif;color:#1a5fa8;font-weight:bold;background:transparent;cursor:pointer;">
+          <option value="AL">AL</option><option value="GM">GM</option>
+        </select>
         <input type="text" id="custid-4" placeholder="輸入編號後按 Enter" autocomplete="off">
         <span class="cust-hint" id="custhint-4"></span>
       </div>
@@ -282,7 +291,14 @@ td.actions button:hover { opacity:0.8; }
      頁面 2：客戶管理
      ════════════════════════════════ -->
 <div class="page" id="page-mgmt">
-  <div class="mgmt-bar" style="margin-top:14px;">
+  <!-- AL/GM 子分頁 -->
+  <div style="display:flex;gap:0;margin-top:14px;margin-bottom:14px;border-bottom:2px solid #1a5fa8;">
+    <button type="button" id="btn-co-AL" onclick="switchCompany('AL')"
+      style="padding:8px 28px;font-size:15px;font-family:sans-serif;font-weight:bold;border:none;background:#1a5fa8;color:#fff;cursor:pointer;border-radius:6px 6px 0 0;">AL</button>
+    <button type="button" id="btn-co-GM" onclick="switchCompany('GM')"
+      style="padding:8px 28px;font-size:15px;font-family:sans-serif;font-weight:bold;border:none;background:#e0e8f5;color:#1a5fa8;cursor:pointer;border-radius:6px 6px 0 0;margin-left:4px;">GM</button>
+  </div>
+  <div class="mgmt-bar">
     <input type="text" id="searchInput" placeholder="搜尋編號 / 姓名 / 電話..." oninput="renderTable()">
     <button type="button" class="primary" onclick="openModal(null)">＋ 新增客戶</button>
     <button type="button" onclick="exportCSV()">⬇ 匯出 CSV</button>
@@ -345,27 +361,32 @@ function switchTab(tab) {
   if (tab === 'mgmt') renderTable();
 }
 
-// ════════════ 客戶資料 ════════════
+// ════════════ Supabase 客戶資料 ════════════
+var _supa = supabase.createClient(
+  'https://achrezfjtyjjgoyaaowr.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ'
+);
 
-// 初始資料（首次開啟時自動載入）
-var SEED_DATA = [{"id":"006","name":"信德儀器有限公司","addr":"台北市中正區羅斯福路3段240巷7弄4-1號","phone":""},{"id":"229","name":"信安儀器有限公司","addr":"台北市中正區羅斯福路3段244巷10弄6-1號","phone":""},{"id":"348","name":"台灣現用股份有限公司","addr":"台北市內湖區新明路143巷8號1樓","phone":""},{"id":"540","name":"力鈞生物科技有限公司","addr":"台北市中山區吉林路245號5樓","phone":""},{"id":"260","name":"慧眾生物科技有限公司","addr":"新北市中和區橋和路85號3F","phone":""},{"id":"110","name":"(永吉)承濱實業有限公司","addr":"新北市三重區三陽路45號1F","phone":""},{"id":"594","name":"盟基生物科技股份有限公司","addr":"新北市汐止區新台五路一段75號13樓之4","phone":""},{"id":"669","name":"尉徠生物科技有限公司","addr":"桃園市桃園區春日路1348號","phone":""},{"id":"892","name":"田祐國際有限公司","addr":"新北市三重區永福街46巷15弄2號","phone":""},{"id":"737","name":"德怡科技有限公司","addr":"苗栗縣竹南鎮工業路198號","phone":""},{"id":"075","name":"(伸球)展茂貿易有限公司","addr":"台中市南區復新街55號","phone":""},{"id":"397","name":"拜爾碁特科技股份有限公司","addr":"苗栗縣頭份鎮幼英街20號","phone":""},{"id":"A5036","name":"益邦製藥股份有限公司","addr":"苗栗縣竹南鎮科東三路1號","phone":""},{"id":"A5014","name":"中國化學製藥股份有限公司(新豐廠)","addr":"新竹縣新豐鄉上坑村二鄰坑子口182-1號","phone":""},{"id":"A1302","name":"國立清華大學-鄭惠春老師","addr":"新竹市東區光復路二段101號 生命科學二館5樓517室","phone":""},{"id":"798","name":"勢得科研股份有限公司","addr":"桃園市龜山區陳厝坑路997巷27號","phone":""},{"id":"674","name":"建順儀器有限公司","addr":"代送","phone":""},{"id":"074","name":"上美儀器有限公司","addr":"彰化縣員林市中山路二段301號","phone":""},{"id":"325","name":"亞璟科技有限公司","addr":"台中市西區建國北路三段17號","phone":""},{"id":"999","name":"聖美塑膠工廠","addr":"彰化縣和美鎮德美路594巷47號","phone":""},{"id":"383","name":"宗城儀器商行","addr":"新竹市建功一路51巷20號2樓","phone":""},{"id":"A9029","name":"恩揚生物科技股份有限公司","addr":"新竹縣關西鎮東安里13鄰糞箕窩1之7號","phone":""},{"id":"238","name":"伯新科技股份有限公司","addr":"新竹市光華二街108巷16-7號","phone":""},{"id":"766","name":"明亮儀器有限公司","addr":"新竹市和平路6巷42號","phone":""},{"id":"902","name":"立亨國際有限公司","addr":"新竹市香山區香北路268號1樓","phone":""},{"id":"Z005","name":"傅太太","addr":"桃園市楊梅區民有路一段198號","phone":""},{"id":"563","name":"上展玻璃儀器商行","addr":"新竹市東區經國路１段398巷15號","phone":""},{"id":"116","name":"詠欣有限公司","addr":"新竹市北區東大路三段298號","phone":""},{"id":"085","name":"新新儀器股份有限公司","addr":"台北市大同區環河北路2段283號","phone":""},{"id":"268","name":"國宜有限公司","addr":"新北市蘆洲區中正路243巷7弄28號1F","phone":""},{"id":"462","name":"昱昌材料科技股份有限公司","addr":"桃園市平鎮區太平東路2號","phone":""},{"id":"A3007","name":"佳格食品股份有限公司(中壢)","addr":"桃園市中壢區吉林路13號","phone":""},{"id":"600","name":"冠揚生物科技有限公司","addr":"新北市中和區連城路451號1樓","phone":""},{"id":"026","name":"(德記)德揚儀器有限公司","addr":"新北市樹林區俊英街172巷12號1F","phone":""},{"id":"代寄01","name":"望隼","addr":"苗栗縣竹南鎮公義里友義路66號","phone":""},{"id":"030","name":"(巨門)啟新生物科技有限公司","addr":"新北市新北產業園區五工五路21號4F","phone":""},{"id":"715","name":"雷伯斯儀器有限公司","addr":"桃園市楊梅區中山北路一段21巷2-3號","phone":""},{"id":"292","name":"心意有限公司","addr":"新北市三重區成功路110號16F之18","phone":""},{"id":"A3001","name":"葡萄王生技股份有限公司-龍岡廠","addr":"桃園市中壢區龍岡路三段60號","phone":""},{"id":"362","name":"新東陽股份有限公司","addr":"桃園市大園區大工路11號","phone":""},{"id":"216","name":"台灣默克股份有限公司","addr":"桃園市觀音區經建四路38號","phone":""},{"id":"440","name":"弘光企業有限公司","addr":"桃園市中寧街3號4F","phone":""},{"id":"A9062","name":"貝爾國際檢測科技股份有限公司","addr":"桃園市桃園區三民路三段182號地下一樓","phone":""},{"id":"A3002","name":"佳格食品(股)公司","addr":"桃園市大園區和平西路一段369號#568","phone":""},{"id":"673","name":"大明儀器行","addr":"桃園市蘆竹區文中路一段345巷50號","phone":""},{"id":"870","name":"勁碩生物科技有限公司","addr":"新北市中和區中正路872號5樓之1","phone":""},{"id":"879","name":"鉅宸國際有限公司","addr":"新北市三重區力行路1段137之1號","phone":""},{"id":"287","name":"宏宜儀器股份有限公司","addr":"台北市內湖區洲子街103號4F","phone":""},{"id":"011","name":"保吉生化學股份有限公司","addr":"新北市中和區中山路2段348巷8號11F","phone":""},{"id":"A1100","name":"國立中央大學","addr":"桃園市中壢區五權里中大路300號科學二館(414室)","phone":""},{"id":"A5025","name":"台裕化學製藥廠股份有限公司","addr":"新竹縣竹東鎮員山路11巷13弄1號(3號電梯)","phone":""},{"id":"A1462","name":"國立臺灣大學","addr":"台北市羅斯福路四段1號生命科學館6樓617室","phone":""},{"id":"A5015","name":"勝昌製藥廠股份有限公司","addr":"桃園市中壢區民族路六段436號","phone":""},{"id":"481","name":"永傑生物科技股份有限公司","addr":"台北市士林區重慶北路四段248號2樓205室","phone":""},{"id":"417","name":"研宏有限公司","addr":"台北市萬華區莒光路299巷3號","phone":""},{"id":"120","name":"忠山儀器有限公司","addr":"桃園市宏昌八街18號","phone":""},{"id":"347","name":"台美檢驗科技股份有限公司","addr":"新北市新北產業園區五工五路21號","phone":""},{"id":"A5069","name":"七星化學製藥股份有限公司","addr":"新北市土城區福安街75號","phone":""},{"id":"083","name":"廣瀚儀器有限公司","addr":"新竹市北區東大路四段156-1號","phone":""},{"id":"042","name":"三育儀器行","addr":"新竹市經國路1段628號","phone":""},{"id":"048","name":"進階生物科技股份有限公司","addr":"新北市汐止區康寧街169巷80號","phone":""},{"id":"441","name":"臻美企業有限公司","addr":"新北市板橋區文化路二段225巷60弄62號","phone":""},{"id":"004","name":"力明儀器有限公司","addr":"台北市文山區羅斯福路6段150巷22號4F","phone":""},{"id":"508","name":"方強企業有限公司","addr":"桃園市龜山區頂湖九街2號","phone":""},{"id":"595","name":"微杏基因生醫科技有限公司","addr":"新北市汐止區新台五路一段93號22樓之3(遠雄U-Town)","phone":""},{"id":"270","name":"鼎好貿易有限公司","addr":"新北市中和區中山路二段504巷2號1F","phone":""},{"id":"809","name":"揚積生物科技有公司","addr":"台北市南港區中南街24號","phone":""},{"id":"641","name":"永佳科學儀器有限公司","addr":"新北市三重區三陽路59號10樓","phone":""},{"id":"A5010","name":"寶齡富錦生技股份有限公司","addr":"桃園市平鎮區興隆路266號","phone":""},{"id":"代寄02","name":"群研->元智環境科技研究中心","addr":"桃園市中壢區永豐里遠東路135號","phone":""},{"id":"A5007","name":"杏林新生製藥股份有限公司","addr":"桃園市龍潭區三和里店湖一路237號","phone":""},{"id":"733","name":"立騰玻璃儀器企業社","addr":"新竹市東區食品路331號","phone":""},{"id":"A3015","name":"光泉牧場股份有限公司","addr":"桃園市大園區南港里14鄰大觀路1249號","phone":""},{"id":"237","name":"永泰興貿易(股)公司","addr":"台北市中正區寧波西街120號","phone":""},{"id":"031","name":"宏昇儀器行有限公司","addr":"台北市萬華區萬大路424巷11號1F","phone":""},{"id":"023","name":"元亨興業有限公司","addr":"台北市信義區富陽街56號","phone":""},{"id":"832","name":"智慧眼科技有限公司","addr":"桃園市蘆竹區光明路一段80號3樓","phone":""},{"id":"183","name":"協泰儀器行","addr":"桃園市桃三街1號","phone":""},{"id":"346","name":"莆崧實業股份有限公司","addr":"新北市三重區光復路一段83巷14號3F","phone":""},{"id":"Z003","name":"中國生化科技股份有限公司","addr":"台中市工業區33路10號","phone":""}];
+var custCache = { AL: [], GM: [] };
+var currentCompany = 'AL'; // 客戶管理目前選擇的公司
 
-// 首次或遷移：確保每筆資料有預設寄件人
-(function() {
-  var key = 'customers';
-  var data = localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : SEED_DATA;
-  var changed = false;
-  data.forEach(function(c) {
-    if (!c.sname) { c.sname = '龍冶股份有限公司'; changed = true; }
-  });
-  if (!localStorage.getItem(key) || changed) localStorage.setItem(key, JSON.stringify(data));
-})();
-
-function loadCustomers() {
-  try { return JSON.parse(localStorage.getItem('customers') || '[]'); } catch(e){ return []; }
+async function fetchCompany(co) {
+  var res = await _supa.from('customers').select('*').eq('company', co).order('id');
+  if (!res.error) custCache[co] = res.data || [];
 }
-function saveCustomers(data) {
-  localStorage.setItem('customers', JSON.stringify(data));
+
+async function fetchAllCustomers() {
+  await Promise.all([fetchCompany('AL'), fetchCompany('GM')]);
+}
+
+function switchCompany(co) {
+  currentCompany = co;
+  document.getElementById('btn-co-AL').style.background = co === 'AL' ? '#1a5fa8' : '#e0e8f5';
+  document.getElementById('btn-co-AL').style.color      = co === 'AL' ? '#fff'    : '#1a5fa8';
+  document.getElementById('btn-co-GM').style.background = co === 'GM' ? '#1a5fa8' : '#e0e8f5';
+  document.getElementById('btn-co-GM').style.color      = co === 'GM' ? '#fff'    : '#1a5fa8';
+  document.getElementById('searchInput').value = '';
+  renderTable();
 }
 
 // ID 正規化：英文字母轉大寫，純數字補到3碼
@@ -375,9 +396,10 @@ function normalizeId(raw) {
   return s;
 }
 
-function findCustomer(rawId) {
+function findCustomer(rawId, company) {
   var id = normalizeId(rawId);
-  return loadCustomers().find(function(c){ return c.id.toUpperCase() === id; });
+  var list = custCache[company] || [];
+  return list.find(function(c){ return c.id.toUpperCase() === id; });
 }
 
 // ════════════ 客戶編號自動帶入 ════════════
@@ -394,12 +416,12 @@ for (var ci = 1; ci <= 4; ci++) {
 
 function applyCustomer(n) {
   var raw   = document.getElementById('custid-'+n).value.trim();
+  var co    = document.getElementById('co-'+n).value;
   var hint  = document.getElementById('custhint-'+n);
   if (!raw) { hint.textContent = ''; return; }
   var normId = normalizeId(raw);
-  // 顯示補零後的編號
   document.getElementById('custid-'+n).value = normId;
-  var cust = findCustomer(normId);
+  var cust = findCustomer(normId, co);
   if (cust) {
     document.getElementById('receiver-'+n).value = cust.name + (cust.addr ? '\n' + cust.addr : '');
     if (cust.sname || cust.saddr)
@@ -415,15 +437,16 @@ function applyCustomer(n) {
 }
 
 // ════════════ 客戶管理表格 ════════════
-var editingId = null; // null = 新增, string = 編輯中的原始 id
+var editingId = null;
 
 function renderTable() {
-  var q    = (document.getElementById('searchInput').value || '').toLowerCase();
-  var data = loadCustomers().filter(function(c) {
+  var data = custCache[currentCompany] || [];
+  var q = (document.getElementById('searchInput').value || '').toLowerCase();
+  data = data.filter(function(c) {
     return !q || c.id.toLowerCase().includes(q) ||
-      c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q);
+      c.name.toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q);
   });
-  document.getElementById('custCount').textContent = '共 ' + loadCustomers().length + ' 筆';
+  document.getElementById('custCount').textContent = '共 ' + (custCache[currentCompany]||[]).length + ' 筆';
   var tbody = document.getElementById('custTbody');
   tbody.innerHTML = '';
   data.forEach(function(c) {
@@ -448,7 +471,7 @@ function openModal(id) {
   editingId = id;
   document.getElementById('modalTitle').textContent = id ? '編輯客戶' : '新增客戶';
   if (id) {
-    var c = findCustomer(id);
+    var c = findCustomer(id, currentCompany);
     document.getElementById('mId').value     = c ? c.id         : '';
     document.getElementById('mName').value   = c ? c.name       : '';
     document.getElementById('mAddr').value   = c ? c.addr       : '';
@@ -469,7 +492,7 @@ function openModal(id) {
 
 function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
 
-function saveModal() {
+async function saveModal() {
   var id    = normalizeId(document.getElementById('mId').value);
   var name  = document.getElementById('mName').value.trim();
   var addr  = document.getElementById('mAddr').value.trim();
@@ -477,33 +500,34 @@ function saveModal() {
   var phone = document.getElementById('mPhone').value.trim();
   if (!id || !name) { alert('請填入客戶編號與收件人姓名'); return; }
 
-  var data = loadCustomers();
-  var rec = { id:id, name:name, addr:addr, sname:sname, phone:phone };
-  if (editingId) {
-    var idx = data.findIndex(function(c){ return c.id.toUpperCase() === editingId.toUpperCase(); });
-    if (idx >= 0) data[idx] = rec;
-  } else {
-    if (data.some(function(c){ return c.id.toUpperCase() === id.toUpperCase(); })) { alert('客戶編號已存在'); return; }
-    data.push(rec);
+  var list = custCache[currentCompany] || [];
+  if (!editingId && list.some(function(c){ return c.id.toUpperCase() === id.toUpperCase(); })) {
+    alert('客戶編號已存在'); return;
   }
-  saveCustomers(data);
+
+  var rec = { company: currentCompany, id:id, name:name, addr:addr, sname:sname, phone:phone, updated_at: new Date().toISOString() };
+  var res = await _supa.from('customers').upsert(rec);
+  if (res.error) { alert('儲存失敗：' + res.error.message); return; }
+
+  await fetchCompany(currentCompany);
   closeModal();
   renderTable();
 }
 
-function deleteCustomer(id) {
+async function deleteCustomer(id) {
   if (!confirm('確定刪除客戶「' + id + '」？')) return;
-  var data = loadCustomers().filter(function(c){ return c.id !== id; });
-  saveCustomers(data);
+  var res = await _supa.from('customers').delete().eq('company', currentCompany).eq('id', id);
+  if (res.error) { alert('刪除失敗：' + res.error.message); return; }
+  custCache[currentCompany] = (custCache[currentCompany]||[]).filter(function(c){ return c.id !== id; });
   renderTable();
 }
 
 // ════════════ CSV 匯入匯出 ════════════
 function exportCSV() {
-  var data = loadCustomers();
-  var rows = ['客戶編號,收件人姓名,收件地址,寄件人姓名,寄件地址,電話'];
+  var data = custCache[currentCompany] || [];
+  var rows = ['客戶編號,收件人姓名,收件地址,寄件人姓名,電話'];
   data.forEach(function(c) {
-    rows.push([c.id, c.name, c.addr, c.sname||'', c.saddr||'', c.phone].map(function(v){
+    rows.push([c.id, c.name, c.addr, c.sname||'', c.phone].map(function(v){
       return '"' + String(v).replace(/"/g,'""') + '"';
     }).join(','));
   });
@@ -514,11 +538,11 @@ function exportCSV() {
   a.click();
 }
 
-function importCSV(e) {
+async function importCSV(e) {
   var file = e.target.files[0];
   if (!file) return;
   var reader = new FileReader();
-  reader.onload = function(ev) {
+  reader.onload = async function(ev) {
     var text = ev.target.result.replace(/^﻿/, ''); // 去 BOM
     var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
     if (lines.length < 2) { alert('CSV 格式錯誤或無資料'); return; }
@@ -537,20 +561,22 @@ function importCSV(e) {
       }
     }
     if (!imported.length) { alert('無法讀取任何資料，請確認格式：客戶編號,姓名,地址,電話'); return; }
-    var action = confirm(
-      '匯入 ' + imported.length + ' 筆資料。\n\n確定 = 合併（相同編號覆蓋）\n取消 = 清空後匯入'
-    );
-    var existing = action ? loadCustomers() : [];
-    imported.forEach(function(n) {
-      var idx = existing.findIndex(function(c){ return c.id === n.id; });
-      if (idx >= 0) existing[idx] = n; else existing.push(n);
-    });
-    saveCustomers(existing);
+    var snameDefault = currentCompany === 'AL' ? '龍冶股份有限公司' : '龍台貿易有限公司';
+    imported.forEach(function(c){ c.company = currentCompany; if (!c.sname) c.sname = snameDefault; });
+    var res = await _supa.from('customers').upsert(imported);
+    if (res.error) { alert('匯入失敗：' + res.error.message); return; }
+    await fetchCompany(currentCompany);
     renderTable();
-    alert('匯入完成，共 ' + existing.length + ' 筆。');
+    alert('匯入完成，共 ' + imported.length + ' 筆。');
   };
   reader.readAsText(file, 'UTF-8');
   e.target.value = '';
+}
+
+function clearAllCustomers() {
+  if (!confirm('確定要刪除全部 ' + loadCustomers().length + ' 筆客戶資料？\n此動作無法復原。')) return;
+  saveCustomers([]);
+  renderTable();
 }
 
 function parseCSVLine(line) {
@@ -659,76 +685,4 @@ printArea.id = 'print-area'; printArea.style.display = 'none';
 document.body.appendChild(printArea);
 
 function buildPrintArea() {
-  var top = parseInt(document.getElementById('sTop').value);
-  var left= parseInt(document.getElementById('sLeft').value);
-  var lw  = parseInt(document.getElementById('sLW').value);
-  var gap = parseInt(document.getElementById('sGap').value);
-  var footOff = parseInt(document.getElementById('sFoot').value);
-  var cntL    = parseInt(document.getElementById('sCnt').value);
-  var phnL    = parseInt(document.getElementById('sPhn').value);
-  printArea.innerHTML = '';
-  for (var i = 1; i <= 4; i++) {
-    var ls = left + (i-1) * (lw + gap);
-    function mkDiv(txt, t, l, w, h, vert) {
-      if (!txt) return;
-      var d = document.createElement('div');
-      d.className = 'pf' + (vert ? ' vert' : '');
-      d.style.top = t+'mm'; d.style.left = l+'mm'; d.style.width = w+'mm';
-      if (h) d.style.height = h+'mm';
-      d.textContent = txt; printArea.appendChild(d);
-    }
-    mkDiv(document.getElementById('sender-'+i).value,   top+17,           ls+1,    16,     86, true);
-    mkDiv(document.getElementById('receiver-'+i).value, top+17,           ls+17,   lw-18,  86, true);
-    mkDiv(document.getElementById('count-'+i).value,    top+113+footOff,  ls+cntL, 10,     null, false);
-    mkDiv(document.getElementById('phone-'+i).value,    top+113+footOff,  ls+phnL, lw-phnL,null, false);
-  }
-}
-
-document.getElementById('btnPrint').addEventListener('click', function(e) {
-  e.preventDefault();
-  buildPrintArea();
-  setTimeout(function() {
-    window.print();
-    setTimeout(function(){ printArea.innerHTML=''; }, 500);
-  }, 100);
-});
-
-document.getElementById('btnCopy').addEventListener('click', function(e) {
-  e.preventDefault();
-  fields.forEach(function(f) {
-    var val = document.getElementById(f+'-4').value;
-    for (var i=1;i<=3;i++) document.getElementById(f+'-'+i).value = val;
-  });
-  drawPreview();
-});
-
-document.getElementById('btnClear').addEventListener('click', function(e) {
-  e.preventDefault();
-  for (var i=1;i<=4;i++) {
-    fields.forEach(function(f){ document.getElementById(f+'-'+i).value=''; });
-    document.getElementById('custid-'+i).value='';
-    document.getElementById('custhint-'+i).textContent='';
-  }
-  drawPreview();
-});
-
-// 折疊預覽
-var previewWrap = document.getElementById('preview-wrap');
-var btnToggle   = document.getElementById('btnTogglePreview');
-var previewOpen = false;
-btnToggle.addEventListener('click', function() {
-  previewOpen = !previewOpen;
-  previewWrap.style.display = previewOpen ? '' : 'none';
-  btnToggle.textContent = (previewOpen?'▼':'▶') + ' 列印預覽 & 偏移設定';
-});
-
-// 輸入時更新預覽
-for (var pi=1;pi<=4;pi++) {
-  fields.forEach(function(f) {
-    document.getElementById(f+'-'+pi).addEventListener('input', drawPreview);
-  });
-}
-drawPreview();
-</script>
-</body>
-</html>
+  
