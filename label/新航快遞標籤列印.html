@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>新航快遞 - 標籤列印工具</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "標楷體","DFKai-SB",serif; background: #e8e8d8; min-height: 100vh; }
@@ -361,22 +360,29 @@ function switchTab(tab) {
   if (tab === 'mgmt') renderTable();
 }
 
-// ════════════ Supabase 客戶資料 ════════════
-var _supa = null;
-try {
-  _supa = supabase.createClient(
-    'https://achrezfjtyjjgoyaaowr.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ'
-  );
-} catch(e) { console.error('Supabase init error:', e); }
+// ════════════ Supabase REST API（不用 CDN library）════════════
+var SUPA_URL = 'https://achrezfjtyjjgoyaaowr.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
+
+function supaFetch(path, options) {
+  return fetch(SUPA_URL + '/rest/v1/' + path, Object.assign({
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    }
+  }, options || {}));
+}
 
 var custCache = { AL: [], GM: [] };
 var currentCompany = 'AL'; // 客戶管理目前選擇的公司
 
 async function fetchCompany(co) {
-  if (!_supa) return;
-  var res = await _supa.from('customers').select('*').eq('company', co).order('id');
-  if (!res.error) custCache[co] = res.data || [];
+  try {
+    var res = await supaFetch('customers?company=eq.' + co + '&order=id');
+    if (res.ok) custCache[co] = await res.json();
+  } catch(e) { console.error('fetchCompany error:', e); }
 }
 
 async function fetchAllCustomers() {
@@ -510,8 +516,13 @@ async function saveModal() {
   }
 
   var rec = { company: currentCompany, id:id, name:name, addr:addr, sname:sname, phone:phone, updated_at: new Date().toISOString() };
-  var res = await _supa.from('customers').upsert(rec);
-  if (res.error) { alert('儲存失敗：' + res.error.message); return; }
+  var res = await supaFetch('customers', {
+    method: 'POST',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify(rec)
+  });
+  if (!res.ok) { alert('儲存失敗：' + await res.text()); return; }
 
   await fetchCompany(currentCompany);
   closeModal();
@@ -520,8 +531,8 @@ async function saveModal() {
 
 async function deleteCustomer(id) {
   if (!confirm('確定刪除客戶「' + id + '」？')) return;
-  var res = await _supa.from('customers').delete().eq('company', currentCompany).eq('id', id);
-  if (res.error) { alert('刪除失敗：' + res.error.message); return; }
+  var res = await supaFetch('customers?company=eq.' + currentCompany + '&id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+  if (!res.ok) { alert('刪除失敗'); return; }
   custCache[currentCompany] = (custCache[currentCompany]||[]).filter(function(c){ return c.id !== id; });
   renderTable();
 }
@@ -567,8 +578,13 @@ async function importCSV(e) {
     if (!imported.length) { alert('無法讀取任何資料，請確認格式：客戶編號,姓名,地址,電話'); return; }
     var snameDefault = currentCompany === 'AL' ? '龍冶股份有限公司' : '龍台貿易有限公司';
     imported.forEach(function(c){ c.company = currentCompany; if (!c.sname) c.sname = snameDefault; });
-    var res = await _supa.from('customers').upsert(imported);
-    if (res.error) { alert('匯入失敗：' + res.error.message); return; }
+    var res = await supaFetch('customers', {
+      method: 'POST',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(imported)
+    });
+    if (!res.ok) { alert('匯入失敗：' + await res.text()); return; }
     await fetchCompany(currentCompany);
     renderTable();
     alert('匯入完成，共 ' + imported.length + ' 筆。');
@@ -666,23 +682,4 @@ function drawPreview() {
 }
 
 var sliderMap = [
-  ['sTop','vTop'],['sLeft','vLeft'],['sLW','vLW'],['sGap','vGap'],
-  ['sFoot','vFoot'],['sCnt','vCnt'],['sPhn','vPhn']
-];
-function sync(id, span) {
-  var v = document.getElementById(id).value;
-  document.getElementById(span).textContent = v + 'mm';
-  localStorage.setItem('label_' + id, v);
-  drawPreview();
-}
-sliderMap.forEach(function(p) {
-  var saved = localStorage.getItem('label_' + p[0]);
-  if (saved !== null) {
-    document.getElementById(p[0]).value = saved;
-    document.getElementById(p[1]).textContent = saved + 'mm';
-  }
-});
-
-// 列印
-var printArea = document.createElement('div');
-printArea.id = 'print-area'; printArea.style.displ
+  ['sTop','vTop'],['sLeft','vLeft'],['sLW','vLW'],['sGap
