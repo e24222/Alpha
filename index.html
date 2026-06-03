@@ -76,17 +76,16 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
 <body>
   <h1>龍冶管理系統</h1>
   <p>請選擇要使用的系統</p>
-  <div class="cards">
+  <!-- 第一排：模具 -->
+  <div class="cards" style="margin-bottom:24px;">
     <div class="card" onclick="openSystem('模具清冊管理', 'mold/index.html')">
       <div class="icon">🔧</div>
       <div class="name">模具清冊管理</div>
       <div class="desc">模具資料管理與追蹤</div>
     </div>
-    <a class="card" href="inspection/index.html">
-      <div class="icon">🔍</div>
-      <div class="name">首件檢驗記錄</div>
-      <div class="desc">首件檢驗紀錄與查詢</div>
-    </a>
+  </div>
+  <!-- 第二排：標籤 + 送貨 -->
+  <div class="cards" style="margin-bottom:24px;">
     <div class="card" onclick="openSystem('新航快遞標籤列印', 'label/新航快遞標籤列印.html')">
       <div class="icon">🏷️</div>
       <div class="name">新航快遞標籤列印</div>
@@ -97,11 +96,19 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
       <div class="name">送貨路線規劃</div>
       <div class="desc">路線規劃與導航列印</div>
     </div>
+  </div>
+  <!-- 第三排：客訴 + 首件 -->
+  <div class="cards">
     <div class="card" onclick="openSystem('客訴管理系統', 'complaint/index.html')">
       <div class="icon">📋</div>
       <div class="name">客訴管理系統</div>
       <div class="desc">客訴記錄與追蹤管理</div>
     </div>
+    <a class="card" href="inspection/index.html">
+      <div class="icon">🔍</div>
+      <div class="name">首件檢驗記錄</div>
+      <div class="desc">首件檢驗紀錄與查詢</div>
+    </a>
   </div>
 
   <!-- Password Modal -->
