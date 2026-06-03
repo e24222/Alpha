@@ -682,4 +682,102 @@ function drawPreview() {
 }
 
 var sliderMap = [
-  ['sTop','vTop'],['sLeft','vLeft'],[
+  ['sTop','vTop'],['sLeft','vLeft'],['sLW','vLW'],['sGap','vGap'],
+  ['sFoot','vFoot'],['sCnt','vCnt'],['sPhn','vPhn']
+];
+function sync(id, span) {
+  var v = document.getElementById(id).value;
+  document.getElementById(span).textContent = v + 'mm';
+  localStorage.setItem('label_' + id, v);
+  drawPreview();
+}
+sliderMap.forEach(function(p) {
+  var saved = localStorage.getItem('label_' + p[0]);
+  if (saved !== null) {
+    document.getElementById(p[0]).value = saved;
+    document.getElementById(p[1]).textContent = saved + 'mm';
+  }
+});
+
+// ════════════ 列印 ════════════
+var printArea = document.createElement('div');
+printArea.id = 'print-area'; printArea.style.display = 'none';
+document.body.appendChild(printArea);
+
+function buildPrintArea() {
+  var top  = parseInt(document.getElementById('sTop').value);
+  var left = parseInt(document.getElementById('sLeft').value);
+  var lw   = parseInt(document.getElementById('sLW').value);
+  var gap  = parseInt(document.getElementById('sGap').value);
+  var footOff = parseInt(document.getElementById('sFoot').value);
+  var cntL    = parseInt(document.getElementById('sCnt').value);
+  var phnL    = parseInt(document.getElementById('sPhn').value);
+  printArea.innerHTML = '';
+  for (var i = 1; i <= 4; i++) {
+    var ls = left + (i-1) * (lw + gap);
+    function mkDiv(txt, t, l, w, h, vert) {
+      if (!txt) return;
+      var d = document.createElement('div');
+      d.className = 'pf' + (vert ? ' vert' : '');
+      d.style.top = t+'mm'; d.style.left = l+'mm'; d.style.width = w+'mm';
+      if (h) d.style.height = h+'mm';
+      d.textContent = txt; printArea.appendChild(d);
+    }
+    mkDiv(document.getElementById('sender-'+i).value,   top+17,           ls+1,    16,      86, true);
+    mkDiv(document.getElementById('receiver-'+i).value, top+17,           ls+17,   lw-18,   86, true);
+    mkDiv(document.getElementById('count-'+i).value,    top+113+footOff,  ls+cntL, 10,      null, false);
+    mkDiv(document.getElementById('phone-'+i).value,    top+113+footOff,  ls+phnL, lw-phnL, null, false);
+  }
+}
+
+document.getElementById('btnPrint').addEventListener('click', function(e) {
+  e.preventDefault();
+  buildPrintArea();
+  setTimeout(function() {
+    window.print();
+    setTimeout(function(){ printArea.innerHTML=''; }, 500);
+  }, 100);
+});
+
+document.getElementById('btnCopy').addEventListener('click', function(e) {
+  e.preventDefault();
+  fields.forEach(function(f) {
+    var val = document.getElementById(f+'-4').value;
+    for (var i=1;i<=3;i++) document.getElementById(f+'-'+i).value = val;
+  });
+  drawPreview();
+});
+
+document.getElementById('btnClear').addEventListener('click', function(e) {
+  e.preventDefault();
+  for (var i=1;i<=4;i++) {
+    fields.forEach(function(f){ document.getElementById(f+'-'+i).value=''; });
+    document.getElementById('custid-'+i).value='';
+    document.getElementById('custhint-'+i).textContent='';
+  }
+  drawPreview();
+});
+
+// 折疊預覽
+var previewWrap = document.getElementById('preview-wrap');
+var btnToggle   = document.getElementById('btnTogglePreview');
+var previewOpen = false;
+btnToggle.addEventListener('click', function() {
+  previewOpen = !previewOpen;
+  previewWrap.style.display = previewOpen ? '' : 'none';
+  btnToggle.textContent = (previewOpen?'▼':'▶') + ' 列印預覽 & 偏移設定';
+});
+
+// 輸入時更新預覽
+for (var pi=1;pi<=4;pi++) {
+  fields.forEach(function(f) {
+    document.getElementById(f+'-'+pi).addEventListener('input', drawPreview);
+  });
+}
+drawPreview();
+
+// 初始載入客戶資料
+fetchAllCustomers();
+</script>
+</body>
+</html>
