@@ -77,38 +77,38 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
   <h1>龍冶管理系統</h1>
   <p>請選擇要使用的系統</p>
   <div class="cards">
-    <a class="card" href="mold/index.html">
+    <div class="card" onclick="openSystem('模具清冊管理', 'mold/index.html')">
       <div class="icon">🔧</div>
       <div class="name">模具清冊管理</div>
       <div class="desc">模具資料管理與追蹤</div>
-    </a>
+    </div>
     <a class="card" href="inspection/index.html">
       <div class="icon">🔍</div>
       <div class="name">首件檢驗記錄</div>
       <div class="desc">首件檢驗紀錄與查詢</div>
     </a>
-    <a class="card" href="label/新航快遞標籤列印.html">
+    <div class="card" onclick="openSystem('新航快遞標籤列印', 'label/新航快遞標籤列印.html')">
       <div class="icon">🏷️</div>
       <div class="name">新航快遞標籤列印</div>
       <div class="desc">標籤填寫與列印管理</div>
-    </a>
-    <div class="card" onclick="openDelivery()">
+    </div>
+    <div class="card" onclick="openSystem('送貨路線規劃', 'delivery/送貨路線規劃.html')">
       <div class="icon">🚛</div>
       <div class="name">送貨路線規劃</div>
       <div class="desc">路線規劃與導航列印</div>
     </div>
-    <div class="card" onclick="openComplaint()">
+    <div class="card" onclick="openSystem('客訴管理系統', 'complaint/index.html')">
       <div class="icon">📋</div>
       <div class="name">客訴管理系統</div>
       <div class="desc">客訴記錄與追蹤管理</div>
     </div>
   </div>
 
-  <!-- Password Modal for Complaint System -->
+  <!-- Password Modal -->
   <div class="pw-overlay" id="pwModal" style="display:none">
     <div class="pw-box">
       <div class="pw-icon">🔒</div>
-      <div class="pw-title" id="pwTitle">客訴管理系統</div>
+      <div class="pw-title" id="pwTitle"></div>
       <div class="pw-sub">請輸入密碼以繼續</div>
       <input class="pw-input" type="password" id="pwInput" placeholder="請輸入密碼"
         onkeydown="if(event.key==='Enter')checkPw()">
@@ -123,41 +123,30 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
 
 <script>
 const CORRECT = '22505047';
-const PW_TTL = 5 * 60 * 1000; // 5 分鐘有效
-let pwTarget = '';
+const PW_TTL  = 24 * 60 * 60 * 1000; // 24 小時
+let pwTargetUrl = '';
+
 function isAuthed() {
-  const t = sessionStorage.getItem('auth_time');
+  const t = localStorage.getItem('auth_time');
   return t && (Date.now() - parseInt(t)) < PW_TTL;
 }
-function setAuthed() { sessionStorage.setItem('auth_time', Date.now()); }
-function openComplaint() {
-  if (isAuthed()) { window.location.href = 'complaint/index.html?a=1'; return; }
-  pwTarget = 'complaint';
-  document.getElementById('pwTitle').textContent = '客訴管理系統';
+function setAuthed() { localStorage.setItem('auth_time', String(Date.now())); }
+
+function openSystem(title, url) {
+  if (isAuthed()) { window.location.href = url; return; }
+  pwTargetUrl = url;
+  document.getElementById('pwTitle').textContent = title;
   document.getElementById('pwModal').style.display = 'flex';
   document.getElementById('pwInput').value = '';
   document.getElementById('pwErr').style.display = 'none';
   setTimeout(() => document.getElementById('pwInput').focus(), 100);
 }
-function openDelivery() {
-  if (isAuthed()) { window.location.href = 'delivery/送貨路線規劃.html'; return; }
-  pwTarget = 'delivery';
-  document.getElementById('pwTitle').textContent = '送貨路線規劃';
-  document.getElementById('pwModal').style.display = 'flex';
-  document.getElementById('pwInput').value = '';
-  document.getElementById('pwErr').style.display = 'none';
-  setTimeout(() => document.getElementById('pwInput').focus(), 100);
-}
+
 function checkPw() {
   const v = document.getElementById('pwInput').value;
   if (v === CORRECT) {
     setAuthed();
-    if (pwTarget === 'delivery') {
-      window.location.href = 'delivery/送貨路線規劃.html';
-    } else {
-      sessionStorage.setItem('complaint_auth', '1');
-      window.location.href = 'complaint/index.html?a=1';
-    }
+    window.location.href = pwTargetUrl;
   } else {
     document.getElementById('pwErr').style.display = 'block';
     document.getElementById('pwInput').value = '';
@@ -166,4 +155,4 @@ function checkPw() {
 }
 </script>
 </body>
-</ht
+</html>
