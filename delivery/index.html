@@ -1358,10 +1358,10 @@
     clearTimeout(ghPushTimer);
     ghPushTimer = setTimeout(async () => {
       try {
-        const m = await (await fetch(`https://api.github.com/repos/${GH_REPO}/contents/history.json`,
+        const m = await (await fetch(`https://api.github.com/repos/${GH_REPO}/contents/delivery/history.json`,
           {headers:{'Authorization':`token ${GH_TOKEN}`}})).json();
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(routeHistory.slice(0,60),null,2))));
-        await fetch(`https://api.github.com/repos/${GH_REPO}/contents/history.json`,{
+        await fetch(`https://api.github.com/repos/${GH_REPO}/contents/delivery/history.json`,{
           method:'PUT', headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
           body:JSON.stringify({message:'Update history',content,sha:m.sha})
         });
