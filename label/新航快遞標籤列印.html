@@ -67,6 +67,11 @@ body { font-family: "標楷體","DFKai-SB",serif; background: #e8e8d8; min-heigh
   font-family:"標楷體","DFKai-SB",serif; font-size:18px; color:#111; background:transparent;
   writing-mode:vertical-rl; line-height:1.8;
 }
+.recv-split { display:flex; width:100%; height:100%; }
+.recv-name-area { width:32%; border-left:1.5px solid #1a5fa8; padding:2px; }
+.recv-name-area textarea { font-size:20px; font-weight:bold; }
+.recv-addr-area { flex:1; padding:2px; }
+.recv-addr-area textarea { font-size:16px; }
 .footer-row { display:flex; border-bottom:1.5px solid #1a5fa8; min-height:50px; }
 .footer-left { width:75px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-right:1.5px solid #1a5fa8; padding:4px; font-size:13px; letter-spacing:2px; gap:3px; }
 .footer-left input { width:48px; border:none; border-bottom:1.5px solid #1a5fa8; outline:none; text-align:center; font-family:"標楷體","DFKai-SB",serif; font-size:18px; color:#111; background:transparent; }
@@ -200,7 +205,12 @@ td.actions button:hover { opacity:0.8; }
         <div class="header-row"><div class="header-cell sh">寄件人</div><div class="header-cell">收 件 人</div></div>
         <div class="body-row">
           <div class="body-cell sc"><textarea id="sender-1"></textarea></div>
-          <div class="body-cell"><textarea id="receiver-1" placeholder="姓名&#10;地址"></textarea></div>
+          <div class="body-cell">
+          <div class="recv-split">
+            <div class="recv-addr-area"><textarea id="receiver-addr-1" placeholder="地址"></textarea></div>
+            <div class="recv-name-area"><textarea id="receiver-1" placeholder="收件人姓名"></textarea></div>
+          </div>
+        </div>
         </div>
         <div class="footer-row">
           <div class="footer-left"><span>共 件</span><input type="text" id="count-1" placeholder="1"></div>
@@ -224,7 +234,12 @@ td.actions button:hover { opacity:0.8; }
         <div class="header-row"><div class="header-cell sh">寄件人</div><div class="header-cell">收 件 人</div></div>
         <div class="body-row">
           <div class="body-cell sc"><textarea id="sender-2"></textarea></div>
-          <div class="body-cell"><textarea id="receiver-2" placeholder="姓名&#10;地址"></textarea></div>
+          <div class="body-cell">
+          <div class="recv-split">
+            <div class="recv-addr-area"><textarea id="receiver-addr-2" placeholder="地址"></textarea></div>
+            <div class="recv-name-area"><textarea id="receiver-2" placeholder="收件人姓名"></textarea></div>
+          </div>
+        </div>
         </div>
         <div class="footer-row">
           <div class="footer-left"><span>共 件</span><input type="text" id="count-2" placeholder="1"></div>
@@ -248,7 +263,12 @@ td.actions button:hover { opacity:0.8; }
         <div class="header-row"><div class="header-cell sh">寄件人</div><div class="header-cell">收 件 人</div></div>
         <div class="body-row">
           <div class="body-cell sc"><textarea id="sender-3"></textarea></div>
-          <div class="body-cell"><textarea id="receiver-3" placeholder="姓名&#10;地址"></textarea></div>
+          <div class="body-cell">
+          <div class="recv-split">
+            <div class="recv-addr-area"><textarea id="receiver-addr-3" placeholder="地址"></textarea></div>
+            <div class="recv-name-area"><textarea id="receiver-3" placeholder="收件人姓名"></textarea></div>
+          </div>
+        </div>
         </div>
         <div class="footer-row">
           <div class="footer-left"><span>共 件</span><input type="text" id="count-3" placeholder="1"></div>
@@ -272,7 +292,12 @@ td.actions button:hover { opacity:0.8; }
         <div class="header-row"><div class="header-cell sh">寄件人</div><div class="header-cell">收 件 人</div></div>
         <div class="body-row">
           <div class="body-cell sc"><textarea id="sender-4"></textarea></div>
-          <div class="body-cell"><textarea id="receiver-4" placeholder="姓名&#10;地址"></textarea></div>
+          <div class="body-cell">
+          <div class="recv-split">
+            <div class="recv-addr-area"><textarea id="receiver-addr-4" placeholder="地址"></textarea></div>
+            <div class="recv-name-area"><textarea id="receiver-4" placeholder="收件人姓名"></textarea></div>
+          </div>
+        </div>
         </div>
         <div class="footer-row">
           <div class="footer-left"><span>共 件</span><input type="text" id="count-4" placeholder="1"></div>
@@ -433,7 +458,8 @@ window.applyCustomer = function applyCustomer(n) {
   document.getElementById('custid-'+n).value = normId;
   var cust = findCustomer(normId, co);
   if (cust) {
-    document.getElementById('receiver-'+n).value = cust.name + (cust.addr ? '\n' + cust.addr : '');
+    document.getElementById('receiver-'+n).value = cust.name;
+    document.getElementById('receiver-addr-'+n).value = cust.addr || '';
     if (cust.sname || cust.saddr)
       document.getElementById('sender-'+n).value = (cust.sname||'') + (cust.saddr ? '\n' + cust.saddr : '');
     if (cust.phone) document.getElementById('phone-'+n).value = cust.phone;
@@ -615,7 +641,7 @@ function parseCSVLine(line) {
 }
 
 // ════════════ 標籤列印 ════════════
-var fields = ['sender','receiver','count','phone'];
+var fields = ['sender','receiver','receiver-addr','count','phone'];
 
 var SCALE = 3.0, SHEET_W = 274, SHEET_H = 140;
 var canvas = document.getElementById('preview');
@@ -670,7 +696,9 @@ function drawPreview() {
   for (var i = 0; i < 4; i++) {
     var n = i + 1, tx = (left + i * (lw + gap)) * s;
     var sVal = document.getElementById('sender-'+n).value;
-    var rVal = document.getElementById('receiver-'+n).value;
+    var rName = document.getElementById('receiver-'+n).value;
+    var rAddr = document.getElementById('receiver-addr-'+n).value;
+    var rVal = rName + (rAddr ? '\n' + rAddr : '');
     var cVal = document.getElementById('count-'+n).value;
     var pVal = document.getElementById('phone-'+n).value;
     ctx.font = Math.round(6*s) + 'px serif'; ctx.textAlign = 'left';
@@ -724,7 +752,10 @@ function buildPrintArea() {
       d.textContent = txt; printArea.appendChild(d);
     }
     mkDiv(document.getElementById('sender-'+i).value,   top+17,           ls+1,    16,      86, true);
-    mkDiv(document.getElementById('receiver-'+i).value, top+17,           ls+17,   lw-18,   86, true);
+    var rName = document.getElementById('receiver-'+i).value;
+    var rAddr = document.getElementById('receiver-addr-'+i).value;
+    mkDiv(rName, top+17, ls+lw-16,  14, 86, true);
+    mkDiv(rAddr, top+17, ls+17,     lw-34, 86, true);
     mkDiv(document.getElementById('count-'+i).value,    top+113+footOff,  ls+cntL, 10,      null, false);
     mkDiv(document.getElementById('phone-'+i).value,    top+113+footOff,  ls+phnL, lw-phnL, null, false);
   }
