@@ -18,23 +18,29 @@ body {
 }
 h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
 p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
-.cards { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 520px;
+  max-width: 95vw;
+}
 .card {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 16px;
-  padding: 36px 44px;
+  padding: 32px 24px;
   text-align: center;
   text-decoration: none;
   color: white;
   transition: all 0.2s;
-  min-width: 200px;
   cursor: pointer;
 }
-.card:hover { background: rgba(255,255,255,0.18); transform: translateY(-4px); }
-.card .icon { font-size: 3rem; margin-bottom: 16px; }
-.card .name { font-size: 1.1rem; font-weight: 700; }
-.card .desc { font-size: 0.85rem; opacity: 0.6; margin-top: 6px; }
+.card.full { grid-column: 1 / -1; }
+.card:hover { background: rgba(255,255,255,0.18); transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.card .icon { font-size: 2.8rem; margin-bottom: 14px; }
+.card .name { font-size: 1.05rem; font-weight: 700; }
+.card .desc { font-size: 0.82rem; opacity: 0.6; margin-top: 5px; }
 
 /* Password Modal */
 .pw-overlay {
@@ -76,16 +82,14 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
 <body>
   <h1>龍冶管理系統</h1>
   <p>請選擇要使用的系統</p>
-  <!-- 第一排：模具 -->
-  <div class="cards" style="margin-bottom:24px;">
-    <div class="card" onclick="openSystem('模具清冊管理', 'mold/index.html')">
+  <div class="grid">
+    <!-- 模具：獨佔一整行 -->
+    <div class="card full" onclick="openSystem('模具清冊管理', 'mold/index.html')">
       <div class="icon">🔧</div>
       <div class="name">模具清冊管理</div>
       <div class="desc">模具資料管理與追蹤</div>
     </div>
-  </div>
-  <!-- 第二排：標籤 + 送貨 -->
-  <div class="cards" style="margin-bottom:24px;">
+    <!-- 標籤 + 送貨 -->
     <div class="card" onclick="openSystem('新航快遞標籤列印', 'label/新航快遞標籤列印.html')">
       <div class="icon">🏷️</div>
       <div class="name">新航快遞標籤列印</div>
@@ -96,9 +100,7 @@ p  { font-size: 1rem; opacity: 0.7; margin-bottom: 48px; }
       <div class="name">送貨路線規劃</div>
       <div class="desc">路線規劃與導航列印</div>
     </div>
-  </div>
-  <!-- 第三排：客訴 + 首件 -->
-  <div class="cards">
+    <!-- 客訴 + 首件 -->
     <div class="card" onclick="openSystem('客訴管理系統', 'complaint/index.html')">
       <div class="icon">📋</div>
       <div class="name">客訴管理系統</div>
