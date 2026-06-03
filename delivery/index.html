@@ -1,0 +1,2717 @@
+<!DOCTYPE html>
+<!-- saved from url=(0116)file:///D:/admin/Downloads/%E9%80%81%E8%B2%A8%E8%B7%AF%E7%B7%9A%E8%A6%8F%E5%8A%83-%E5%AE%A2%E6%88%B6%E7%89%88_4.html -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>送貨路線規劃 (OSRM版)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#232637;--accent:#f5a623;--accent2:#e8543a;--text:#eef0f8;--muted:#7b7f9a;--border:#2e3147;--green:#2ecc71;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  .header{background:var(--surface);border-bottom:2px solid var(--accent);padding:14px 20px;display:flex;align-items:center;gap:14px;}
+  .header-icon{width:38px;height:38px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .header-text h1{font-size:18px;font-weight:900;}
+  .header-text p{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;}
+  .header-badge{margin-left:auto;background:rgba(46,204,113,0.15);border:1px solid var(--green);color:var(--green);font-size:11px;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+  .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;position:sticky;top:0;z-index:99;overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;box-sizing:border-box;}
+  .tab{padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);transition:all 0.2s;white-space:nowrap;}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .main{padding:20px;max-width:680px;margin:0 auto;}
+  .page{display:none;}
+  .page.active{display:block;}
+  .search-bar{position:relative;margin-bottom:16px;}
+  .search-bar input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 16px 12px 40px;font-size:14px;font-family:'Noto Sans TC',sans-serif;outline:none;}
+  .search-bar input:focus{border-color:var(--accent);}
+  .search-bar .icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;}
+  .customer-list{background:var(--surface);border-radius:14px;overflow:hidden;margin-bottom:16px;}
+  .customer-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;user-select:none;}
+  .customer-item:last-child{border-bottom:none;}
+  .customer-item:hover{background:var(--surface2);}
+  .customer-item.selected{background:rgba(245,166,35,0.08);}
+  .checkbox{width:22px;height:22px;border:2px solid var(--border);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+  .customer-item.selected .checkbox{background:var(--accent);border-color:var(--accent);color:#000;font-size:13px;}
+  .cust-code{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);width:36px;flex-shrink:0;}
+  .cust-info{flex:1;min-width:0;}
+  .cust-name{font-weight:700;font-size:14px;margin-bottom:2px;}
+  .cust-addr{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .selected-count{background:var(--surface);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);}
+  .selected-count span{font-size:14px;color:var(--muted);}
+  .selected-count strong{color:var(--accent);font-family:'Space Mono',monospace;}
+  .priority-btn{background:transparent;border:none;font-size:16px;cursor:pointer;padding:0 2px;opacity:0.25;transition:opacity 0.15s,transform 0.15s;flex-shrink:0;}
+  .priority-btn:hover{opacity:0.6;}
+  .priority-btn.on{opacity:1;transform:scale(1.15);}
+  .drag-handle{font-size:18px;color:var(--muted);cursor:grab;padding:0 6px 0 0;flex-shrink:0;user-select:none;}
+  .drag-handle:active{cursor:grabbing;}
+  .draggable.dragging{opacity:0.4;background:var(--surface2);}
+  .draggable.drag-over{border-top:2px solid var(--accent);}
+  .remove-stop-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .remove-stop-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+  .add-stop-area{display:flex;gap:8px;margin-bottom:10px;}
+  .add-stop-area select{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Noto Sans TC',sans-serif;outline:none;}
+  .add-stop-area select:focus{border-color:var(--accent);}
+  .add-stop-area button{background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 16px;font-weight:700;font-size:13px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;white-space:nowrap;}
+  .clear-btn{font-size:12px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'Noto Sans TC',sans-serif;}
+  .clear-btn:hover{color:var(--accent2);}
+  .route-btn{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:16px;border-radius:12px;font-size:17px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;margin-bottom:16px;}
+  .route-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .result-section{display:none;}
+  .result-section.show{display:block;}
+  .section-title{font-size:12px;font-family:'Space Mono',monospace;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;}
+  .address-list{background:var(--surface);border-radius:14px;overflow:hidden;margin-bottom:14px;}
+  .address-item{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);animation:fadeIn 0.3s ease forwards;opacity:0;}
+  .address-item:last-child{border-bottom:none;}
+  @keyframes fadeIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+  .addr-num{width:28px;height:28px;background:var(--accent);color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;flex-shrink:0;font-family:'Space Mono',monospace;}
+  .addr-info{flex:1;min-width:0;}
+  .addr-name{font-weight:700;font-size:14px;margin-bottom:2px;}
+  .addr-text{font-size:12px;color:var(--muted);word-break:break-all;}
+  .addr-code{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0;}
+  .map-btn{display:block;width:100%;background:var(--surface);border:2px solid var(--accent);color:var(--accent);padding:14px;border-radius:12px;font-size:15px;font-weight:700;font-family:'Noto Sans TC',sans-serif;text-align:center;text-decoration:none;margin-bottom:10px;transition:all 0.2s;}
+  .map-btn:hover{background:var(--accent);color:#000;}
+  .back-btn{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px;border-radius:8px;font-size:14px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;margin-bottom:20px;}
+  .back-btn:hover{border-color:var(--muted);color:var(--text);}
+  /* 歷史紀錄 */
+  .history-item{background:var(--surface);border-radius:14px;margin-bottom:12px;border:1px solid var(--border);overflow:hidden;}
+  .history-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;transition:background 0.15s;}
+  .history-header:hover{background:var(--surface2);}
+  .history-date{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+  .edit-label-btn{background:transparent;border:none;cursor:pointer;font-size:12px;opacity:0.5;padding:0;line-height:1;}
+  .edit-label-btn:hover{opacity:1;}
+  .history-names{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;}
+  .history-meta{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .history-count{font-size:13px;font-weight:700;color:var(--fg);white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+  .history-count .hc-stops{color:var(--accent);}
+  .history-count .hc-boxes{color:#4fc97e;font-size:12px;}
+  .history-del{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px 6px;border-radius:4px;}
+  .history-del:hover{color:var(--accent2);}
+  .history-detail{display:none;padding:0 16px 16px;}
+  .history-detail.show{display:block;}
+  .hstop{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+  .hstop:last-of-type{border-bottom:none;}
+  .hstop-num{width:22px;height:22px;background:var(--accent);color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;}
+  .hmap-btn{display:block;width:100%;background:var(--surface2);border:1px solid var(--accent);color:var(--accent);padding:10px;border-radius:8px;font-size:13px;font-weight:700;font-family:'Noto Sans TC',sans-serif;text-align:center;text-decoration:none;margin-top:10px;transition:all 0.2s;}
+  .hmap-btn:hover{background:var(--accent);color:#000;}
+  /* 客戶管理 */
+  .mgmt-toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .add-cust-btn{flex:1;min-width:100px;background:var(--accent);color:#000;border:none;padding:11px;border-radius:10px;font-size:14px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
+  .tool-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:10px;font-size:13px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;white-space:nowrap;}
+  .tool-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .cust-table{background:var(--surface);border-radius:14px;overflow:hidden;margin-bottom:16px;}
+  .cust-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);}
+  .cust-row:last-child{border-bottom:none;}
+  .cust-row .code{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);width:44px;flex-shrink:0;}
+  .cust-row .info{flex:1;min-width:0;}
+  .cust-row .name{font-weight:700;font-size:13px;}
+  .cust-row .addr{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .icon-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .icon-btn.edit:hover{border-color:var(--accent);color:var(--accent);}
+  .icon-btn.del:hover{border-color:var(--accent2);color:var(--accent2);}
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-bg.show{display:flex;}
+  .modal{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:440px;border:1px solid var(--border);}
+  .modal h3{font-size:16px;font-weight:900;margin-bottom:16px;}
+  .modal label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;margin-top:12px;}
+  .modal input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;font-family:'Noto Sans TC',sans-serif;outline:none;}
+  .modal input:focus{border-color:var(--accent);}
+  .field-error{font-size:11px;color:var(--accent2);margin-top:3px;display:none;}
+  .field-error.show{display:block;}
+  .modal-btns{display:flex;gap:8px;margin-top:20px;}
+  .modal-save{flex:1;background:var(--accent);color:#000;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
+  .modal-cancel{background:transparent;border:1px solid var(--border);color:var(--muted);padding:12px 20px;border-radius:8px;font-size:14px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
+  .import-area{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:12px;font-family:'Space Mono',monospace;resize:vertical;min-height:120px;outline:none;margin-top:4px;}
+  .import-area:focus{border-color:var(--accent);}
+  .import-hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;background:var(--surface2);border-radius:8px;padding:10px 12px;}
+  .action-btn{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;transition:all 0.2s;}
+  .action-btn:hover{border-color:var(--accent);color:var(--accent);}
+  @media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { position: fixed; left: 0; top: 0; width: 100%; }
+    @page { size: A4; margin: 15mm; }
+  }
+  /* 列印路線單樣式 */
+  #printArea { display:none; }
+  .print-header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 14px; }
+  .print-header h2 { font-size: 20px; font-weight: 900; color: #111; display:flex; align-items:center; gap:8px; }
+  .print-meta { font-size: 12px; color: #555; margin-top: 6px; display:flex; gap:18px; }
+  .print-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .print-table th { background: #f0f0f0; border: 1px solid #ccc; padding: 8px 10px; text-align: left; font-weight: 700; }
+  .print-table td { border: 1px solid #ddd; padding: 8px 10px; vertical-align: middle; }
+  .print-table tr.return-row td { background: #fafafa; color: #888; font-style: italic; }
+  .print-table .stop-num { text-align:center; font-weight:900; font-size:15px; width:36px; }
+  .print-table .qr-cell { width:72px; text-align:center; padding:4px; }
+  .print-table .qr-cell canvas, .print-table .qr-cell img { width:64px !important; height:64px !important; }
+  .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+  .empty-state .icon{font-size:40px;margin-bottom:12px;}
+  .empty-state p{font-size:14px;line-height:1.8;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🚛</div>
+  <div class="header-text">
+    <h1>送貨路線規劃 <span style="font-size:11px;color:var(--green);font-weight:normal">[OSRM]</span></h1>
+    <p>勾選今日客戶 → 自動排路線</p>
+  </div>
+
+</div>
+
+<div class="tabs">
+  <div class="tab" onclick="switchTab(&#39;today&#39;)">📋 今日送貨</div>
+  <div class="tab" onclick="switchTab(&#39;history&#39;)">🕘 歷史紀錄</div>
+  <div class="tab" onclick="switchTab(&#39;analytics&#39;)">📊 數據分析</div>
+  <div class="tab active" onclick="switchTab(&#39;manage&#39;)">👥 客戶管理</div>
+</div>
+
+<div class="main">
+
+  <!-- 今日送貨 -->
+  <div class="page" id="page-today">
+    <div class="result-section" id="resultSection">
+      <div class="section-title">📍 今日送貨順序</div>
+      <div class="address-list" id="addressList"><div class="address-item" style="animation-delay:0s">
+        <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">出發</div>
+        <div class="addr-info"><div class="addr-name">【出發點】龍台貿易有限公司</div><div class="addr-text">📍 桃園市龍潭區工五路250號</div></div>
+      </div>
+        <div class="address-item draggable" draggable="true" data-id="1777355275666" style="animation-delay:0.05s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">1</div>
+          <div class="addr-info">
+            <div class="addr-name">恩揚生物科技股份有限公司</div>
+            <div class="addr-text">📍 新竹縣關西鎮東安里13鄰糞箕窩1之7號<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 9.6 km</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;1777355275666&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="17769993456680.28687538987637806" style="animation-delay:0.1s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">2</div>
+          <div class="addr-info">
+            <div class="addr-name">國立清華大學-鄭惠春老師</div>
+            <div class="addr-text">📍 新竹市東區光復路二段101號 生命科學二館5樓517室<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 20.4 km</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;17769993456680.28687538987637806&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="1777355249968" style="animation-delay:0.15000000000000002s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">3</div>
+          <div class="addr-info">
+            <div class="addr-name">宗城儀器商行</div>
+            <div class="addr-text">📍 新竹市建功一路51巷20號2樓<span style="color:var(--accent);margin-left:6px;font-size:11px">(同區域)</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;1777355249968&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="1777355297914" style="animation-delay:0.2s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">4</div>
+          <div class="addr-info">
+            <div class="addr-name">伯新科技股份有限公司</div>
+            <div class="addr-text">📍 新竹市光華二街108巷16-7號<span style="color:var(--accent);margin-left:6px;font-size:11px">(同區域)</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;1777355297914&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="1777355316469" style="animation-delay:0.25s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">5</div>
+          <div class="addr-info">
+            <div class="addr-name">明亮儀器有限公司</div>
+            <div class="addr-text">📍 新竹市和平路6巷42號<span style="color:var(--accent);margin-left:6px;font-size:11px">(同區域)</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;1777355316469&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="1777360052859" style="animation-delay:0.30000000000000004s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">6</div>
+          <div class="addr-info">
+            <div class="addr-name">上展玻璃儀器商行</div>
+            <div class="addr-text">📍 新竹市東區經國路１段398巷15號<span style="color:var(--accent);margin-left:6px;font-size:11px">(同區域)</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;1777360052859&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="1777360973510" style="animation-delay:0.35000000000000003s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">7</div>
+          <div class="addr-info">
+            <div class="addr-name">詠欣有限公司</div>
+            <div class="addr-text">📍 新竹市北區東大路三段298號<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 2.3 km</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;1777360973510&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="1777355425570" style="animation-delay:0.4s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">8</div>
+          <div class="addr-info">
+            <div class="addr-name">立亨國際有限公司</div>
+            <div class="addr-text">📍 新竹市香山區香北路268號1樓<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 6.3 km</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;1777355425570&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="17769993456680.8180470695102519" style="animation-delay:0.45s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">9</div>
+          <div class="addr-info">
+            <div class="addr-name">中國化學製藥股份有限公司(新豐廠)</div>
+            <div class="addr-text">📍 新竹縣新豐鄉上坑村二鄰坑子口182-1號<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 20.4 km</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;17769993456680.8180470695102519&#39;)" title="從路線移除">✕</button>
+        </div>
+        <div class="address-item draggable" draggable="true" data-id="1777356768680" style="animation-delay:0.5s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num">10</div>
+          <div class="addr-info">
+            <div class="addr-name">傅太太</div>
+            <div class="addr-text">📍 桃園市楊梅區民有路一段198號<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 12.5 km</span></div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop(&#39;1777356768680&#39;)" title="從路線移除">✕</button>
+        </div></div>
+      <div id="mapBtns">
+      <div class="add-stop-area">
+        <select id="addStopSelect">
+          <option value="">＋ 新增客戶到路線...</option>
+          <option value="17769993456670.011147364464104026">006 信德儀器有限公司</option><option value="1777443005718">026 (德記)德揚儀器有限公司</option><option value="1777259681332">074 上美儀器有限公司</option><option value="17769993456680.017947337819429587">075 (伸球)展茂貿易有限公司</option><option value="1777442816632">085 新新儀器股份有限公司</option><option value="17769993456670.015296453012662359">110 (永吉)承濱實業有限公司</option><option value="17769993456670.16724052360164499">229 信安儀器有限公司</option><option value="17769993456670.9193196216448934">260 慧眾生物科技有限公司</option><option value="1777442849703">268 國宜有限公司</option><option value="1777259694781">325 亞璟科技有限公司</option><option value="17769993456670.031546935501290174">348 台灣現用股份有限公司</option><option value="17769993456680.2818970028149611">397 拜爾碁特科技股份有限公司</option><option value="1777442888965">462 昱昌材料科技股份有限公司</option><option value="17769993456670.8833847098835632">540 力鈞生物科技有限公司</option><option value="17769993456670.035110481045239283">594 盟基生物科技股份有限公司</option><option value="1777442973046">600 冠揚生物科技有限公司</option><option value="17769993456670.9574898407089889">669 尉徠生物科技有限公司</option><option value="1777258637594">674 建順儀器有限公司</option><option value="17769993456680.4078213116955376">737 德怡科技有限公司</option><option value="1777016392660">798 勢得科研股份有限公司</option><option value="17769993456670.5168646982351172">892 田祐國際有限公司</option><option value="1777259736338">999 聖美塑膠工廠</option><option value="1777514046603">代寄01 望隼</option><option value="1777442926207">A3007 佳格食品股份有限公司(中壢)</option><option value="17769993456680.8472427601478607">A5036 益邦製藥股份有限公司</option>
+        </select>
+        <button onclick="addStop()">加入</button>
+      </div><a class="map-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&amp;destination=%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%96%B0%E8%B1%90%E9%84%89%E4%B8%8A%E5%9D%91%E6%9D%91%E4%BA%8C%E9%84%B0%E5%9D%91%E5%AD%90%E5%8F%A3182-1%E8%99%9F&amp;waypoints=%E6%96%B0%E7%AB%B9%E7%B8%A3%E9%97%9C%E8%A5%BF%E9%8E%AE%E6%9D%B1%E5%AE%89%E9%87%8C13%E9%84%B0%E7%B3%9E%E7%AE%95%E7%AA%A91%E4%B9%8B7%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E5%85%89%E5%BE%A9%E8%B7%AF%E4%BA%8C%E6%AE%B5101%E8%99%9F%20%E7%94%9F%E5%91%BD%E7%A7%91%E5%AD%B8%E4%BA%8C%E9%A4%A85%E6%A8%93517%E5%AE%A4|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%85%89%E8%8F%AF%E4%BA%8C%E8%A1%97108%E5%B7%B716-7%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%92%8C%E5%B9%B3%E8%B7%AF6%E5%B7%B742%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E7%B6%93%E5%9C%8B%E8%B7%AF%EF%BC%91%E6%AE%B5398%E5%B7%B715%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E6%9D%B1%E5%A4%A7%E8%B7%AF%E4%B8%89%E6%AE%B5298%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E9%A6%99%E5%B1%B1%E5%8D%80%E9%A6%99%E5%8C%97%E8%B7%AF268%E8%99%9F1%E6%A8%93&amp;travelmode=driving" target="_blank">🗺️ 第 1 段導航（第 1～9 站）</a><a class="map-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%96%B0%E8%B1%90%E9%84%89%E4%B8%8A%E5%9D%91%E6%9D%91%E4%BA%8C%E9%84%B0%E5%9D%91%E5%AD%90%E5%8F%A3182-1%E8%99%9F&amp;destination=%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F&amp;travelmode=driving" target="_blank">🗺️ 第 2 段導航（第 10～10 站）</a></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+        <button class="action-btn" style="flex:1" onclick="printRoute()">🖨️ 列印 A4 路線單</button>
+        <div style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;flex-shrink:0;">
+          <span style="font-size:13px;color:var(--muted);white-space:nowrap;">📦 今日箱數</span>
+          <input id="boxCount" type="number" min="0" placeholder="—"
+            style="width:60px;background:transparent;border:none;outline:none;color:var(--fg);font-size:15px;font-weight:700;font-family:inherit;text-align:center;"
+            oninput="updateBoxCount(this.value)">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="sortDirection" style="flex:1;background:var(--surface);border:1px solid var(--accent);color:var(--accent);border-radius:10px;padding:11px 12px;font-size:13px;font-weight:700;font-family:&#39;Noto Sans TC&#39;,sans-serif;outline:none;cursor:pointer;">
+          <option value="auto">🧭 自動判斷方向</option>
+          <option value="hwy3">🛣️ 先走國三方向</option>
+          <option value="hwy1">🛣️ 先走國一方向</option>
+        </select>
+        <button class="action-btn" style="flex:1;border-color:var(--accent);color:var(--accent)" onclick="reSort()">🔄 重新排列路線</button>
+      </div>
+      <button class="back-btn" onclick="backToHistory()">🕘 返回歷史紀錄</button>
+    </div>
+    <div id="selectSection" style="display: block;">
+      <div class="search-bar">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="輸入客戶編號按 Enter 打勾，或搜尋名稱" oninput="renderList()" onkeydown="handleSearchKey(event)">
+      </div>
+      <div class="selected-count">
+        <span>已選 <strong id="selectedNum">10</strong> 家客戶</span>
+        <button class="clear-btn" onclick="clearSelected()">全部取消</button>
+      </div>
+      <div class="customer-list" id="customerList">
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.011147364464104026&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">006</div>
+          <div class="cust-info">
+            <div class="cust-name">信德儀器有限公司</div>
+            <div class="cust-addr">台北市中正區羅斯福路3段240巷7弄4-1號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.011147364464104026&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777443005718&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">026</div>
+          <div class="cust-info">
+            <div class="cust-name">(德記)德揚儀器有限公司</div>
+            <div class="cust-addr">新北市樹林區俊英街172巷12號1F</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777443005718&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777259681332&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">074</div>
+          <div class="cust-info">
+            <div class="cust-name">上美儀器有限公司</div>
+            <div class="cust-addr">彰化縣員林市中山路二段301號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777259681332&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456680.017947337819429587&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">075</div>
+          <div class="cust-info">
+            <div class="cust-name">(伸球)展茂貿易有限公司</div>
+            <div class="cust-addr">台中市南區復新街55號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456680.017947337819429587&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777442816632&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">085</div>
+          <div class="cust-info">
+            <div class="cust-name">新新儀器股份有限公司</div>
+            <div class="cust-addr">台北市大同區環河北路2段283號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777442816632&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.015296453012662359&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">110</div>
+          <div class="cust-info">
+            <div class="cust-name">(永吉)承濱實業有限公司</div>
+            <div class="cust-addr">新北市三重區三陽路45號1F</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.015296453012662359&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;1777360973510&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">116</div>
+          <div class="cust-info">
+            <div class="cust-name">詠欣有限公司</div>
+            <div class="cust-addr">新竹市北區東大路三段298號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777360973510&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.16724052360164499&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">229</div>
+          <div class="cust-info">
+            <div class="cust-name">信安儀器有限公司</div>
+            <div class="cust-addr">台北市中正區羅斯福路3段244巷10弄6-1號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.16724052360164499&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;1777355297914&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">238</div>
+          <div class="cust-info">
+            <div class="cust-name">伯新科技股份有限公司</div>
+            <div class="cust-addr">新竹市光華二街108巷16-7號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777355297914&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.9193196216448934&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">260</div>
+          <div class="cust-info">
+            <div class="cust-name">慧眾生物科技有限公司</div>
+            <div class="cust-addr">新北市中和區橋和路85號3F</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.9193196216448934&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777442849703&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">268</div>
+          <div class="cust-info">
+            <div class="cust-name">國宜有限公司</div>
+            <div class="cust-addr">新北市蘆洲區中正路243巷7弄28號1F</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777442849703&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777259694781&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">325</div>
+          <div class="cust-info">
+            <div class="cust-name">亞璟科技有限公司</div>
+            <div class="cust-addr">台中市西區建國北路三段17號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777259694781&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.031546935501290174&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">348</div>
+          <div class="cust-info">
+            <div class="cust-name">台灣現用股份有限公司</div>
+            <div class="cust-addr">台北市內湖區新明路143巷8號1樓</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.031546935501290174&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;1777355249968&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">383</div>
+          <div class="cust-info">
+            <div class="cust-name">宗城儀器商行</div>
+            <div class="cust-addr">新竹市建功一路51巷20號2樓</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777355249968&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456680.2818970028149611&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">397</div>
+          <div class="cust-info">
+            <div class="cust-name">拜爾碁特科技股份有限公司</div>
+            <div class="cust-addr">苗栗縣頭份鎮幼英街20號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456680.2818970028149611&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777442888965&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">462</div>
+          <div class="cust-info">
+            <div class="cust-name">昱昌材料科技股份有限公司</div>
+            <div class="cust-addr">桃園市平鎮區太平東路2號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777442888965&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.8833847098835632&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">540</div>
+          <div class="cust-info">
+            <div class="cust-name">力鈞生物科技有限公司</div>
+            <div class="cust-addr">台北市中山區吉林路245號5樓</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.8833847098835632&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;1777360052859&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">563</div>
+          <div class="cust-info">
+            <div class="cust-name">上展玻璃儀器商行</div>
+            <div class="cust-addr">新竹市東區經國路１段398巷15號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777360052859&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.035110481045239283&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">594</div>
+          <div class="cust-info">
+            <div class="cust-name">盟基生物科技股份有限公司</div>
+            <div class="cust-addr">新北市汐止區新台五路一段75號13樓之4</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.035110481045239283&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777442973046&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">600</div>
+          <div class="cust-info">
+            <div class="cust-name">冠揚生物科技有限公司</div>
+            <div class="cust-addr">新北市中和區連城路451號1樓</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777442973046&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.9574898407089889&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">669</div>
+          <div class="cust-info">
+            <div class="cust-name">尉徠生物科技有限公司</div>
+            <div class="cust-addr">桃園市桃園區春日路1348號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.9574898407089889&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777258637594&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">674</div>
+          <div class="cust-info">
+            <div class="cust-name">建順儀器有限公司</div>
+            <div class="cust-addr">代送</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777258637594&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456680.4078213116955376&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">737</div>
+          <div class="cust-info">
+            <div class="cust-name">德怡科技有限公司</div>
+            <div class="cust-addr">苗栗縣竹南鎮工業路198號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456680.4078213116955376&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;1777355316469&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">766</div>
+          <div class="cust-info">
+            <div class="cust-name">明亮儀器有限公司</div>
+            <div class="cust-addr">新竹市和平路6巷42號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777355316469&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777016392660&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">798</div>
+          <div class="cust-info">
+            <div class="cust-name">勢得科研股份有限公司</div>
+            <div class="cust-addr">桃園市龜山區陳厝坑路997巷27號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777016392660&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456670.5168646982351172&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">892</div>
+          <div class="cust-info">
+            <div class="cust-name">田祐國際有限公司</div>
+            <div class="cust-addr">新北市三重區永福街46巷15弄2號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456670.5168646982351172&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;1777355425570&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">902</div>
+          <div class="cust-info">
+            <div class="cust-name">立亨國際有限公司</div>
+            <div class="cust-addr">新竹市香山區香北路268號1樓</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777355425570&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777259736338&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">999</div>
+          <div class="cust-info">
+            <div class="cust-name">聖美塑膠工廠</div>
+            <div class="cust-addr">彰化縣和美鎮德美路594巷47號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777259736338&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777514046603&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">代寄01</div>
+          <div class="cust-info">
+            <div class="cust-name">望隼</div>
+            <div class="cust-addr">苗栗縣竹南鎮公義里友義路66號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777514046603&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;17769993456680.28687538987637806&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">A1302</div>
+          <div class="cust-info">
+            <div class="cust-name">國立清華大學-鄭惠春老師</div>
+            <div class="cust-addr">新竹市東區光復路二段101號 生命科學二館5樓517室</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456680.28687538987637806&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;1777442926207&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">A3007</div>
+          <div class="cust-info">
+            <div class="cust-name">佳格食品股份有限公司(中壢)</div>
+            <div class="cust-addr">桃園市中壢區吉林路13號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777442926207&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;17769993456680.8180470695102519&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">A5014</div>
+          <div class="cust-info">
+            <div class="cust-name">中國化學製藥股份有限公司(新豐廠)</div>
+            <div class="cust-addr">新竹縣新豐鄉上坑村二鄰坑子口182-1號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456680.8180470695102519&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item " onclick="toggleSelect(&#39;17769993456680.8472427601478607&#39;)">
+          <div class="checkbox"></div>
+          <div class="cust-code">A5036</div>
+          <div class="cust-info">
+            <div class="cust-name">益邦製藥股份有限公司</div>
+            <div class="cust-addr">苗栗縣竹南鎮科東三路1號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;17769993456680.8472427601478607&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;1777355275666&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">A9029</div>
+          <div class="cust-info">
+            <div class="cust-name">恩揚生物科技股份有限公司</div>
+            <div class="cust-addr">新竹縣關西鎮東安里13鄰糞箕窩1之7號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777355275666&#39;)" title="優先送">⭐</button>
+        </div>
+        <div class="customer-item selected" onclick="toggleSelect(&#39;1777356768680&#39;)">
+          <div class="checkbox">✓</div>
+          <div class="cust-code">Z005</div>
+          <div class="cust-info">
+            <div class="cust-name">傅太太</div>
+            <div class="cust-addr">桃園市楊梅區民有路一段198號</div>
+          </div>
+          <button class="priority-btn " onclick="event.stopPropagation();togglePriority(&#39;1777356768680&#39;)" title="優先送">⭐</button>
+        </div></div>
+      <button class="route-btn" id="routeBtn" onclick="showRoute()">🗺️ 排列今日路線</button>
+    </div>
+  </div>
+
+  <!-- 歷史紀錄 -->
+  <div class="page" id="page-history">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="tool-btn" onclick="exportHistory()">📋 匯出歷史紀錄</button>
+    </div>
+    <div id="historyList">
+      <div class="history-item">
+        <div class="history-header" onclick="toggleHDetail(&#39;1777443081091&#39;)">
+          <div style="min-width:0;flex:1">
+            <div class="history-date" id="hlabel-1777443081091">
+              📅 20260430-98ctn
+              <button class="edit-label-btn" onclick="event.stopPropagation();editLabel(&#39;1777443081091&#39;)" title="修改日期標籤">✏️</button>
+            </div>
+            <div class="history-names">昱昌材料科技股份有限公司、佳格食品股份有限公司(中壢)、國宜有限公司、新新儀器股份有限公司、信德儀器有限公司、冠揚生物科技有限公司、慧眾生物科技有限公司、(德記)德揚儀器有限公司</div>
+          </div>
+          <div class="history-meta">
+            <div class="history-count">8 站</div>
+            <button class="history-del" onclick="event.stopPropagation();deleteHRecord(&#39;1777443081091&#39;)">✕</button>
+          </div>
+        </div>
+        <div class="history-detail" id="hd-1777443081091">
+          
+            <div class="hstop">
+              <div class="hstop-num">1</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">昱昌材料科技股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">桃園市平鎮區太平東路2號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">462</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">2</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">佳格食品股份有限公司(中壢)</div>
+                <div style="font-size:11px;color:var(--muted)">桃園市中壢區吉林路13號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">A3007</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">3</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">國宜有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新北市蘆洲區中正路243巷7弄28號1F</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">268</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">4</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">新新儀器股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">台北市大同區環河北路2段283號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">085</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">5</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">信德儀器有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">台北市中正區羅斯福路3段240巷7弄4-1號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">006</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">6</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">冠揚生物科技有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新北市中和區連城路451號1樓</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">600</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">7</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">慧眾生物科技有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新北市中和區橋和路85號3F</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">260</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">8</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">(德記)德揚儀器有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新北市樹林區俊英街172巷12號1F</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">026</div>
+            </div>
+          <a class="hmap-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&amp;destination=%E6%96%B0%E5%8C%97%E5%B8%82%E6%A8%B9%E6%9E%97%E5%8D%80%E4%BF%8A%E8%8B%B1%E8%A1%97172%E5%B7%B712%E8%99%9F1F&amp;waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E5%B9%B3%E9%8E%AE%E5%8D%80%E5%A4%AA%E5%B9%B3%E6%9D%B1%E8%B7%AF2%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E5%90%89%E6%9E%97%E8%B7%AF13%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E8%98%86%E6%B4%B2%E5%8D%80%E4%B8%AD%E6%AD%A3%E8%B7%AF243%E5%B7%B77%E5%BC%8428%E8%99%9F1F|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%A4%A7%E5%90%8C%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8C%97%E8%B7%AF2%E6%AE%B5283%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5240%E5%B7%B77%E5%BC%844-1%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E9%80%A3%E5%9F%8E%E8%B7%AF451%E8%99%9F1%E6%A8%93|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E6%A9%8B%E5%92%8C%E8%B7%AF85%E8%99%9F3F&amp;travelmode=driving" target="_blank">🗺️ 在 Google Maps 開啟導航</a>
+          <button class="hmap-btn" style="border:1px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;margin-top:4px" onclick="reEditHistory(&#39;1777443081091&#39;)">✏️ 重新編輯此路線</button>
+        </div>
+      </div>
+      <div class="history-item">
+        <div class="history-header" onclick="toggleHDetail(&#39;1777356422892&#39;)">
+          <div style="min-width:0;flex:1">
+            <div class="history-date" id="hlabel-1777356422892">
+              📅 20260429
+              <button class="edit-label-btn" onclick="event.stopPropagation();editLabel(&#39;1777356422892&#39;)" title="修改日期標籤">✏️</button>
+            </div>
+            <div class="history-names">恩揚生物科技股份有限公司、國立清華大學-鄭惠春老師、宗城儀器商行、伯新科技股份有限公司、明亮儀器有限公司、上展玻璃儀器商行、詠欣有限公司、立亨國際有限公司、中國化學製藥股份有限公司(新豐廠)、傅太太</div>
+          </div>
+          <div class="history-meta">
+            <div class="history-count">10 站</div>
+            <button class="history-del" onclick="event.stopPropagation();deleteHRecord(&#39;1777356422892&#39;)">✕</button>
+          </div>
+        </div>
+        <div class="history-detail" id="hd-1777356422892">
+          
+            <div class="hstop">
+              <div class="hstop-num">1</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">恩揚生物科技股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新竹縣關西鎮東安里13鄰糞箕窩1之7號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">A9029</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">2</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">國立清華大學-鄭惠春老師</div>
+                <div style="font-size:11px;color:var(--muted)">新竹市東區光復路二段101號 生命科學二館5樓517室</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">A1302</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">3</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">宗城儀器商行</div>
+                <div style="font-size:11px;color:var(--muted)">新竹市建功一路51巷20號2樓</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">383</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">4</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">伯新科技股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新竹市光華二街108巷16-7號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">238</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">5</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">明亮儀器有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新竹市和平路6巷42號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">766</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">6</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">上展玻璃儀器商行</div>
+                <div style="font-size:11px;color:var(--muted)">新竹市東區經國路１段398巷15號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">563</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">7</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">詠欣有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新竹市北區東大路三段298號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">116</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">8</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">立亨國際有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新竹市香山區香北路268號1樓</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">902</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">9</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">中國化學製藥股份有限公司(新豐廠)</div>
+                <div style="font-size:11px;color:var(--muted)">新竹縣新豐鄉上坑村二鄰坑子口182-1號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">A5014</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">10</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">傅太太</div>
+                <div style="font-size:11px;color:var(--muted)">桃園市楊梅區民有路一段198號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">Z005</div>
+            </div>
+          <a class="hmap-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&amp;destination=%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%96%B0%E8%B1%90%E9%84%89%E4%B8%8A%E5%9D%91%E6%9D%91%E4%BA%8C%E9%84%B0%E5%9D%91%E5%AD%90%E5%8F%A3182-1%E8%99%9F&amp;waypoints=%E6%96%B0%E7%AB%B9%E7%B8%A3%E9%97%9C%E8%A5%BF%E9%8E%AE%E6%9D%B1%E5%AE%89%E9%87%8C13%E9%84%B0%E7%B3%9E%E7%AE%95%E7%AA%A91%E4%B9%8B7%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E5%85%89%E5%BE%A9%E8%B7%AF%E4%BA%8C%E6%AE%B5101%E8%99%9F%20%E7%94%9F%E5%91%BD%E7%A7%91%E5%AD%B8%E4%BA%8C%E9%A4%A85%E6%A8%93517%E5%AE%A4|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%85%89%E8%8F%AF%E4%BA%8C%E8%A1%97108%E5%B7%B716-7%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%92%8C%E5%B9%B3%E8%B7%AF6%E5%B7%B742%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E7%B6%93%E5%9C%8B%E8%B7%AF%EF%BC%91%E6%AE%B5398%E5%B7%B715%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E6%9D%B1%E5%A4%A7%E8%B7%AF%E4%B8%89%E6%AE%B5298%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E9%A6%99%E5%B1%B1%E5%8D%80%E9%A6%99%E5%8C%97%E8%B7%AF268%E8%99%9F1%E6%A8%93&amp;travelmode=driving" target="_blank">🗺️ 第 1 段導航（第 1～9 站）</a><a class="hmap-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%96%B0%E8%B1%90%E9%84%89%E4%B8%8A%E5%9D%91%E6%9D%91%E4%BA%8C%E9%84%B0%E5%9D%91%E5%AD%90%E5%8F%A3182-1%E8%99%9F&amp;destination=%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F&amp;travelmode=driving" target="_blank">🗺️ 第 2 段導航（第 10～10 站）</a>
+          <button class="hmap-btn" style="border:1px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;margin-top:4px" onclick="reEditHistory(&#39;1777356422892&#39;)">✏️ 重新編輯此路線</button>
+        </div>
+      </div>
+      <div class="history-item">
+        <div class="history-header" onclick="toggleHDetail(&#39;1777259857090&#39;)">
+          <div style="min-width:0;flex:1">
+            <div class="history-date" id="hlabel-1777259857090">
+              📅 20260504-50CTN
+              <button class="edit-label-btn" onclick="event.stopPropagation();editLabel(&#39;1777259857090&#39;)" title="修改日期標籤">✏️</button>
+            </div>
+            <div class="history-names">上美儀器有限公司、聖美塑膠工廠、望隼</div>
+          </div>
+          <div class="history-meta">
+            <div class="history-count">3 站</div>
+            <button class="history-del" onclick="event.stopPropagation();deleteHRecord(&#39;1777259857090&#39;)">✕</button>
+          </div>
+        </div>
+        <div class="history-detail" id="hd-1777259857090">
+          
+            <div class="hstop">
+              <div class="hstop-num">1</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">上美儀器有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">彰化縣員林市中山路二段301號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">074</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">2</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">聖美塑膠工廠</div>
+                <div style="font-size:11px;color:var(--muted)">彰化縣和美鎮德美路594巷47號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">999</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">3</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">望隼</div>
+                <div style="font-size:11px;color:var(--muted)">苗栗縣竹南鎮公義里友義路66號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">代寄01</div>
+            </div>
+          <a class="hmap-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&amp;destination=%E8%8B%97%E6%A0%97%E7%B8%A3%E7%AB%B9%E5%8D%97%E9%8E%AE%E5%85%AC%E7%BE%A9%E9%87%8C%E5%8F%8B%E7%BE%A9%E8%B7%AF66%E8%99%9F&amp;waypoints=%E5%BD%B0%E5%8C%96%E7%B8%A3%E5%93%A1%E6%9E%97%E5%B8%82%E4%B8%AD%E5%B1%B1%E8%B7%AF%E4%BA%8C%E6%AE%B5301%E8%99%9F|%E5%BD%B0%E5%8C%96%E7%B8%A3%E5%92%8C%E7%BE%8E%E9%8E%AE%E5%BE%B7%E7%BE%8E%E8%B7%AF594%E5%B7%B747%E8%99%9F&amp;travelmode=driving" target="_blank">🗺️ 在 Google Maps 開啟導航</a>
+          <button class="hmap-btn" style="border:1px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;margin-top:4px" onclick="reEditHistory(&#39;1777259857090&#39;)">✏️ 重新編輯此路線</button>
+        </div>
+      </div>
+      <div class="history-item">
+        <div class="history-header" onclick="toggleHDetail(&#39;1777258698756&#39;)">
+          <div style="min-width:0;flex:1">
+            <div class="history-date" id="hlabel-1777258698756">
+              📅 20260428
+              <button class="edit-label-btn" onclick="event.stopPropagation();editLabel(&#39;1777258698756&#39;)" title="修改日期標籤">✏️</button>
+            </div>
+            <div class="history-names">益邦製藥股份有限公司、(伸球)展茂貿易有限公司、拜爾碁特科技股份有限公司、國立清華大學-鄭惠春老師</div>
+          </div>
+          <div class="history-meta">
+            <div class="history-count">4 站</div>
+            <button class="history-del" onclick="event.stopPropagation();deleteHRecord(&#39;1777258698756&#39;)">✕</button>
+          </div>
+        </div>
+        <div class="history-detail" id="hd-1777258698756">
+          
+            <div class="hstop">
+              <div class="hstop-num">1</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">益邦製藥股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">苗栗縣竹南鎮科東三路1號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">A5036</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">2</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">(伸球)展茂貿易有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">台中市南區復新街55號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">075</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">3</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">拜爾碁特科技股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">苗栗縣頭份鎮幼英街20號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">397</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">4</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">國立清華大學-鄭惠春老師</div>
+                <div style="font-size:11px;color:var(--muted)">清大生科二館5樓517室</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">A1302</div>
+            </div>
+          <a class="hmap-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&amp;destination=%E6%B8%85%E5%A4%A7%E7%94%9F%E7%A7%91%E4%BA%8C%E9%A4%A85%E6%A8%93517%E5%AE%A4&amp;waypoints=%E8%8B%97%E6%A0%97%E7%B8%A3%E7%AB%B9%E5%8D%97%E9%8E%AE%E7%A7%91%E6%9D%B1%E4%B8%89%E8%B7%AF1%E8%99%9F|%E5%8F%B0%E4%B8%AD%E5%B8%82%E5%8D%97%E5%8D%80%E5%BE%A9%E6%96%B0%E8%A1%9755%E8%99%9F|%E8%8B%97%E6%A0%97%E7%B8%A3%E9%A0%AD%E4%BB%BD%E9%8E%AE%E5%B9%BC%E8%8B%B1%E8%A1%9720%E8%99%9F&amp;travelmode=driving" target="_blank">🗺️ 在 Google Maps 開啟導航</a>
+          <button class="hmap-btn" style="border:1px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;margin-top:4px" onclick="reEditHistory(&#39;1777258698756&#39;)">✏️ 重新編輯此路線</button>
+        </div>
+      </div>
+      <div class="history-item">
+        <div class="history-header" onclick="toggleHDetail(&#39;1777008145460&#39;)">
+          <div style="min-width:0;flex:1">
+            <div class="history-date" id="hlabel-1777008145460">
+              📅 20260427
+              <button class="edit-label-btn" onclick="event.stopPropagation();editLabel(&#39;1777008145460&#39;)" title="修改日期標籤">✏️</button>
+            </div>
+            <div class="history-names">尉徠生物科技有限公司、勢得科研股份有限公司、慧眾生物科技有限公司、信德儀器有限公司、信安儀器有限公司、力鈞生物科技有限公司、(永吉)承濱實業有限公司、田祐國際有限公司、台灣現用股份有限公司、盟基生物科技股份有限公司</div>
+          </div>
+          <div class="history-meta">
+            <div class="history-count">10 站</div>
+            <button class="history-del" onclick="event.stopPropagation();deleteHRecord(&#39;1777008145460&#39;)">✕</button>
+          </div>
+        </div>
+        <div class="history-detail" id="hd-1777008145460">
+          
+            <div class="hstop">
+              <div class="hstop-num">1</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">尉徠生物科技有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">桃園市桃園區春日路1348號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">669</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">2</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">勢得科研股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">桃園市龜山區陳厝坑路997巷27號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">798</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">3</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">慧眾生物科技有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新北市中和區橋和路85號3F</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">260</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">4</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">信德儀器有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">台北市中正區羅斯福路3段240巷7弄4-1號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">006</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">5</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">信安儀器有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">台北市中正區羅斯福路3段244巷10弄6-1號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">229</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">6</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">力鈞生物科技有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">台北市中山區吉林路245號5樓</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">540</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">7</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">(永吉)承濱實業有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新北市三重區三陽路45號1F</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">110</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">8</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">田祐國際有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新北市三重區永福街46巷15弄2號</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">892</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">9</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">台灣現用股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">台北市內湖區新明路143巷8號1樓</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">348</div>
+            </div>
+            <div class="hstop">
+              <div class="hstop-num">10</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">盟基生物科技股份有限公司</div>
+                <div style="font-size:11px;color:var(--muted)">新北市汐止區新台五路一段75號13樓之4</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">594</div>
+            </div>
+          <a class="hmap-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&amp;destination=%E5%8F%B0%E5%8C%97%E5%B8%82%E5%85%A7%E6%B9%96%E5%8D%80%E6%96%B0%E6%98%8E%E8%B7%AF143%E5%B7%B78%E8%99%9F1%E6%A8%93&amp;waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E6%A1%83%E5%9C%92%E5%8D%80%E6%98%A5%E6%97%A5%E8%B7%AF1348%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%9C%E5%B1%B1%E5%8D%80%E9%99%B3%E5%8E%9D%E5%9D%91%E8%B7%AF997%E5%B7%B727%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E6%A9%8B%E5%92%8C%E8%B7%AF85%E8%99%9F3F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5240%E5%B7%B77%E5%BC%844-1%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5244%E5%B7%B710%E5%BC%846-1%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%B1%B1%E5%8D%80%E5%90%89%E6%9E%97%E8%B7%AF245%E8%99%9F5%E6%A8%93|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%89%E9%87%8D%E5%8D%80%E4%B8%89%E9%99%BD%E8%B7%AF45%E8%99%9F1F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%89%E9%87%8D%E5%8D%80%E6%B0%B8%E7%A6%8F%E8%A1%9746%E5%B7%B715%E5%BC%842%E8%99%9F&amp;travelmode=driving" target="_blank">🗺️ 第 1 段導航（第 1～9 站）</a><a class="hmap-btn" href="https://www.google.com/maps/dir/?api=1&amp;origin=%E5%8F%B0%E5%8C%97%E5%B8%82%E5%85%A7%E6%B9%96%E5%8D%80%E6%96%B0%E6%98%8E%E8%B7%AF143%E5%B7%B78%E8%99%9F1%E6%A8%93&amp;destination=%E6%96%B0%E5%8C%97%E5%B8%82%E6%B1%90%E6%AD%A2%E5%8D%80%E6%96%B0%E5%8F%B0%E4%BA%94%E8%B7%AF%E4%B8%80%E6%AE%B575%E8%99%9F13%E6%A8%93%E4%B9%8B4&amp;travelmode=driving" target="_blank">🗺️ 第 2 段導航（第 10～10 站）</a>
+          <button class="hmap-btn" style="border:1px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;margin-top:4px" onclick="reEditHistory(&#39;1777008145460&#39;)">✏️ 重新編輯此路線</button>
+        </div>
+      </div></div>
+  </div>
+
+  <!-- 數據分析 -->
+  <div class="page" id="page-analytics">
+    <div id="analyticsContent" style="padding:8px 0"></div>
+  </div>
+
+  <!-- 客戶管理 -->
+  <div class="page active" id="page-manage">
+    <div class="mgmt-toolbar">
+      <button class="add-cust-btn" onclick="openModal()">＋ 新增客戶</button>
+      <button class="tool-btn" onclick="openImport()">📥 匯入</button>
+      <button class="tool-btn" onclick="exportCSV()">📤 匯出</button>
+    </div>
+    <div class="cust-table" id="custTable">
+      <div class="cust-row">
+        <div class="code">006</div>
+        <div class="info"><div class="name">信德儀器有限公司</div><div class="addr">台北市中正區羅斯福路3段240巷7弄4-1號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.011147364464104026&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.011147364464104026&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">026</div>
+        <div class="info"><div class="name">(德記)德揚儀器有限公司</div><div class="addr">新北市樹林區俊英街172巷12號1F</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777443005718&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777443005718&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">074</div>
+        <div class="info"><div class="name">上美儀器有限公司</div><div class="addr">彰化縣員林市中山路二段301號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777259681332&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777259681332&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">075</div>
+        <div class="info"><div class="name">(伸球)展茂貿易有限公司</div><div class="addr">台中市南區復新街55號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456680.017947337819429587&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456680.017947337819429587&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">085</div>
+        <div class="info"><div class="name">新新儀器股份有限公司</div><div class="addr">台北市大同區環河北路2段283號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777442816632&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777442816632&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">110</div>
+        <div class="info"><div class="name">(永吉)承濱實業有限公司</div><div class="addr">新北市三重區三陽路45號1F</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.015296453012662359&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.015296453012662359&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">116</div>
+        <div class="info"><div class="name">詠欣有限公司</div><div class="addr">新竹市北區東大路三段298號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777360973510&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777360973510&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">229</div>
+        <div class="info"><div class="name">信安儀器有限公司</div><div class="addr">台北市中正區羅斯福路3段244巷10弄6-1號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.16724052360164499&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.16724052360164499&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">238</div>
+        <div class="info"><div class="name">伯新科技股份有限公司</div><div class="addr">新竹市光華二街108巷16-7號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777355297914&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777355297914&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">260</div>
+        <div class="info"><div class="name">慧眾生物科技有限公司</div><div class="addr">新北市中和區橋和路85號3F</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.9193196216448934&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.9193196216448934&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">268</div>
+        <div class="info"><div class="name">國宜有限公司</div><div class="addr">新北市蘆洲區中正路243巷7弄28號1F</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777442849703&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777442849703&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">325</div>
+        <div class="info"><div class="name">亞璟科技有限公司</div><div class="addr">台中市西區建國北路三段17號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777259694781&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777259694781&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">348</div>
+        <div class="info"><div class="name">台灣現用股份有限公司</div><div class="addr">台北市內湖區新明路143巷8號1樓</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.031546935501290174&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.031546935501290174&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">383</div>
+        <div class="info"><div class="name">宗城儀器商行</div><div class="addr">新竹市建功一路51巷20號2樓</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777355249968&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777355249968&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">397</div>
+        <div class="info"><div class="name">拜爾碁特科技股份有限公司</div><div class="addr">苗栗縣頭份鎮幼英街20號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456680.2818970028149611&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456680.2818970028149611&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">462</div>
+        <div class="info"><div class="name">昱昌材料科技股份有限公司</div><div class="addr">桃園市平鎮區太平東路2號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777442888965&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777442888965&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">540</div>
+        <div class="info"><div class="name">力鈞生物科技有限公司</div><div class="addr">台北市中山區吉林路245號5樓</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.8833847098835632&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.8833847098835632&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">563</div>
+        <div class="info"><div class="name">上展玻璃儀器商行</div><div class="addr">新竹市東區經國路１段398巷15號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777360052859&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777360052859&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">594</div>
+        <div class="info"><div class="name">盟基生物科技股份有限公司</div><div class="addr">新北市汐止區新台五路一段75號13樓之4</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.035110481045239283&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.035110481045239283&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">600</div>
+        <div class="info"><div class="name">冠揚生物科技有限公司</div><div class="addr">新北市中和區連城路451號1樓</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777442973046&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777442973046&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">669</div>
+        <div class="info"><div class="name">尉徠生物科技有限公司</div><div class="addr">桃園市桃園區春日路1348號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.9574898407089889&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.9574898407089889&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">674</div>
+        <div class="info"><div class="name">建順儀器有限公司</div><div class="addr">代送</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777258637594&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777258637594&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">737</div>
+        <div class="info"><div class="name">德怡科技有限公司</div><div class="addr">苗栗縣竹南鎮工業路198號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456680.4078213116955376&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456680.4078213116955376&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">766</div>
+        <div class="info"><div class="name">明亮儀器有限公司</div><div class="addr">新竹市和平路6巷42號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777355316469&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777355316469&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">798</div>
+        <div class="info"><div class="name">勢得科研股份有限公司</div><div class="addr">桃園市龜山區陳厝坑路997巷27號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777016392660&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777016392660&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">892</div>
+        <div class="info"><div class="name">田祐國際有限公司</div><div class="addr">新北市三重區永福街46巷15弄2號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456670.5168646982351172&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456670.5168646982351172&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">902</div>
+        <div class="info"><div class="name">立亨國際有限公司</div><div class="addr">新竹市香山區香北路268號1樓</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777355425570&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777355425570&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">999</div>
+        <div class="info"><div class="name">聖美塑膠工廠</div><div class="addr">彰化縣和美鎮德美路594巷47號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777259736338&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777259736338&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">代寄01</div>
+        <div class="info"><div class="name">望隼</div><div class="addr">苗栗縣竹南鎮公義里友義路66號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777514046603&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777514046603&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">A1302</div>
+        <div class="info"><div class="name">國立清華大學-鄭惠春老師</div><div class="addr">新竹市東區光復路二段101號 生命科學二館5樓517室</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456680.28687538987637806&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456680.28687538987637806&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">A3007</div>
+        <div class="info"><div class="name">佳格食品股份有限公司(中壢)</div><div class="addr">桃園市中壢區吉林路13號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777442926207&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777442926207&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">A5014</div>
+        <div class="info"><div class="name">中國化學製藥股份有限公司(新豐廠)</div><div class="addr">新竹縣新豐鄉上坑村二鄰坑子口182-1號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456680.8180470695102519&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456680.8180470695102519&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">A5036</div>
+        <div class="info"><div class="name">益邦製藥股份有限公司</div><div class="addr">苗栗縣竹南鎮科東三路1號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;17769993456680.8472427601478607&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;17769993456680.8472427601478607&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">A9029</div>
+        <div class="info"><div class="name">恩揚生物科技股份有限公司</div><div class="addr">新竹縣關西鎮東安里13鄰糞箕窩1之7號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777355275666&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777355275666&#39;)">✕</button>
+      </div>
+      <div class="cust-row">
+        <div class="code">Z005</div>
+        <div class="info"><div class="name">傅太太</div><div class="addr">桃園市楊梅區民有路一段198號</div></div>
+        <button class="icon-btn edit" onclick="openModal(&#39;1777356768680&#39;)">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer(&#39;1777356768680&#39;)">✕</button>
+      </div></div>
+  </div>
+
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle">新增客戶</h3>
+    <label>客戶編號</label>
+    <input type="text" id="fCode" placeholder="例：006">
+    <div class="field-error" id="codeError">⚠️ 此客戶編號已存在，請使用其他編號</div>
+    <label>客戶名稱</label>
+    <input type="text" id="fName" placeholder="例：信德儀器有限公司">
+    <label>送貨地址</label>
+    <input type="text" id="fAddr" placeholder="例：台北市中正區羅斯福路3段240巷7弄4-1號">
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">取消</button>
+      <button class="modal-save" onclick="saveCustomer()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 匯入 Modal -->
+<div class="modal-bg" id="importModal">
+  <div class="modal">
+    <h3>📥 匯入客戶資料</h3>
+    <label style="margin-top:0">選擇 CSV 檔案</label>
+    <input type="file" accept=".csv,.txt" onchange="handleFileImport(event)" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;">
+    <label>或直接貼上資料</label>
+    <textarea class="import-area" id="importText" placeholder="貼上資料，每行一筆..."></textarea>
+    <div class="import-hint">
+      格式（逗號或 Tab 分隔）：<br>
+      客戶編號, 客戶名稱, 送貨地址<br>
+      例：006, 信德儀器有限公司, 台北市中正區羅斯福路3段240巷7弄4-1號<br>
+      ⚠️ 相同客戶編號會自動略過，不重複新增
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeImport()">取消</button>
+      <button class="modal-save" onclick="importCustomers()">匯入</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  const DEPOT = '桃園市龍潭區工五路250號';
+  const CHUNK = 9;
+  let customers = [];
+  let routeHistory = [];
+  let selected = new Set();
+  let editingId = null;
+
+  const GH_TOKEN = ['ghp_nHWg5QJ16InBy6A1', 'JR3spOqb8KUhCs1tRPFJ'].join('');
+  const GH_REPO = 'e24222/Alpha';
+
+  function save() { localStorage.setItem('customers_v3', JSON.stringify(customers)); }
+  function saveHist() {
+    localStorage.setItem('route_history_v2', JSON.stringify(routeHistory.slice(0,60)));
+    pushHistoryToGitHub();
+  }
+  function load() {
+    try { customers = JSON.parse(localStorage.getItem('customers_v3') || '[]'); } catch(e) { customers = []; }
+    try { routeHistory = JSON.parse(localStorage.getItem('route_history_v2') || '[]'); } catch(e) { routeHistory = []; }
+  }
+
+  const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/e24222/Alpha/main/delivery/customers.csv';
+  const GITHUB_HIST_URL = 'https://raw.githubusercontent.com/e24222/Alpha/main/delivery/history.json';
+
+  async function syncFromGitHub() { await syncCustomers(); await syncHistory(); }
+
+  async function syncCustomers() {
+    try {
+      const res = await fetch(GITHUB_CSV_URL + '?t=' + Date.now());
+      if (!res.ok) return;
+      const text = (await res.text()).replace(/^﻿/,'').trim();
+      const etag = text.length + '_' + text.slice(-50);
+      if (localStorage.getItem('gh_csv_etag') === etag) return;
+      const newC = [];
+      text.split('\n').filter(l=>l.trim()).forEach(line => {
+        if (line.startsWith('客戶編號')) return;
+        const p = line.split(',').map(s=>s.trim()).filter(Boolean);
+        if (p.length < 2) return;
+        const [code, name, ...rest] = p; const address = cleanAddr(rest.join(' '));
+        if (!name||!address) return;
+        const ex = customers.find(c=>c.code===code);
+        newC.push(ex||{id:Date.now().toString()+Math.random(),code,name,address});
+      });
+      if (newC.length>0){customers=newC;save();renderManage();renderList();}
+      localStorage.setItem('gh_csv_etag', etag);
+    } catch(e){console.warn('客戶同步失敗',e);}
+  }
+
+  async function syncHistory() {
+    try {
+      const res = await fetch(GITHUB_HIST_URL + '?t=' + Date.now());
+      if (!res.ok) return;
+      const gh = await res.json();
+      const etag = gh.length + '_' + (gh[0]||{id:''}).id;
+      if (localStorage.getItem('gh_hist_etag') === etag) return;
+      const ids = new Set(routeHistory.map(r=>r.id));
+      gh.forEach(r => {
+        if (!ids.has(r.id)) {
+          r.stops = r.stops.map(s => {
+            if (s.id) return s;
+            const f = customers.find(c=>c.name===s.name);
+            return f ? {...s,id:f.id,addr:f.address,code:f.code} : s;
+          });
+          routeHistory.push(r);
+        }
+      });
+      routeHistory.sort((a,b)=>(b.label||'').localeCompare(a.label||''));
+      localStorage.setItem('route_history_v2', JSON.stringify(routeHistory.slice(0,60)));
+      renderHistory();
+      localStorage.setItem('gh_hist_etag', etag);
+    } catch(e){console.warn('歷史同步失敗',e);}
+  }
+
+  let ghPushTimer = null;
+  async function pushHistoryToGitHub() {
+    clearTimeout(ghPushTimer);
+    ghPushTimer = setTimeout(async () => {
+      try {
+        const m = await (await fetch(`https://api.github.com/repos/${GH_REPO}/contents/history.json`,
+          {headers:{'Authorization':`token ${GH_TOKEN}`}})).json();
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(routeHistory.slice(0,60),null,2))));
+        await fetch(`https://api.github.com/repos/${GH_REPO}/contents/history.json`,{
+          method:'PUT', headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
+          body:JSON.stringify({message:'Update history',content,sha:m.sha})
+        });
+      } catch(e){console.warn('歷史回寫失敗',e);}
+    }, 2000);
+  }
+  function switchTab(tab) {
+    const tabs = ['today','history','analytics','manage'];
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === tab));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-'+tab).classList.add('active');
+    if (tab==='manage') renderManage();
+    if (tab==='today') renderList();
+    if (tab==='history') renderHistory();
+    if (tab==='analytics') renderAnalytics();
+  }
+
+  function parseRecordDate(r) {
+    const lm = (r.label || '').match(/^(\d{4})(\d{2})(\d{2})/);
+    if (lm) return `${lm[1]}-${lm[2]}-${lm[3]}`;
+    const dm = (r.date || '').match(/(\d{4})\/(\d{2})\/(\d{2})/);
+    if (dm) return `${dm[1]}-${dm[2]}-${dm[3]}`;
+    return null;
+  }
+
+  function buildDayMap() {
+    // dayMap[YYYY-MM-DD] = { km, stops, boxes, records }
+    const dayMap = {};
+    routeHistory.forEach(r => {
+      const d = parseRecordDate(r);
+      if (!d) return;
+      if (!dayMap[d]) dayMap[d] = { km:0, stops:0, boxes:0, records:[] };
+      dayMap[d].km    += r.totalKm || 0;
+      dayMap[d].stops += r.stops.length;
+      dayMap[d].boxes += r.boxes ? Number(r.boxes) : 0;
+      dayMap[d].records.push(r);
+    });
+    return dayMap;
+  }
+
+  let analyticsChart = null;
+  let selectedAnalyticsMonth = null;
+
+  function renderAnalytics() {
+    const el = document.getElementById('analyticsContent');
+    if (!routeHistory.length) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">📊</div><p>還沒有歷史紀錄<br>排過路線後會自動出現數據</p></div>`;
+      return;
+    }
+
+    const dayMap = buildDayMap();
+    const allDays = Object.keys(dayMap).sort();
+
+    // 月份彙總
+    const byMonth = {};
+    allDays.forEach(d => {
+      const ym = d.slice(0,7);
+      if (!byMonth[ym]) byMonth[ym] = { km:0, stops:0, boxes:0, days:0 };
+      byMonth[ym].km    += dayMap[d].km;
+      byMonth[ym].stops += dayMap[d].stops;
+      byMonth[ym].boxes += dayMap[d].boxes;
+      byMonth[ym].days  += 1;
+    });
+    const months = Object.keys(byMonth).sort();
+
+    // 當月（用最新一筆記錄的月份，或目前系統月份）
+    const nowYM = new Date().toISOString().slice(0,7);
+    const thisYM = byMonth[nowYM] ? nowYM : months[months.length-1];
+    const tm = byMonth[thisYM] || { km:0, stops:0, boxes:0, days:0 };
+    const [ty, tmo] = thisYM.split('-');
+    const thisMonthLabel = `${parseInt(ty)}年${parseInt(tmo)}月`;
+
+    // 月份選擇器預設
+    if (!selectedAnalyticsMonth || !byMonth[selectedAnalyticsMonth]) {
+      selectedAnalyticsMonth = thisYM;
+    }
+
+    const kpi = (label, val, color, sub='') =>
+      `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;flex:1;min-width:110px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px">${label}</div>
+        <div style="font-size:24px;font-weight:900;color:${color};line-height:1">${val}</div>
+        ${sub?`<div style="font-size:10px;color:var(--muted);margin-top:4px">${sub}</div>`:''}
+      </div>`;
+
+    const monthOptions = months.slice().reverse().map(ym => {
+      const [y,m] = ym.split('-');
+      return `<option value="${ym}" ${ym===selectedAnalyticsMonth?'selected':''}>${parseInt(y)}年${parseInt(m)}月</option>`;
+    }).join('');
+
+    el.innerHTML = `
+      <!-- 當月 KPI -->
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:.5px">📅 ${thisMonthLabel}（當月）</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+        ${kpi('出勤天數', tm.days+'天', 'var(--fg)')}
+        ${kpi('本月里程', tm.km.toFixed(0)+' km', '#7ec8f7', tm.days?`平均 ${(tm.km/tm.days).toFixed(0)} km/天`:'')}
+        ${kpi('本月站數', tm.stops+'站', 'var(--accent)', tm.days?`平均 ${(tm.stops/tm.days).toFixed(1)} 站/天`:'')}
+        ${tm.boxes?kpi('本月箱數', tm.boxes+'箱', '#4fc97e'):''}
+      </div>
+
+      <!-- 主體：左日期查詢 + 右月份圖表 -->
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <!-- 日期查詢 -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;min-width:200px;flex:0 0 200px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px">📅 查詢特定日期</div>
+          <input type="date" id="dayLookupInput"
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--fg);
+                   border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;margin-bottom:10px"
+            onchange="lookupDate(this.value)">
+          <div id="dayLookupResult" style="font-size:13px;color:var(--muted);min-height:80px">選擇日期查看當日數據</div>
+        </div>
+
+        <!-- 月份條形圖 -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;flex:1;min-width:240px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px">📦 月份出貨彙總</div>
+            <select id="monthSelector" onchange="changeAnalyticsMonth(this.value)"
+              style="background:var(--surface2);border:1px solid var(--border);color:var(--fg);
+                     border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit;cursor:pointer">
+              ${monthOptions}
+            </select>
+          </div>
+          <canvas id="monthlyChart" height="130"></canvas>
+        </div>
+      </div>
+
+      <!-- 月曆 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px" id="calendarSection">
+        ${buildCalendar(selectedAnalyticsMonth, dayMap)}
+      </div>
+
+      <!-- 列印月報表按鈕 -->
+      <button onclick="printMonthlyReport()"
+        style="width:100%;margin-top:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+               color:#fff;border:none;padding:15px;border-radius:12px;font-size:16px;font-weight:700;
+               font-family:'Noto Sans TC',sans-serif;cursor:pointer;letter-spacing:.5px">
+        🖨️ 列印本月送貨月報表
+      </button>`;
+
+    drawMonthChart(byMonth);
+  }
+
+  function buildCalendar(ym, dayMap) {
+    if (!ym) return '';
+    const [y, m] = ym.split('-').map(Number);
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const firstDow = new Date(y, m-1, 1).getDay(); // 0=日
+    const today = new Date().toISOString().slice(0,10);
+    const maxKm = Math.max(...Object.values(dayMap).map(d=>d.km), 1);
+
+    function cellBg(km) {
+      if (!km) return 'var(--surface2)';
+      const t = Math.min(km / maxKm, 1);
+      const alpha = 0.25 + t * 0.6;
+      return `rgba(245,166,35,${alpha.toFixed(2)})`;
+    }
+
+    const DOW = ['日','一','二','三','四','五','六'];
+    const header = DOW.map((d,i) => {
+      const color = (i===0||i===6) ? '#e8543a' : 'var(--muted)';
+      return `<th style="text-align:center;font-size:11px;font-weight:700;color:${color};padding:6px 0;border-bottom:1px solid var(--border)">${d}</th>`;
+    }).join('');
+
+    let cells = '';
+    // 空白前置格
+    for (let i=0; i<firstDow; i++) cells += `<td style="padding:4px"></td>`;
+
+    for (let d=1; d<=daysInMonth; d++) {
+      const iso = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const data = dayMap[iso];
+      const isToday = iso === today;
+      const isWeekend = (new Date(iso).getDay()===0 || new Date(iso).getDay()===6);
+      const bg = data ? cellBg(data.km) : (isWeekend ? 'rgba(232,84,58,0.06)' : 'var(--surface2)');
+      const border = isToday ? '2px solid var(--accent)' : '1px solid var(--border)';
+
+      cells += `<td onclick="lookupDate('${iso}')"
+        style="padding:6px 4px;border-radius:8px;background:${bg};border:${border};
+               cursor:pointer;vertical-align:top;min-width:42px;transition:background .15s"
+        onmouseover="this.style.filter='brightness(1.2)'" onmouseout="this.style.filter=''">
+        <div style="font-size:12px;font-weight:${isToday?'900':'600'};color:${data?'var(--fg)':'var(--muted)'}; margin-bottom:2px">${d}</div>
+        ${data ? `<div style="font-size:10px;color:#7ec8f7;line-height:1.4">${data.km.toFixed(0)}km</div>
+                  <div style="font-size:10px;color:var(--accent);line-height:1.4">${data.stops}站</div>
+                  ${data.boxes?`<div style="font-size:9px;color:#4fc97e;line-height:1.4">${data.boxes}箱</div>`:''}` : ''}
+      </td>`;
+
+      // 換行
+      const dow = (firstDow + d) % 7;
+      if (dow === 0 && d < daysInMonth) cells += '</tr><tr>';
+    }
+
+    const [ty,tmo] = ym.split('-');
+    // 計算上個月、下個月
+    const ymDate = new Date(parseInt(ty), parseInt(tmo)-1, 1);
+    const prevDate = new Date(ymDate); prevDate.setMonth(prevDate.getMonth()-1);
+    const nextDate = new Date(ymDate); nextDate.setMonth(nextDate.getMonth()+1);
+    const prevYM = `${prevDate.getFullYear()}-${String(prevDate.getMonth()+1).padStart(2,'0')}`;
+    const nextYM = `${nextDate.getFullYear()}-${String(nextDate.getMonth()+1).padStart(2,'0')}`;
+    const navBtn = (ym2, label) =>
+      `<button onclick="navCalendar('${ym2}')"
+        style="background:var(--surface2);border:1px solid var(--border);color:var(--fg);
+               border-radius:8px;padding:5px 14px;font-size:14px;cursor:pointer;font-family:inherit;
+               line-height:1" onmouseover="this.style.borderColor='var(--accent)'"
+               onmouseout="this.style.borderColor='var(--border)'">${label}</button>`;
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          ${navBtn(prevYM, '&#8249;')}
+          <div style="font-size:15px;font-weight:900;color:var(--fg);min-width:90px;text-align:center">${parseInt(ty)}年 ${parseInt(tmo)}月</div>
+          ${navBtn(nextYM, '&#8250;')}
+        </div>
+        <div style="font-size:10px;color:var(--muted)">點選日期查看詳細</div>
+      </div>
+      <table style="width:100%;border-collapse:separate;border-spacing:4px">
+        <thead><tr>${header}</tr></thead>
+        <tbody><tr>${cells}</tr></tbody>
+      </table>`;
+  }
+
+
+  function navCalendar(ym) {
+    selectedAnalyticsMonth = ym;
+    // 更新下拉選單（如果該月有資料）
+    const sel = document.getElementById('monthSelector');
+    if (sel) {
+      // 如果選單裡有這個月就選它，沒有就不動
+      const opt = Array.from(sel.options).find(o => o.value === ym);
+      if (opt) sel.value = ym;
+    }
+    // 重繪日曆（不管有無資料都可翻頁）
+    const dayMap = buildDayMap();
+    const cal = document.getElementById('calendarSection');
+    if (cal) cal.innerHTML = buildCalendar(ym, dayMap);
+  }
+
+  function drawMonthChart(byMonth) {
+    if (analyticsChart) { analyticsChart.destroy(); analyticsChart = null; }
+    const canvas = document.getElementById('monthlyChart');
+    if (!canvas) return;
+    const sel = selectedAnalyticsMonth;
+    const d = (byMonth || {})[sel] || { km:0, stops:0 };
+    const [y,m] = sel.split('-');
+    const label = `${parseInt(y)}年${parseInt(m)}月`;
+
+    analyticsChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: [label],
+        datasets: [
+          {
+            label: '里程 km',
+            data: [Math.round(d.km * 10)/10],
+            backgroundColor: 'rgba(126,200,247,0.85)',
+            borderColor: '#7ec8f7',
+            borderWidth: 1,
+            borderRadius: 6,
+            barThickness: 36,
+          },
+          {
+            label: '箱數',
+            data: [d.boxes || 0],
+            backgroundColor: 'rgba(79,201,126,0.85)',
+            borderColor: '#4fc97e',
+            borderWidth: 1,
+            borderRadius: 6,
+            barThickness: 36,
+          }
+        ]
+      },
+      plugins: [ChartDataLabels],
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position:'right', labels:{ color:'#7b7f9a', font:{size:12}, boxWidth:12 } },
+          tooltip: {
+            backgroundColor:'#1a1d27', borderColor:'#2e3147', borderWidth:1,
+            titleColor:'#eef0f8', bodyColor:'#aaa',
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'end',
+            color: '#eef0f8',
+            font: { size:13, weight:'900' },
+            formatter: (val, ctx) => {
+              if (!val) return '';
+              return ctx.dataset.label === '里程 km' ? val + ' km' : val + ' 箱';
+            }
+          }
+        },
+        layout: { padding: { top: 24 } },
+        scales: {
+          x: { ticks:{color:'#eef0f8',font:{size:12}}, grid:{color:'#2e3147'} },
+          y: { ticks:{color:'#7b7f9a',font:{size:11}}, grid:{color:'#2e3147'}, beginAtZero:true }
+        }
+      }
+    });
+  }
+
+  function changeAnalyticsMonth(ym) {
+    selectedAnalyticsMonth = ym;
+    const dayMap = buildDayMap();
+    const allDays = Object.keys(dayMap).sort();
+    const byMonth = {};
+    allDays.forEach(d => {
+      const m = d.slice(0,7);
+      if (!byMonth[m]) byMonth[m] = { km:0, stops:0, boxes:0, days:0 };
+      byMonth[m].km    += dayMap[d].km;
+      byMonth[m].stops += dayMap[d].stops;
+      byMonth[m].boxes += dayMap[d].boxes;
+      byMonth[m].days  += 1;
+    });
+    drawMonthChart(byMonth);
+    // 更新日曆
+    const cal = document.getElementById('calendarSection');
+    if (cal) cal.innerHTML = buildCalendar(ym, dayMap);
+  }
+
+
+  function printMonthlyReport() {
+    const ym = selectedAnalyticsMonth;
+    if (!ym) return;
+    const [y, m] = ym.split('-').map(Number);
+    const dayMap = buildDayMap();
+    const daysInMonth = new Date(y, m, 0).getDate();
+
+    // 收集該月所有有資料的日期
+    const rows = [];
+    let totalKm = 0, totalStops = 0, totalBoxes = 0, activeDays = 0;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dow = new Date(iso).getDay();
+      const dowLabel = ['日','一','二','三','四','五','六'][dow];
+      const isWeekend = (dow === 0 || dow === 6);
+      const data = dayMap[iso];
+      if (data) {
+        totalKm    += data.km;
+        totalStops += data.stops;
+        totalBoxes += data.boxes;
+        activeDays++;
+      }
+      rows.push({ d, iso, dowLabel, isWeekend, data });
+    }
+
+    const monthLabel = `${y}年${m}月`;
+    const companyName = '龍冶股份有限公司';
+
+    const tableRows = rows.filter(({ data }) => data).map(({ d, dowLabel, isWeekend, data }) => {
+      const dateStyle = isWeekend ? 'color:#c0392b;font-weight:700' : 'font-weight:600';
+      return `<tr>
+        <td style="${dateStyle}">${m}/${d}（${dowLabel}）</td>
+        <td style="color:#1565c0;font-weight:700">${data.km.toFixed(1)} km</td>
+        <td style="color:#e65100;font-weight:700">${data.stops} 站</td>
+        <td style="color:#2e7d32;font-weight:700">${data.boxes ? data.boxes + ' 箱' : '—'}</td>
+        <td></td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="zh-TW"><head><meta charset="UTF-8">
+<style>
+  @page { size: A4 portrait; margin: 8mm 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC', Arial, sans-serif; color: #111; font-size: 13px; }
+  .header { border-bottom: 2px solid #f5a623; padding-bottom: 5px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .header-left { display: flex; align-items: baseline; gap: 10px; }
+  .header h1 { font-size: 16px; font-weight: 900; }
+  .header .sub { font-size: 10px; color: #777; }
+  .header .month { font-size: 22px; font-weight: 900; color: #f5a623; }
+  .summary { display: flex; gap: 0; margin-bottom: 6px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+  .sc { flex: 1; padding: 5px 8px; text-align: center; border-right: 1px solid #eee; }
+  .sc:last-child { border-right: none; }
+  .sc .lbl { font-size: 9px; color: #888; }
+  .sc .val { font-size: 14px; font-weight: 900; line-height: 1.2; }
+  .sc .avg { font-size: 9px; color: #aaa; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f5a623; color: #000; padding: 6px 8px; text-align: center; font-weight: 800; font-size: 12px; border: 1px solid #e0970f; }
+  td { padding: 5px 8px; border: 1px solid #e8e8e8; text-align: center; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .total-row td { background: #fff3d6 !important; font-weight: 900; border-top: 2px solid #f5a623; }
+  .footer { margin-top: 5px; font-size: 9px; color: #bbb; text-align: right; }
+</style>
+</head><body>
+<div class="header">
+  <div class="header-left">
+    <h1>🚛 送貨月報表</h1>
+    <span class="sub">龍冶股份有限公司 ／ 出發：桃園市龍潭區工五路250號</span>
+  </div>
+  <div class="month">${monthLabel}</div>
+</div>
+
+<div class="summary">
+  <div class="sc"><div class="lbl">出勤天數</div><div class="val" style="color:#333">${activeDays} 天</div><div class="avg">共${daysInMonth}天</div></div>
+  <div class="sc"><div class="lbl">總里程</div><div class="val" style="color:#1565c0">${totalKm.toFixed(1)} km</div><div class="avg">${activeDays?'平均'+(totalKm/activeDays).toFixed(0)+'km/天':''}</div></div>
+  <div class="sc"><div class="lbl">總站數</div><div class="val" style="color:#e65100">${totalStops} 站</div><div class="avg">${activeDays?'平均'+(totalStops/activeDays).toFixed(1)+'站/天':''}</div></div>
+  ${totalBoxes?`<div class="sc"><div class="lbl">總箱數</div><div class="val" style="color:#2e7d32">${totalBoxes} 箱</div><div class="avg">${activeDays?'平均'+(totalBoxes/activeDays).toFixed(1)+'箱/天':''}</div></div>`:''}
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:90px">日期</th>
+      <th style="width:80px">里程 (km)</th>
+      <th style="width:60px">站數</th>
+      <th style="width:60px">箱數</th>
+      <th>備註</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${tableRows}
+    <tr class="total-row">
+      <td>合計</td>
+      <td style="color:#1565c0">${totalKm.toFixed(1)} km</td>
+      <td style="color:#e65100">${totalStops} 站</td>
+      <td style="color:#2e7d32">${totalBoxes ? totalBoxes + ' 箱' : '—'}</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+<div class="footer">列印：${new Date().toLocaleString('zh-TW')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => { w.focus(); w.print(); }, 400);
+  }
+
+  function lookupDate(dateStr) {
+    if (!dateStr) return;
+    const inp = document.getElementById('dayLookupInput');
+    if (inp) inp.value = dateStr;
+    const dayMap = buildDayMap();
+    const d = dayMap[dateStr];
+    const el = document.getElementById('dayLookupResult');
+    if (!el) return;
+    if (!d) {
+      el.innerHTML = `<div style="color:var(--muted);padding:8px 0">📭 ${dateStr}<br>當日無出勤紀錄</div>`;
+      return;
+    }
+    const [y,m,day] = dateStr.split('-');
+    el.innerHTML = `
+      <div style="font-weight:700;color:var(--fg);margin-bottom:10px">${parseInt(y)}年${parseInt(m)}月${parseInt(day)}日</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;background:var(--surface2);border-radius:8px;padding:8px 12px">
+          <span style="color:var(--muted);font-size:12px">🛣 里程</span>
+          <span style="color:#7ec8f7;font-weight:900;font-size:15px">${d.km.toFixed(1)} km</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;background:var(--surface2);border-radius:8px;padding:8px 12px">
+          <span style="color:var(--muted);font-size:12px">📍 站數</span>
+          <span style="color:var(--accent);font-weight:900;font-size:15px">${d.stops} 站</span>
+        </div>
+        ${d.boxes?`<div style="display:flex;justify-content:space-between;background:var(--surface2);border-radius:8px;padding:8px 12px">
+          <span style="color:var(--muted);font-size:12px">📦 箱數</span>
+          <span style="color:#4fc97e;font-weight:900;font-size:15px">${d.boxes} 箱</span>
+        </div>`:''}
+      </div>`;
+  }
+
+
+
+  // ── 今日送貨 ──
+  let priority = new Set(); // 優先送的客戶
+
+  function renderList() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const list = document.getElementById('customerList');
+    const filtered = customers.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+      .sort((a,b) => a.code.localeCompare(b.code, 'zh-TW', {numeric:true}));
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">👥</div><p>${customers.length===0?'還沒有客戶資料<br>請到「客戶管理」新增':'找不到符合的客戶'}</p></div>`;
+    } else {
+      list.innerHTML = filtered.map(c => `
+        <div class="customer-item ${selected.has(c.id)?'selected':''}" onclick="toggleSelect('${c.id}')">
+          <div class="checkbox">${selected.has(c.id)?'✓':''}</div>
+          <div class="cust-code">${c.code}</div>
+          <div class="cust-info">
+            <div class="cust-name">${c.name}</div>
+            <div class="cust-addr">${c.address}</div>
+          </div>
+          <button class="priority-btn ${priority.has(c.id)?'on':''}" onclick="event.stopPropagation();togglePriority('${c.id}')" title="優先送">⭐</button>
+        </div>`).join('');
+    }
+    document.getElementById('selectedNum').textContent = selected.size;
+    document.getElementById('routeBtn').disabled = selected.size === 0;
+  }
+
+  function togglePriority(id) {
+    if (priority.has(id)) priority.delete(id); else priority.add(id);
+    renderList();
+  }
+
+  function handleSearchKey(e) {
+    if (e.key !== 'Enter') return;
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (!q) return;
+    const exact = customers.find(c => c.code.toLowerCase() === q);
+    if (exact) {
+      if (selected.has(exact.id)) selected.delete(exact.id); else selected.add(exact.id);
+      document.getElementById('searchInput').value = ''; renderList(); return;
+    }
+    const filtered = customers.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
+    if (filtered.length === 1) {
+      if (selected.has(filtered[0].id)) selected.delete(filtered[0].id); else selected.add(filtered[0].id);
+      document.getElementById('searchInput').value = ''; renderList();
+    }
+  }
+
+  function toggleSelect(id) { if(selected.has(id)) selected.delete(id); else selected.add(id); renderList(); }
+  function clearSelected() { selected.clear(); priority.clear(); renderList(); }
+
+  function extractDistrict(addr) {
+    const m = addr.match(/(.{2,3}[市縣])(.{2,3}[鄉鎮市區])/);
+    if (m) return m[1]+m[2];
+    const m2 = addr.match(/(.{2,3}[鄉鎮市區])/);
+    if (m2) return m2[1];
+    return addr.substring(0,6);
+  }
+
+  function buildMapUrl(origin, stops) {
+    const dest = encodeURIComponent(stops[stops.length-1]);
+    const wp = stops.slice(0,-1).map(a=>encodeURIComponent(a)).join('|');
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${dest}`;
+    if (wp) url += `&waypoints=${wp}`;
+    return url + '&travelmode=driving';
+  }
+
+  function buildSegments(sorted) {
+    const addrs = sorted.map(c=>c.address);
+    const segs = [];
+    for (let i=0; i<addrs.length; i+=CHUNK) segs.push(addrs.slice(i,i+CHUNK));
+    return segs.map((seg,i) => {
+      const isLast = i === segs.length - 1;
+      // 最後一段：把公司地址加入為終點，原本最後一站變 waypoint
+      const stops = isLast ? [...seg, DEPOT] : seg;
+      return {
+        url: buildMapUrl(i===0 ? DEPOT : segs[i-1][segs[i-1].length-1], stops),
+        label: segs.length===1 ? '🗺️ 在 Google Maps 開啟導航'
+          : `🗺️ 第 ${i+1} 段導航（第 ${i*CHUNK+1}～${i*CHUNK+seg.length} 站）`
+      };
+    });
+  }
+
+  // 台灣各鄉鎮市區座標對照表（離線，不需要網路）
+  const TW_GEO = {
+    '基隆市中正區':[25.1285,121.7419],'基隆市七堵區':[25.0836,121.7145],'基隆市暖暖區':[25.0663,121.7307],'基隆市仁愛區':[25.1289,121.7467],'基隆市中山區':[25.1333,121.7368],'基隆市安樂區':[25.1137,121.7237],'基隆市信義區':[25.1238,121.7554],
+    '台北市中正區':[25.0432,121.5196],'台北市大同區':[25.0634,121.5131],'台北市中山區':[25.0694,121.5326],'台北市松山區':[25.0579,121.5772],'台北市大安區':[25.0263,121.5436],'台北市萬華區':[25.0356,121.4993],'台北市信義區':[25.0336,121.5649],'台北市士林區':[25.0935,121.5244],'台北市北投區':[25.1316,121.4985],'台北市內湖區':[25.0847,121.5875],'台北市南港區':[25.0548,121.6073],'台北市文山區':[24.9986,121.5697],
+    '新北市板橋區':[25.0122,121.4628],'新北市三重區':[25.0617,121.4878],'新北市中和區':[24.9956,121.4897],'新北市永和區':[25.0137,121.5162],'新北市新莊區':[25.0365,121.4498],'新北市新店區':[24.9691,121.5382],'新北市樹林區':[24.9884,121.4175],'新北市鶯歌區':[24.9557,121.3435],'新北市三峽區':[24.9357,121.3722],'新北市淡水區':[25.1638,121.4485],'新北市汐止區':[25.0671,121.6609],'新北市瑞芳區':[25.1074,121.8022],'新北市土城區':[24.9694,121.4412],'新北市蘆洲區':[25.0854,121.4732],'新北市五股區':[25.0809,121.4357],'新北市泰山區':[25.0569,121.4287],'新北市林口區':[25.0791,121.3878],'新北市深坑區':[24.9934,121.6124],'新北市石碇區':[24.9708,121.6601],'新北市坪林區':[24.9366,121.7112],'新北市三芝區':[25.2583,121.4991],'新北市石門區':[25.2946,121.5687],'新北市八里區':[25.1514,121.4142],'新北市平溪區':[25.0241,121.7399],'新北市雙溪區':[25.0422,121.8693],'新北市貢寮區':[25.0228,121.9218],'新北市金山區':[25.2218,121.6383],'新北市萬里區':[25.179,121.6851],'新北市烏來區':[24.8737,121.5499],
+    '桃園市桃園區':[24.9936,121.3009],'桃園市中壢區':[24.9636,121.2252],'桃園市大溪區':[24.8867,121.2877],'桃園市楊梅區':[24.9147,121.1413],'桃園市蘆竹區文中':[25.025,121.277],'桃園市蘆竹區南崁':[25.046,121.269],'桃園市蘆竹區':[25.0569,121.2671],'桃園市大園區':[25.0495,121.1634],'桃園市龜山區頂湖':[25.073,121.382],'桃園市龜山區':[24.9968,121.3486],'桃園市八德區':[24.9529,121.3009],'桃園市龍潭區':[24.8629,121.2246],'桃園市平鎮區':[24.9371,121.2153],'桃園市新屋區':[24.9725,121.0861],'桃園市觀音區':[25.0198,121.0799],'桃園市復興區':[24.7929,121.3695],
+    '新竹市東區':[24.8039,120.9718],'新竹市北區':[24.8218,120.9611],'新竹市香山區':[24.7707,120.9353],
+    '新竹縣竹北市':[24.8395,121.0044],'新竹縣竹東鎮':[24.7388,121.0918],'新竹縣新埔鎮':[24.8382,121.0804],'新竹縣關西鎮':[24.7905,121.1736],'新竹縣湖口鄉':[24.9032,121.0448],'新竹縣新豐鄉':[24.9373,121.0199],'新竹縣峨眉鄉':[24.6828,121.1012],'新竹縣寶山鄉':[24.7644,121.0363],'新竹縣北埔鄉':[24.6985,121.0622],'新竹縣橫山鄉':[24.7308,121.1318],'新竹縣芎林鄉':[24.7888,121.0515],'新竹縣五峰鄉':[24.6406,121.1694],'新竹縣尖石鄉':[24.7376,121.2773],'新竹縣五峰鄉':[24.6406,121.1694],
+    '苗栗縣苗栗市':[24.5711,120.8206],'苗栗縣頭份市':[24.6874,120.8824],'苗栗縣竹南鎮':[24.6908,120.8631],'苗栗縣後龍鎮':[24.6174,120.7955],'苗栗縣通霄鎮':[24.4948,120.6985],'苗栗縣苑裡鎮':[24.4398,120.6569],'苗栗縣頭屋鄉':[24.5567,120.8718],'苗栗縣公館鄉':[24.5023,120.8289],'苗栗縣銅鑼鄉':[24.4934,120.7845],'苗栗縣三義鄉':[24.3932,120.7531],'苗栗縣西湖鄉':[24.4415,120.7348],'苗栗縣造橋鄉':[24.5872,120.8543],'苗栗縣三灣鄉':[24.6637,120.9185],'苗栗縣南庄鄉':[24.6188,121.0009],'苗栗縣大湖鄉':[24.4149,120.9008],'苗栗縣獅潭鄉':[24.5702,120.9473],'苗栗縣泰安鄉':[24.4381,121.0261],
+    '台中市中區':[24.1476,120.6822],'台中市東區':[24.1459,120.7049],'台中市南區':[24.1283,120.6731],'台中市西區':[24.1528,120.6635],'台中市北區':[24.163,120.6817],'台中市北屯區':[24.1752,120.7117],'台中市西屯區':[24.1644,120.6339],'台中市南屯區':[24.139,120.6369],'台中市太平區':[24.1285,120.7283],'台中市大里區':[24.1033,120.6799],'台中市霧峰區':[24.0573,120.7222],'台中市烏日區':[24.0922,120.6434],'台中市豐原區':[24.2368,120.7181],'台中市后里區':[24.3044,120.6986],'台中市石岡區':[24.2637,120.7804],'台中市東勢區':[24.2579,120.8236],'台中市和平區':[24.3638,121.0282],'台中市新社區':[24.2349,120.8168],'台中市潭子區':[24.2093,120.7214],'台中市大雅區':[24.2175,120.6649],'台中市神岡區':[24.2532,120.6535],'台中市大肚區':[24.1503,120.5522],'台中市沙鹿區':[24.1792,120.5775],'台中市龍井區':[24.1567,120.5443],'台中市梧棲區':[24.2573,120.5238],'台中市清水區':[24.2671,120.5639],'台中市大甲區':[24.3472,120.6233],'台中市外埔區':[24.3247,120.6541],'台中市大安區':[24.3698,120.5799],
+    '彰化縣彰化市':[24.0801,120.5381],'彰化縣員林市':[23.9573,120.5742],'彰化縣和美鎮':[24.1012,120.4818],'彰化縣鹿港鎮':[24.0536,120.4361],'彰化縣溪湖鎮':[23.9732,120.4797],'彰化縣田中鎮':[23.8689,120.5894],'彰化縣北斗鎮':[23.8746,120.5322],'彰化縣二林鎮':[23.9159,120.3926],'彰化縣線西鄉':[24.1318,120.4542],'彰化縣伸港鄉':[24.1273,120.4268],'彰化縣福興鄉':[24.0232,120.4331],'彰化縣秀水鄉':[24.0506,120.5001],'彰化縣花壇鄉':[24.0257,120.5357],'彰化縣芬園鄉':[24.027,120.5761],'彰化縣大村鄉':[23.9887,120.5596],'彰化縣埔鹽鄉':[23.9961,120.4734],'彰化縣清水溝鄉':[24.0019,120.4271],'彰化縣芳苑鄉':[23.9037,120.3491],'彰化縣大城鄉':[23.8612,120.3508],'彰化縣竹塘鄉':[23.9074,120.4253],'彰化縣社頭鄉':[23.9127,120.5818],'彰化縣永靖鄉':[23.9386,120.5379],'彰化縣埔心鄉':[23.9553,120.5312],'彰化縣溪州鄉':[23.8639,120.5037],'彰化縣竹塘鄉':[23.9074,120.4253],'彰化縣二水鄉':[23.8141,120.6217],'彰化縣田尾鄉':[23.8883,120.5207],'彰化縣埤頭鄉':[23.8818,120.4706],
+    '南投縣南投市':[23.9167,120.6836],'南投縣埔里鎮':[23.9611,121.0002],'南投縣草屯鎮':[23.9718,120.6711],'南投縣竹山鎮':[23.7531,120.6767],'南投縣集集鎮':[23.8296,120.7854],'南投縣名間鄉':[23.8628,120.6779],'南投縣鹿谷鄉':[23.7678,120.7609],'南投縣中寮鄉':[23.8697,120.7363],'南投縣魚池鄉':[23.9138,120.9288],'南投縣國姓鄉':[24.0322,120.8574],'南投縣水里鄉':[23.8175,120.8541],'南投縣信義鄉':[23.6798,120.8607],'南投縣仁愛鄉':[24.0564,121.1697],
+    '雲林縣斗六市':[23.7085,120.5433],'雲林縣斗南鎮':[23.6767,120.4778],'雲林縣虎尾鎮':[23.7075,120.4378],'雲林縣西螺鎮':[23.7978,120.4678],'雲林縣土庫鎮':[23.6718,120.3936],'雲林縣北港鎮':[23.5724,120.3011],'雲林縣古坑鄉':[23.6488,120.5878],'雲林縣大埤鄉':[23.6528,120.4578],'雲林縣莿桐鄉':[23.7428,120.5078],'雲林縣林內鄉':[23.7628,120.6178],'雲林縣二崙鄉':[23.7678,120.3878],'雲林縣崙背鄉':[23.7678,120.3278],'雲林縣麥寮鄉':[23.7578,120.2478],'雲林縣東勢鄉':[23.6828,120.2878],'雲林縣褒忠鄉':[23.6878,120.3178],'雲林縣台西鄉':[23.6928,120.2078],'雲林縣元長鄉':[23.6428,120.3178],'雲林縣四湖鄉':[23.6278,120.2278],'雲林縣口湖鄉':[23.5878,120.1878],'雲林縣水林鄉':[23.5678,120.2478],
+    '嘉義市東區':[23.4788,120.4498],'嘉義市西區':[23.4788,120.4298],
+    '嘉義縣太保市':[23.4572,120.3322],'嘉義縣朴子市':[23.4582,120.2432],'嘉義縣布袋鎮':[23.3832,120.1732],'嘉義縣大林鎮':[23.5932,120.4732],'嘉義縣民雄鄉':[23.5532,120.4232],'嘉義縣溪口鄉':[23.5732,120.3932],'嘉義縣新港鄉':[23.5532,120.3432],'嘉義縣六腳鄉':[23.4532,120.2832],'嘉義縣東石鄉':[23.4432,120.1832],'嘉義縣義竹鄉':[23.3932,120.2532],'嘉義縣鹿草鄉':[23.4132,120.3232],'嘉義縣水上鄉':[23.4432,120.3932],'嘉義縣中埔鄉':[23.4332,120.5032],'嘉義縣竹崎鄉':[23.5232,120.5432],'嘉義縣梅山鄉':[23.5732,120.5632],'嘉義縣番路鄉':[23.4932,120.5532],'嘉義縣大埔鄉':[23.3932,120.6132],'嘉義縣阿里山鄉':[23.4732,120.8032],
+    '台南市中西區':[22.9998,120.1998],'台南市東區':[22.9898,120.2198],'台南市南區':[22.9698,120.1898],'台南市北區':[23.0198,120.1998],'台南市安平區':[22.9998,120.1598],'台南市安南區':[23.0498,120.1598],'台南市永康區':[23.0298,120.2498],'台南市歸仁區':[22.9798,120.2898],'台南市新化區':[23.0298,120.3198],'台南市左鎮區':[23.0198,120.3998],'台南市玉井區':[23.1098,120.4498],'台南市楠西區':[23.1798,120.4798],'台南市南化區':[23.2298,120.4998],'台南市仁德區':[22.9498,120.2298],'台南市關廟區':[22.9498,120.3198],'台南市龍崎區':[22.9298,120.3698],'台南市官田區':[23.0998,120.3198],'台南市麻豆區':[23.1798,120.2498],'台南市佳里區':[23.1598,120.1798],'台南市西港區':[23.1498,120.2298],'台南市七股區':[23.1498,120.0998],'台南市將軍區':[23.1998,120.1398],'台南市學甲區':[23.2198,120.1798],'台南市北門區':[23.2698,120.1298],'台南市新營區':[23.3098,120.3198],'台南市後壁區':[23.3698,120.3498],'台南市白河區':[23.3498,120.4198],'台南市東山區':[23.2698,120.4298],'台南市六甲區':[23.2198,120.3598],'台南市下營區':[23.2298,120.2698],'台南市柳營區':[23.2898,120.3098],'台南市鹽水區':[23.3198,120.2698],'台南市善化區':[23.1398,120.2998],'台南市大內區':[23.1098,120.3898],'台南市山上區':[23.0698,120.3598],'台南市新市區':[23.0798,120.2898],'台南市安定區':[23.1198,120.2398],
+    '高雄市楠梓區':[22.7292,120.3192],'高雄市左營區':[22.6892,120.2992],'高雄市鼓山區':[22.6692,120.2792],'高雄市三民區':[22.6492,120.3192],'高雄市鹽埕區':[22.6292,120.2792],'高雄市前金區':[22.6292,120.2992],'高雄市苓雅區':[22.6192,120.3192],'高雄市前鎮區':[22.5992,120.3292],'高雄市旗津區':[22.5792,120.2792],'高雄市小港區':[22.5692,120.3492],'高雄市鳳山區':[22.6292,120.3692],'高雄市林園區':[22.4992,120.3892],'高雄市大寮區':[22.5892,120.4092],'高雄市大樹區':[22.6792,120.4292],'高雄市大社區':[22.7292,120.3592],'高雄市仁武區':[22.7092,120.3492],'高雄市鳥松區':[22.6492,120.3892],'高雄市岡山區':[22.7992,120.2992],'高雄市橋頭區':[22.7592,120.2992],'高雄市燕巢區':[22.7892,120.3692],'高雄市田寮區':[22.8792,120.3792],'高雄市阿蓮區':[22.8792,120.3192],'高雄市路竹區':[22.8492,120.2692],'高雄市湖內區':[22.8992,120.2392],'高雄市茄萣區':[22.9292,120.2192],'高雄市永安區':[22.8492,120.2292],'高雄市彌陀區':[22.8192,120.2492],'高雄市梓官區':[22.7692,120.2692],'高雄市旗山區':[22.8892,120.4792],'高雄市美濃區':[22.8992,120.5392],'高雄市六龜區':[23.0092,120.6292],'高雄市甲仙區':[23.0792,120.5892],'高雄市杉林區':[23.0292,120.5492],'高雄市內門區':[22.9792,120.4692],'高雄市茂林區':[22.9192,120.6692],'高雄市桃源區':[23.1692,120.7692],'高雄市那瑪夏區':[23.2392,120.6892],
+    '屏東縣屏東市':[22.6792,120.4892],'屏東縣潮州鎮':[22.5492,120.5492],'屏東縣東港鎮':[22.4692,120.4692],'屏東縣恆春鎮':[22.0092,120.7492],'屏東縣萬丹鄉':[22.5892,120.4892],'屏東縣長治鄉':[22.6892,120.5192],'屏東縣麟洛鄉':[22.6592,120.4992],'屏東縣九如鄉':[22.7192,120.4892],'屏東縣里港鄉':[22.7792,120.5092],'屏東縣鹽埔鄉':[22.7492,120.5292],'屏東縣高樹鄉':[22.8192,120.5792],'屏東縣萬巒鄉':[22.6092,120.5392],'屏東縣內埔鄉':[22.6392,120.5692],'屏東縣竹田鄉':[22.5892,120.5192],'屏東縣新埤鄉':[22.5492,120.5792],'屏東縣枋寮鄉':[22.3592,120.5992],'屏東縣南州鄉':[22.4992,120.5292],'屏東縣林邊鄉':[22.4392,120.5192],'屏東縣東港鎮':[22.4692,120.4692],'屏東縣琉球鄉':[22.3492,120.3892],'屏東縣佳冬鄉':[22.4292,120.5592],'屏東縣新園鄉':[22.5392,120.4592],'屏東縣枋山鄉':[22.2892,120.6392],'屏東縣三地門鄉':[22.7892,120.6292],'屏東縣霧台鄉':[22.7292,120.6892],'屏東縣瑪家鄉':[22.6992,120.6192],'屏東縣泰武鄉':[22.6392,120.6392],'屏東縣來義鄉':[22.5592,120.6192],'屏東縣春日鄉':[22.3892,120.6492],'屏東縣獅子鄉':[22.2392,120.6992],'屏東縣牡丹鄉':[22.1292,120.7292],'屏東縣滿州鄉':[21.9992,120.7592],
+    '宜蘭縣宜蘭市':[24.7492,121.7492],'宜蘭縣羅東鎮':[24.6792,121.7692],'宜蘭縣蘇澳鎮':[24.5992,121.8492],'宜蘭縣頭城鎮':[24.8592,121.8192],'宜蘭縣礁溪鄉':[24.8192,121.7792],'宜蘭縣壯圍鄉':[24.7592,121.7892],'宜蘭縣員山鄉':[24.7492,121.6892],'宜蘭縣冬山鄉':[24.6492,121.7892],'宜蘭縣五結鄉':[24.6892,121.8192],'宜蘭縣三星鄉':[24.6692,121.6492],'宜蘭縣大同鄉':[24.6292,121.5592],'宜蘭縣南澳鄉':[24.4492,121.7892],
+    '花蓮縣花蓮市':[23.9992,121.6092],'花蓮縣鳳林鎮':[23.7392,121.4792],'花蓮縣玉里鎮':[23.3392,121.3192],'花蓮縣新城鄉':[24.1292,121.6492],'花蓮縣吉安鄉':[23.9692,121.5792],'花蓮縣壽豐鄉':[23.8892,121.5492],'花蓮縣光復鄉':[23.6592,121.4392],'花蓮縣豐濱鄉':[23.6292,121.5192],'花蓮縣瑞穗鄉':[23.4992,121.3692],'花蓮縣富里鄉':[23.1892,121.2492],'花蓮縣秀林鄉':[24.1492,121.5192],'花蓮縣萬榮鄉':[23.7292,121.3892],'花蓮縣卓溪鄉':[23.3892,121.2292],
+    '台東縣台東市':[22.7592,121.1492],'台東縣成功鎮':[23.0992,121.3692],'台東縣關山鎮':[23.0492,121.1692],'台東縣卑南鄉':[22.7892,121.1292],'台東縣大武鄉':[22.3592,120.8892],'台東縣太麻里鄉':[22.6192,121.0192],'台東縣東河鄉':[22.9492,121.2892],'台東縣長濱鄉':[23.3292,121.4392],'台東縣池上鄉':[23.1092,121.2092],'台東縣綠島鄉':[22.6692,121.4992],'台東縣海端鄉':[23.1292,121.0492],'台東縣延平鄉':[22.8992,121.0692],'台東縣金峰鄉':[22.5292,120.9592],'台東縣達仁鄉':[22.2792,120.9292],'台東縣蘭嶼鄉':[22.0492,121.5492],
+  };
+
+  // 從地址抓出縣市+鄉鎮區，查座標表
+  // 縣市中心座標（當找不到鄉鎮區時的 fallback）
+  const TW_CITY = {
+    '基隆市':[25.1285,121.7419],'台北市':[25.0478,121.5319],'臺北市':[25.0478,121.5319],
+    '新北市':[25.0122,121.4628],'桃園市':[24.9936,121.3009],'新竹市':[24.8039,120.9718],
+    '新竹縣':[24.8395,121.0044],'苗栗縣':[24.5711,120.8206],'台中市':[24.1476,120.6822],
+    '臺中市':[24.1476,120.6822],'彰化縣':[24.0801,120.5381],'南投縣':[23.9167,120.6836],
+    '雲林縣':[23.7085,120.5433],'嘉義市':[23.4788,120.4498],'嘉義縣':[23.4572,120.3322],
+    '台南市':[22.9998,120.1998],'臺南市':[22.9998,120.1998],'高雄市':[22.6792,120.3009],
+    '屏東縣':[22.6792,120.4892],'宜蘭縣':[24.7492,121.7492],'花蓮縣':[23.9992,121.6092],
+    '台東縣':[22.7592,121.1492],'臺東縣':[22.7592,121.1492],
+  };
+
+  function getCoordFromAddress(addr) {
+    // 1. 先試完整縣市+鄉鎮區（最精確）
+    for (const key of Object.keys(TW_GEO)) {
+      if (addr.includes(key)) return TW_GEO[key];
+    }
+    // 2. 處理「台」「臺」互換後再試
+    const addr2 = addr.replace(/臺/g,'台').replace(/台/g,'臺');
+    for (const key of Object.keys(TW_GEO)) {
+      const key2 = key.replace(/臺/g,'台').replace(/台/g,'臺');
+      if (addr.includes(key2) || addr2.includes(key)) return TW_GEO[key];
+    }
+    // 3. 只比對鄉鎮區名稱
+    for (const key of Object.keys(TW_GEO)) {
+      const district = key.replace(/^.{2,4}[市縣]/, '');
+      if (district.length >= 2 && addr.includes(district)) return TW_GEO[key];
+    }
+    // 4. fallback：只用縣市中心座標
+    for (const city of Object.keys(TW_CITY)) {
+      if (addr.includes(city)) return TW_CITY[city];
+    }
+    return null;
+  }
+
+  // OSRM 路線距離快取
+  const osrmCache = {};
+
+  // 用 OSRM 查詢真實道路距離（km），失敗時 fallback 到 Haversine
+  async function getRoadDistance(lat1, lng1, lat2, lng2) {
+    const key = `${lat1.toFixed(5)},${lng1.toFixed(5)};${lat2.toFixed(5)},${lng2.toFixed(5)}`;
+    if (osrmCache[key] !== undefined) return osrmCache[key];
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.code === 'Ok' && data.routes && data.routes[0]) {
+        const km = Math.round(data.routes[0].distance / 100) / 10;
+        osrmCache[key] = km;
+        return km;
+      }
+    } catch(e) {}
+    // 連線失敗時 fallback 直線距離
+    const km = Math.round(haversine(lat1, lng1, lat2, lng2) * 10) / 10;
+    osrmCache[key] = km;
+    return km;
+  }
+
+  // Haversine 公式計算兩點直線距離（km）
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  // 公司座標（桃園市龍潭區工五路250號）
+  const DEPOT_LAT = 24.8629, DEPOT_LNG = 121.2246;
+
+  let editingHistoryId = null;
+
+  // ── 地理廊道排序：依經度由西→東掃過，避免折返跑 ──
+  // 主目標：順，不折返；距離最短是其次
+  async function osrmTripSort(candidates) { return osrmOptimizedSort(candidates); }
+  async function osrmTableSort(candidates) { return osrmOptimizedSort(candidates); }
+
+  async function osrmOptimizedSort(candidates) {
+    const withCoord = candidates.map(c => ({ ...c, coord: getCoordFromAddress(c.address) }));
+    const valid = withCoord.filter(c => c.coord);
+    const noCoord = candidates.filter(c => !getCoordFromAddress(c.address));
+    if (valid.length === 0) return null;
+
+    // 出發方向決定掃描方向
+    // 自動/先走國一 = 由西向東（低經度→高經度）
+    // 先走國三     = 由東向西（高經度→低經度）
+    const hwayPref = getDirection();
+    const eastFirst = (hwayPref === 'hwy3');
+
+    const sorted = [...valid].sort((a, b) => {
+      const lngDiff = a.coord[1] - b.coord[1]; // 正數 = b 在東邊
+      // 經度差夠大才用經度排，避免同區域亂排
+      if (Math.abs(lngDiff) > 0.008) return eastFirst ? -lngDiff : lngDiff;
+      // 同經度帶（約 0.8km 以內）：用緯度排（由南→北 或 北→南）
+      const latDiff = a.coord[0] - b.coord[0];
+      return eastFirst ? -latDiff : latDiff;
+    });
+
+    return [...sorted, ...noCoord];
+  }
+
+  // 最近鄰居演算法
+  function nearestNeighbor(candidates, direction='auto') {
+    if (candidates.length === 0) return [];
+    if (candidates.length === 1) {
+      const c = candidates[0];
+      const coord = getCoordFromAddress(c.address);
+      const dist = coord ? haversine(DEPOT_LAT, DEPOT_LNG, coord[0], coord[1]) : null;
+      return [{ ...c, dist }];
+    }
+
+    // 1. 取得每個客戶的座標和方位角
+    const withGeo = candidates.map(c => {
+      const coord = getCoordFromAddress(c.address);
+      const dist = coord ? haversine(DEPOT_LAT, DEPOT_LNG, coord[0], coord[1]) : 99999;
+      // 方位角：從公司看客戶的角度（0°=北，順時針增加）
+      let bearing = 0;
+      if (coord) {
+        const dLng = (coord[1] - DEPOT_LNG) * Math.PI / 180;
+        const lat1r = DEPOT_LAT * Math.PI / 180;
+        const lat2r = coord[0] * Math.PI / 180;
+        const y = Math.sin(dLng) * Math.cos(lat2r);
+        const x = Math.cos(lat1r) * Math.sin(lat2r) - Math.sin(lat1r) * Math.cos(lat2r) * Math.cos(dLng);
+        bearing = ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+      }
+      return { ...c, coord, distFromDepot: dist, bearing };
+    });
+
+    const validCoords = withGeo.filter(c => c.coord);
+
+    // 2. 決定掃描方向
+    let resolvedDirection = direction;
+    if (direction === 'auto' && validCoords.length >= 2) {
+      const lats = validCoords.map(c => c.coord[0]);
+      const lngs = validCoords.map(c => c.coord[1]);
+      const latSpan = Math.max(...lats) - Math.min(...lats);
+      const lngSpan = Math.max(...lngs) - Math.min(...lngs);
+      resolvedDirection = latSpan > lngSpan * 0.8 ? 'lat' : 'lng';
+    }
+
+    // 3. 按方向預排序
+    let presorted = withGeo.slice();
+    if (resolvedDirection === 'cw') {
+      // 順時針：找最近的客戶開始，方位角順時針掃
+      const first = presorted.slice().sort((a,b) => a.distFromDepot - b.distFromDepot)[0];
+      const startBearing = first.bearing;
+      presorted.sort((a,b) => {
+        const aBearing = (a.bearing - startBearing + 360) % 360;
+        const bBearing = (b.bearing - startBearing + 360) % 360;
+        if (Math.abs(aBearing - bBearing) < 20) return a.distFromDepot - b.distFromDepot;
+        return aBearing - bBearing;
+      });
+    } else if (resolvedDirection === 'ccw') {
+      // 逆時針：方位角逆時針掃
+      const first = presorted.slice().sort((a,b) => a.distFromDepot - b.distFromDepot)[0];
+      const startBearing = first.bearing;
+      presorted.sort((a,b) => {
+        const aBearing = (startBearing - a.bearing + 360) % 360;
+        const bBearing = (startBearing - b.bearing + 360) % 360;
+        if (Math.abs(aBearing - bBearing) < 20) return a.distFromDepot - b.distFromDepot;
+        return aBearing - bBearing;
+      });
+    } else {
+      // auto：按主軸（南北或東西）排
+      const lats = validCoords.map(c => c.coord[0]);
+      const lngs = validCoords.map(c => c.coord[1]);
+      const latSpan = validCoords.length ? Math.max(...lats) - Math.min(...lats) : 0;
+      const lngSpan = validCoords.length ? Math.max(...lngs) - Math.min(...lngs) : 0;
+
+      if (latSpan > lngSpan * 0.8) {
+        const northMost = validCoords.reduce((a,b) => a.coord[0] > b.coord[0] ? a : b);
+        const southMost = validCoords.reduce((a,b) => a.coord[0] < b.coord[0] ? a : b);
+        const dNorth = haversine(DEPOT_LAT, DEPOT_LNG, northMost.coord[0], northMost.coord[1]);
+        const dSouth = haversine(DEPOT_LAT, DEPOT_LNG, southMost.coord[0], southMost.coord[1]);
+        presorted.sort((a,b) => dNorth < dSouth
+          ? (b.coord?.[0]||0) - (a.coord?.[0]||0)
+          : (a.coord?.[0]||0) - (b.coord?.[0]||0));
+      } else {
+        const eastMost = validCoords.reduce((a,b) => a.coord[1] > b.coord[1] ? a : b);
+        const westMost = validCoords.reduce((a,b) => a.coord[1] < b.coord[1] ? a : b);
+        const dEast = haversine(DEPOT_LAT, DEPOT_LNG, eastMost.coord[0], eastMost.coord[1]);
+        const dWest = haversine(DEPOT_LAT, DEPOT_LNG, westMost.coord[0], westMost.coord[1]);
+        presorted.sort((a,b) => dEast < dWest
+          ? (b.coord?.[1]||0) - (a.coord?.[1]||0)
+          : (a.coord?.[1]||0) - (b.coord?.[1]||0));
+      }
+    }
+
+    // 4. 在預排序基礎上用最近鄰居微調（前 40% 視窗）
+    const result = [];
+    const remaining = [...presorted];
+    let curLat = DEPOT_LAT, curLng = DEPOT_LNG;
+
+    while (remaining.length > 0) {
+      const windowSize = Math.max(3, Math.ceil(remaining.length * 0.4));
+      const pool = remaining.slice(0, windowSize);
+      let bestIdx = 0, bestDist = Infinity;
+      pool.forEach(c => {
+        const dist = c.coord ? haversine(curLat, curLng, c.coord[0], c.coord[1]) : 99999;
+        if (dist < bestDist) { bestDist = dist; bestIdx = remaining.indexOf(c); }
+      });
+      const next = remaining[bestIdx];
+      result.push({ ...next, dist: bestDist < 99999 ? bestDist : null });
+      if (next.coord) { curLat = next.coord[0]; curLng = next.coord[1]; }
+      remaining.splice(bestIdx, 1);
+    }
+    return result;
+  }
+
+  async function showRoute(isEdit=false, reSort=false) {
+    const chosen = customers.filter(c=>selected.has(c.id));
+    if (!chosen.length) return;
+
+    // 顯示 loading 狀態
+    const routeBtn = document.getElementById('routeBtn');
+    const origBtnText = routeBtn ? routeBtn.textContent : '';
+    if (routeBtn) { routeBtn.textContent = '⏳ 查詢路線中...'; routeBtn.disabled = true; }
+
+    const priorityList = chosen.filter(c => priority.has(c.id));
+    const normalList = chosen.filter(c => !priority.has(c.id));
+
+    let sortedNormal;
+    if (!isEdit || reSort) {
+      // 全新排路線 或 編輯後要重新排
+      if (normalList.length <= 9) {
+        // ≤ 9 站：OSRM Trip 最佳化 → 失敗則 fallback 最近鄰居
+        sortedNormal = await osrmTripSort(normalList) || nearestNeighbor(normalList, getDirection());
+      } else {
+        // > 9 站：OSRM Table 距離矩陣 + 最近鄰居 → 失敗則 fallback 純 Haversine 最近鄰居
+        sortedNormal = await osrmTableSort(normalList) || nearestNeighbor(normalList, getDirection());
+      }
+      // 方向已在 osrmOptimizedSort 內依 getDirection() 直接套用，此處不需重複處理
+    } else {
+      // 從歷史紀錄載入，按歷史順序排，並計算「距上一站」距離
+      const ordered = historyStopOrder.length > 0
+        ? historyStopOrder.map(id => normalList.find(c => c.id === id)).filter(Boolean)
+        : normalList;
+      const missing = normalList.filter(c => !historyStopOrder.includes(c.id));
+      const allOrdered = [...ordered, ...missing];
+      let prevLat = DEPOT_LAT, prevLng = DEPOT_LNG;
+      sortedNormal = allOrdered.map(c => {
+        const coord = getCoordFromAddress(c.address);
+        const dist = coord ? haversine(prevLat, prevLng, coord[0], coord[1]) : null;
+        if (coord) { prevLat = coord[0]; prevLng = coord[1]; }
+        return { ...c, dist };
+      });
+    }
+    const sorted = [...priorityList, ...sortedNormal];
+
+    // 用 OSRM 重新計算每站真實道路距離
+    let prevLat = DEPOT_LAT, prevLng = DEPOT_LNG;
+    for (const c of sorted) {
+      const coord = getCoordFromAddress(c.address);
+      if (coord) {
+        c.dist = await getRoadDistance(prevLat, prevLng, coord[0], coord[1]);
+        prevLat = coord[0];
+        prevLng = coord[1];
+      } else {
+        c.dist = null;
+      }
+    }
+    // 回程距離
+    const lastCoordOSRM = sorted.length ? getCoordFromAddress(sorted[sorted.length-1].address) : null;
+    const returnDistOSRM = lastCoordOSRM ? await getRoadDistance(lastCoordOSRM[0], lastCoordOSRM[1], DEPOT_LAT, DEPOT_LNG) : null;
+
+    const segments = buildSegments(sorted);
+    lastSorted = sorted;
+    lastSegments = segments;
+
+    const list = document.getElementById('addressList');
+    list.innerHTML =
+      `<div class="address-item" style="animation-delay:0s">
+        <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">出發</div>
+        <div class="addr-info"><div class="addr-name">【出發點】龍台貿易有限公司</div><div class="addr-text">📍 ${DEPOT}</div></div>
+      </div>` +
+      sorted.map((c,i)=>`
+        <div class="address-item draggable" draggable="true" data-id="${c.id}" style="animation-delay:${(i+1)*0.05}s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num" ${priority.has(c.id)?'style="background:var(--accent2)"':''}>${i+1}</div>
+          <div class="addr-info">
+            <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
+            <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+        </div>`).join('') +
+      (() => {
+        const distLabel = returnDistOSRM != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 ${returnDistOSRM.toFixed(1)} km</span>` : '';
+        return `<div class="address-item" style="animation-delay:${(sorted.length+1)*0.05}s;opacity:0.7">
+          <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">回程</div>
+          <div class="addr-info"><div class="addr-name">【回公司】龍台貿易有限公司</div><div class="addr-text">📍 ${DEPOT}${distLabel}</div></div>
+        </div>`;
+      })();
+
+    // 初始化拖曳排序
+    initDragSort(list, sorted);
+
+    const notSelected = customers.filter(c=>!selected.has(c.id))
+      .sort((a,b)=>a.code.localeCompare(b.code,'zh-TW',{numeric:true}));
+    const addArea = notSelected.length > 0 ? `
+      <div class="add-stop-area">
+        <select id="addStopSelect">
+          <option value="">＋ 新增客戶到路線...</option>
+          ${notSelected.map(c=>`<option value="${c.id}">${c.code} ${c.name}</option>`).join('')}
+        </select>
+        <button onclick="addStop()">加入</button>
+      </div>` : '';
+
+    document.getElementById('mapBtns').innerHTML =
+      addArea +
+      segments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
+
+    // 計算總里程（同區域 < 0.1km 不計入，加回程）— 使用已取得的 OSRM 距離
+    const calcTotalKm = (sortedArr) => {
+      const stopSum = sortedArr.reduce((acc, c) => acc + (c.dist != null && c.dist >= 0.1 ? c.dist : 0), 0);
+      const returnDist = returnDistOSRM != null ? returnDistOSRM : 0;
+      return Math.round((stopSum + returnDist) * 10) / 10;
+    };
+
+    if (!isEdit) {
+      // 全新排路線 → 新增一筆歷史
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'})
+        + ' ' + now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+      const newRecord = {
+        id: Date.now().toString(),
+        date: dateStr,
+        boxes: document.getElementById('boxCount').value || '',
+        totalKm: calcTotalKm(sorted),
+        stops: sorted.map(c=>({code:c.code,name:c.name,address:c.address})),
+        segments
+      };
+      routeHistory.unshift(newRecord);
+      editingHistoryId = newRecord.id; // 之後若再編輯就更新這筆
+      saveHist();
+    } else if (editingHistoryId) {
+      // 編輯中 → 更新既有那筆歷史
+      const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
+      if (idx !== -1) {
+        routeHistory[idx].stops = sorted.map(c=>({code:c.code,name:c.name,address:c.address}));
+        routeHistory[idx].segments = segments;
+        routeHistory[idx].totalKm = calcTotalKm(sorted);
+        saveHist();
+      }
+    }
+
+    // 還原按鈕狀態
+    if (routeBtn) { routeBtn.textContent = origBtnText; routeBtn.disabled = selected.size === 0; }
+
+    document.getElementById('selectSection').style.display='none';
+    document.getElementById('resultSection').classList.add('show');
+  }
+
+  function initDragSort(list, sorted) {
+    let dragEl = null, dragOver = null;
+
+    list.querySelectorAll('.draggable').forEach(item => {
+      item.addEventListener('dragstart', e => {
+        dragEl = item;
+        setTimeout(() => item.classList.add('dragging'), 0);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+        list.querySelectorAll('.draggable').forEach(el => el.classList.remove('drag-over'));
+        dragEl = null;
+        // 更新號碼和 lastSorted
+        applyNewOrder();
+      });
+      item.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (item === dragEl) return;
+        list.querySelectorAll('.draggable').forEach(el => el.classList.remove('drag-over'));
+        item.classList.add('drag-over');
+        dragOver = item;
+        // 插入位置
+        const rect = item.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (e.clientY < mid) list.insertBefore(dragEl, item);
+        else list.insertBefore(dragEl, item.nextSibling);
+      });
+    });
+  }
+
+  function applyNewOrder() {
+    // 根據拖曳後的 DOM 順序重建 lastSorted
+    const items = document.querySelectorAll('#addressList .draggable');
+    const newOrder = [];
+    items.forEach(item => {
+      const id = item.dataset.id;
+      const c = lastSorted.find(x => x.id === id);
+      if (c) newOrder.push(c);
+    });
+    lastSorted = newOrder;
+
+    // 更新號碼顯示
+    items.forEach((item, i) => {
+      const numEl = item.querySelector('.addr-num');
+      if (numEl) numEl.textContent = i + 1;
+    });
+
+    // 重建地圖連結
+    const segments = buildSegments(lastSorted);
+    lastSegments = segments;
+    const notSelected = customers.filter(c=>!selected.has(c.id))
+      .sort((a,b)=>a.code.localeCompare(b.code,'zh-TW',{numeric:true}));
+    const addArea = notSelected.length > 0 ? `
+      <div class="add-stop-area">
+        <select id="addStopSelect">
+          <option value="">＋ 新增客戶到路線...</option>
+          ${notSelected.map(c=>`<option value="${c.id}">${c.code} ${c.name}</option>`).join('')}
+        </select>
+        <button onclick="addStop()">加入</button>
+      </div>` : '';
+    document.getElementById('mapBtns').innerHTML =
+      addArea +
+      segments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
+
+    // 更新歷史紀錄
+    if (editingHistoryId) {
+      const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
+      if (idx !== -1) {
+        routeHistory[idx].stops = lastSorted.map(c=>({code:c.code,name:c.name,address:c.address}));
+        routeHistory[idx].segments = segments;
+        saveHist();
+      }
+    }
+  }
+
+  function reSort() {
+    showRoute(true, true);
+  }
+
+  function getDirection() {
+    const sel = document.getElementById('sortDirection');
+    return sel ? sel.value : 'auto';
+  }
+
+  function removeStop(id) {
+    selected.delete(id);
+    priority.delete(id);
+    if (selected.size === 0) { backToSelect(); return; }
+    showRoute(true, true); // isEdit=true, reSort=true
+  }
+
+  function addStop() {
+    const sel = document.getElementById('addStopSelect');
+    const id = sel.value;
+    if (!id) return;
+    selected.add(id);
+    showRoute(true, true); // isEdit=true, reSort=true
+  }
+
+  function backToSelect() {
+    editingHistoryId = null;
+    document.getElementById('boxCount').value = '';
+    document.getElementById('selectSection').style.display='block';
+    document.getElementById('resultSection').classList.remove('show');
+  }
+
+  function backToHistory() {
+    editingHistoryId = null;
+    document.getElementById('boxCount').value = '';
+    document.getElementById('resultSection').classList.remove('show');
+    document.getElementById('selectSection').style.display='block';
+    switchTab('history');
+  }
+
+  // ── 歷史紀錄 ──
+  function renderHistory() {
+    const el = document.getElementById('historyList');
+    if (routeHistory.length===0) {
+      el.innerHTML=`<div class="empty-state"><div class="icon">🕘</div><p>還沒有路線紀錄<br>每次排完路線會自動儲存在這裡<br>最多保留 60 筆</p></div>`;
+      return;
+    }
+    el.innerHTML = routeHistory.map(r=>`
+      <div class="history-item">
+        <div class="history-header" onclick="toggleHDetail('${r.id}')">
+          <div style="min-width:0;flex:1">
+            <div class="history-date" id="hlabel-${r.id}">
+              📅 ${r.label || r.date}
+              <button class="edit-label-btn" onclick="event.stopPropagation();editLabel('${r.id}')" title="修改日期標籤">✏️</button>
+            </div>
+            <div class="history-names">${r.stops.map(s=>s.name).join('、')}</div>
+          </div>
+          <div class="history-meta">
+            <div class="history-count">
+              <span class="hc-stops">${r.stops.length} 站</span>
+              ${r.boxes ? `<span class="hc-boxes">📦 ${r.boxes} 箱</span>` : ''}
+              ${r.totalKm ? `<span style="color:#7ec8f7;font-size:12px;">🛣 ${r.totalKm} km</span>` : ''}
+            </div>
+            <button class="history-del" onclick="event.stopPropagation();deleteHRecord('${r.id}')">✕</button>
+          </div>
+        </div>
+        <div class="history-detail" id="hd-${r.id}">
+          ${r.stops.map((s,i)=>`
+            <div class="hstop">
+              <div class="hstop-num">${i+1}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px">${s.name}</div>
+                <div style="font-size:11px;color:var(--muted)">${s.address}</div>
+              </div>
+              <div style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted);flex-shrink:0">${s.code}</div>
+            </div>`).join('')}
+          ${(r.segments||[]).map(s=>`<a class="hmap-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('')}
+          <button class="hmap-btn" style="border:1px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;margin-top:4px" onclick="reEditHistory('${r.id}')">✏️ 重新編輯此路線</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function editLabel(id) {
+    const r = routeHistory.find(x=>x.id===id);
+    if (!r) return;
+    const current = r.label || r.date;
+    const newLabel = prompt('修改日期標籤：', current);
+    if (newLabel === null) return; // 按取消
+    r.label = newLabel.trim() || current;
+    saveHist(); renderHistory();
+    // 保持展開狀態
+    const detail = document.getElementById('hd-'+id);
+    if (detail) detail.classList.add('show');
+  }
+
+  let historyStopOrder = []; // 歷史紀錄的客戶順序
+
+  function reEditHistory(id) {
+    const r = routeHistory.find(x=>x.id===id);
+    if (!r) return;
+    selected.clear(); priority.clear();
+    historyStopOrder = [];
+    r.stops.forEach(s => {
+      const c = customers.find(x=>x.code===s.code && x.name===s.name);
+      if (c) { selected.add(c.id); historyStopOrder.push(c.id); }
+    });
+    if (selected.size === 0) { alert('找不到對應的客戶資料，可能已被刪除。'); return; }
+    editingHistoryId = id;
+    document.getElementById('boxCount').value = r.boxes || ''; // 帶入該筆箱數
+    switchTab('today');
+    showRoute(true);
+  }
+
+  function toggleHDetail(id) { document.getElementById('hd-'+id).classList.toggle('show'); }
+
+  function deleteHRecord(id) {
+    if (!confirm('確定刪除此筆紀錄？')) return;
+    routeHistory = routeHistory.filter(r=>r.id!==id);
+    saveHist(); renderHistory();
+  }
+
+  // ── 客戶管理 ──
+  function renderManage() {
+    const table = document.getElementById('custTable');
+    if (customers.length===0) {
+      table.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>還沒有客戶資料<br>點「新增客戶」或「匯入」開始</p></div>`;
+      return;
+    }
+    table.innerHTML = customers.slice().sort((a,b)=>a.code.localeCompare(b.code,'zh-TW',{numeric:true})).map(c=>`
+      <div class="cust-row">
+        <div class="code">${c.code}</div>
+        <div class="info"><div class="name">${c.name}</div><div class="addr">${c.address}</div></div>
+        <button class="icon-btn edit" onclick="openModal('${c.id}')">✏️</button>
+        <button class="icon-btn del" onclick="deleteCustomer('${c.id}')">✕</button>
+      </div>`).join('');
+  }
+
+  function isDupCode(code, excludeId=null) {
+    return code.trim()!=='' && customers.some(c=>c.code.trim()===code.trim() && c.id!==excludeId);
+  }
+
+  function openModal(id=null) {
+    editingId=id;
+    document.getElementById('modalTitle').textContent = id?'編輯客戶':'新增客戶';
+    document.getElementById('codeError').classList.remove('show');
+    if (id) { const c=customers.find(x=>x.id===id); document.getElementById('fCode').value=c.code; document.getElementById('fName').value=c.name; document.getElementById('fAddr').value=c.address; }
+    else { document.getElementById('fCode').value=''; document.getElementById('fName').value=''; document.getElementById('fAddr').value=''; }
+    document.getElementById('modal').classList.add('show');
+    setTimeout(()=>document.getElementById('fCode').focus(),100);
+  }
+
+  function closeModal() { document.getElementById('modal').classList.remove('show'); editingId=null; }
+
+  function saveCustomer() {
+    const code=document.getElementById('fCode').value.trim();
+    const name=document.getElementById('fName').value.trim();
+    const addr=cleanAddr(document.getElementById('fAddr').value.trim());
+    if (!name||!addr) { alert('請填入客戶名稱和地址！'); return; }
+    if (isDupCode(code,editingId)) { document.getElementById('codeError').classList.add('show'); document.getElementById('fCode').focus(); return; }
+    document.getElementById('codeError').classList.remove('show');
+    if (editingId) { const c=customers.find(x=>x.id===editingId); c.code=code; c.name=name; c.address=addr; }
+    else customers.push({id:Date.now().toString(),code,name,address:addr});
+    save(); closeModal(); renderManage(); renderList();
+  }
+
+  function deleteCustomer(id) {
+    if (!confirm('確定要刪除這筆客戶資料嗎？')) return;
+    customers=customers.filter(c=>c.id!==id); selected.delete(id);
+    save(); renderManage(); renderList();
+  }
+
+  // ── 匯入/匯出 ──
+  function openImport() { document.getElementById('importText').value=''; document.getElementById('importModal').classList.add('show'); }
+  function closeImport() { document.getElementById('importModal').classList.remove('show'); }
+  function cleanAddr(addr) { return addr.replace(/[（(]\d{3,6}[)）]/g,'').trim(); }
+
+  function importCustomers() {
+    const text=document.getElementById('importText').value.trim();
+    if (!text) { alert('請貼上資料！'); return; }
+    let added=0, skipped=0;
+    text.split('\n').filter(l=>l.trim()).forEach(line=>{
+      if (line.startsWith('客戶編號') || line.startsWith('【') || line.startsWith('日期')) return;
+      const parts=line.split(/\t|，|,/).map(s=>s.trim()).filter(Boolean);
+      if (parts.length<2) return;
+      let code='',name='',address='';
+      if (parts.length>=3) { code=parts[0]; name=parts[1]; address=cleanAddr(parts.slice(2).join(' ')); }
+      else { name=parts[0]; address=cleanAddr(parts[1]); }
+      if (!name||!address) return;
+      if (isDupCode(code)) { skipped++; return; }
+      customers.push({id:Date.now().toString()+Math.random(),code,name,address}); added++;
+    });
+    save(); closeImport(); renderManage(); renderList();
+    alert(`匯入完成！新增 ${added} 筆${skipped>0?`，略過 ${skipped} 筆重複編號`:''}。`);
+  }
+
+  function handleFileImport(e) {
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=ev=>{ document.getElementById('importText').value=ev.target.result.replace(/^\uFEFF/,''); };
+    r.readAsText(file,'UTF-8'); e.target.value='';
+  }
+
+  function exportCSV() {
+    if (customers.length===0) { alert('還沒有客戶資料可以匯出！'); return; }
+    const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+    const custRows = customers.map(c=>`${esc(c.code)},${esc(c.name)},${esc(c.address)}`);
+    const csv = '\uFEFF' + '客戶編號,客戶名稱,送貨地址\n' + custRows.join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = `客戶資料_${date}.csv`;
+    a.click();
+  }
+
+  function exportHistory() {
+    if (routeHistory.length===0) { alert('還沒有歷史紀錄！'); return; }
+    const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+    const rows = routeHistory.map(r => {
+      const label = esc(r.label || r.date || '');
+      const km = r.totalKm != null ? r.totalKm : '';
+      const stops = r.stops.length;
+      const boxes = r.boxes || '';
+      const names = esc(r.stops.map(s=>s.name).join('、'));
+      return `${label},${km},${stops},${boxes},${names}`;
+    });
+    const csv = '\uFEFF' + '日期標籤,里程(km),站數,箱數,客戶清單\n' + rows.join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = `歷史紀錄_${date}.csv`;
+    a.click();
+  }
+
+  function esc(v) {
+    if (!v) return '';
+    if (v.includes(',')||v.includes('\n')||v.includes('"')) return '"'+v.replace(/"/g,'""')+'"';
+    return v;
+  }
+
+  // ── 列印 ──
+  let lastSorted = [];
+  let lastSegments = [];
+
+  async function printRoute() {
+    if (!lastSorted.length) return;
+    const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+    const bc = document.getElementById('boxCount').value;
+
+    // 預計總里程（同區域 < 0.1km 不計入，含回程）
+    const stopSum = lastSorted.reduce((acc, c) => acc + (c.dist != null && c.dist >= 0.1 ? c.dist : 0), 0);
+    const last = lastSorted[lastSorted.length - 1];
+    const lastCoord = last ? getCoordFromAddress(last.address) : null;
+    const returnDist = lastCoord ? await getRoadDistance(lastCoord[0], lastCoord[1], DEPOT_LAT, DEPOT_LNG) : 0;
+    const totalKm = Math.round((stopSum + returnDist) * 10) / 10;
+
+    const rows = lastSorted.map((c,i) => `
+      <tr>
+        <td style="text-align:center;font-weight:bold;font-size:16px">${i+1}</td>
+        <td style="font-weight:bold">${c.name}</td>
+        <td style="color:#666">${c.address}</td>
+        <td style="text-align:center;color:#999;font-family:monospace">${c.code}</td>
+        <td></td>
+      </tr>`).join('') + `
+      <tr style="background:#fff8ee;">
+        <td style="text-align:center;font-weight:bold;font-size:13px;color:#f5a623">回</td>
+        <td style="font-weight:bold;color:#f5a623">【回公司】龍台貿易有限公司</td>
+        <td style="color:#999">桃園市龍潭區工五路250號</td>
+        <td></td>
+        <td></td>
+      </tr>`;
+
+    const subParts = [
+      '出發點：桃園市龍潭區工五路250號',
+      `日期：${date}`,
+      `共 ${lastSorted.length} 站`,
+      `預計總里程：${totalKm} km`,
+      ...(bc ? [`箱數：${bc} 箱`] : [])
+    ].join('　|　');
+
+    // 取得導航段落的 Google Maps URL
+    const segUrls = lastSegments.map(s => s.url);
+
+    // QR code 區塊（每段一個，橫排）
+    const qrBlocks = segUrls.map((url, i) => `
+      <div style="display:inline-block;text-align:center;margin:0 16px 0 0;vertical-align:top">
+        <div id="qr-seg-${i}" style="display:inline-block"></div>
+        <div style="font-size:11px;color:#666;margin-top:4px">${segUrls.length > 1 ? `第 ${i+1} 段導航` : '掃描開始導航'}</div>
+      </div>`).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+      <style>
+        body{font-family:'Noto Sans TC',Arial,sans-serif;padding:0;margin:0;color:#111;}
+        h2{font-size:18px;margin:0 0 4px 0;}
+        .sub{font-size:12px;color:#666;margin-bottom:16px;}
+        table{width:100%;border-collapse:collapse;font-size:13px;}
+        th{background:#f5a623;color:#000;padding:8px 10px;text-align:left;}
+        td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;}
+        tr:nth-child(even) td{background:#fafafa;}
+        .qr-section{margin-top:20px;padding-top:14px;border-top:1px solid #ddd;}
+        .qr-label{font-size:12px;font-weight:bold;color:#555;margin-bottom:10px;}
+        @page{size:A4;margin:15mm;}
+      </style>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    </head><body>
+      <h2>🚛 龍冶股份有限公司 — 送貨路線單</h2>
+      <div class="sub">${subParts}</div>
+      <table>
+        <tr>
+          <th style="width:36px">站</th>
+          <th style="width:160px">公司名稱</th>
+          <th>送貨地址</th>
+          <th style="width:50px">編號</th>
+          <th style="width:50px">備註</th>
+        </tr>
+        ${rows}
+      </table>
+      <div class="qr-section">
+        <div class="qr-label">📱 Google Maps 導航 QR Code</div>
+        ${qrBlocks}
+      </div>
+      <script>
+        const urls = ${JSON.stringify(segUrls)};
+        async function shortenUrl(url) {
+          try {
+            const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
+            if (res.ok) { const txt = await res.text(); if (txt.startsWith('http')) return txt.trim(); }
+          } catch(e) {}
+          return url; // fallback 原始 URL
+        }
+        async function init() {
+          for (let i = 0; i < urls.length; i++) {
+            const el = document.getElementById('qr-seg-' + i);
+            if (!el) continue;
+            const short = await shortenUrl(urls[i]);
+            new QRCode(el, { text: short, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.L });
+          }
+          setTimeout(() => { window.focus(); window.print(); }, 600);
+        }
+        init();
+      <\/script>
+    </body></html>`;
+
+    const w = window.open('','_blank');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function updateBoxCount(v) {
+    if (!editingHistoryId) return;
+    const idx = routeHistory.findIndex(r => r.id === editingHistoryId);
+    if (idx !== -1) {
+      routeHistory[idx].boxes = v || '';
+      saveHist();
+    }
+  }
+
+  load(); renderList();
+  syncFromGitHub();
+</script>
+
+
+</body></html>
