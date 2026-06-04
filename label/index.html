@@ -179,12 +179,12 @@ td.actions button:hover { opacity:0.8; }
   <div id="preview-wrap" style="display:none; margin:0 auto 16px; border:1px solid #aaa; background:#f0ede0; width:fit-content; padding:10px;">
     <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; font-family:sans-serif; font-size:13px; margin-bottom:10px;">
       <div class="og"><label>↕ 上下</label><input type="range" id="sTop" min="-20" max="20" value="12" oninput="sync('sTop','vTop')"><span id="vTop">12mm</span></div>
-      <div class="og"><label>↔ 左右</label><input type="range" id="sLeft" min="-10" max="30" value="14" oninput="sync('sLeft','vLeft')"><span id="vLeft">14mm</span></div>
+      <div class="og"><label>↔ 左右</label><input type="range" id="sLeft" min="-10" max="30" value="0" oninput="sync('sLeft','vLeft')"><span id="vLeft">0mm</span></div>
       <div class="og"><label>📐 格寬</label><input type="range" id="sLW" min="55" max="75" value="63" oninput="sync('sLW','vLW')"><span id="vLW">63mm</span></div>
-      <div class="og"><label>⬜ 間距</label><input type="range" id="sGap" min="0" max="10" value="8" oninput="sync('sGap','vGap')"><span id="vGap">8mm</span></div>
-      <div class="og"><label>↕ 件數/電話上下</label><input type="range" id="sFoot" min="-15" max="15" value="-3" oninput="sync('sFoot','vFoot')"><span id="vFoot">-3mm</span></div>
-      <div class="og"><label>↔ 件數左右</label><input type="range" id="sCnt" min="-5" max="15" value="10" oninput="sync('sCnt','vCnt')"><span id="vCnt">10mm</span></div>
-      <div class="og"><label>↔ 電話左右</label><input type="range" id="sPhn" min="10" max="40" value="34" oninput="sync('sPhn','vPhn')"><span id="vPhn">34mm</span></div>
+      <div class="og"><label>⬜ 間距</label><input type="range" id="sGap" min="0" max="10" value="7" oninput="sync('sGap','vGap')"><span id="vGap">7mm</span></div>
+      <div class="og"><label>↕ 件數/電話上下</label><input type="range" id="sFoot" min="-15" max="15" value="-9" oninput="sync('sFoot','vFoot')"><span id="vFoot">-9mm</span></div>
+      <div class="og"><label>↔ 件數左右</label><input type="range" id="sCnt" min="-5" max="15" value="7" oninput="sync('sCnt','vCnt')"><span id="vCnt">7mm</span></div>
+      <div class="og"><label>↔ 電話左右</label><input type="range" id="sPhn" min="10" max="40" value="31" oninput="sync('sPhn','vPhn')"><span id="vPhn">31mm</span></div>
     </div>
     <canvas id="preview" style="display:block; margin:0 auto;"></canvas>
   </div>
