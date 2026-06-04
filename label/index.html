@@ -139,7 +139,8 @@ td.actions button:hover { opacity:0.8; }
 /* ── 列印 ── */
 @media print {
   body { background:none; margin:0; padding:0; }
-  .tabs, .controls, #preview-wrap, .sheet-wrap, .cust-bar, h1 { display:none !important; }
+  .tabs, .controls, #preview-wrap, .sheet-wrap, .cust-bar, h1,
+  #page-print, #page-mgmt, .modal-bg { display:none !important; }
   @page { size: 274mm 140mm; margin: 0; }
   #print-area {
     display: block !important;
