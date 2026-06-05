@@ -152,6 +152,7 @@
 </style>
 </head>
 <body>
+<div id="syncToast" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1d27;border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.4)"></div>
 
 <div class="header">
   <div class="header-icon">🚛</div>
@@ -1305,7 +1306,41 @@
   const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/e24222/Alpha/main/delivery/customers.csv';
   const GITHUB_HIST_URL = 'https://raw.githubusercontent.com/e24222/Alpha/main/delivery/history.json';
 
-  async function syncFromGitHub() { await syncCustomers(); await syncHistory(); }
+  function showToast(msg, color) {
+    const t = document.getElementById('syncToast');
+    t.textContent = msg; t.style.display = 'block';
+    t.style.borderColor = color || 'var(--border)';
+    t.style.color = color || 'var(--text)';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.style.display = 'none'; }, 4000);
+  }
+
+  async function syncFromGitHub() {
+    await syncCustomers();
+    await syncHistory();
+    await autoUploadIfNewer();
+  }
+
+  async function autoUploadIfNewer() {
+    if (!routeHistory.length) return;
+    try {
+      const res = await fetch(GITHUB_HIST_URL + '?t=' + Date.now());
+      if (!res.ok) { showToast('⚠️ 無法連線 GitHub，歷史可能未同步', '#f59e0b'); return; }
+      const gh = await res.json();
+      const localLatest = (routeHistory[0] || {}).label || '';
+      const ghLatest = (gh[0] || {}).label || '';
+      if (localLatest <= ghLatest) return;
+      const m = await (await fetch(`https://api.github.com/repos/${GH_REPO}/contents/delivery/history.json`,
+        {headers:{'Authorization':`token ${GH_TOKEN}`}})).json();
+      const payload = btoa(unescape(encodeURIComponent(JSON.stringify(routeHistory.slice(0,60),null,2))));
+      const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/delivery/history.json`,{
+        method:'PUT', headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
+        body:JSON.stringify({message:'Auto sync history',content:payload,sha:m.sha})
+      });
+      if (r.ok) { showToast('☁️ 歷史已自動同步', 'var(--green)'); }
+      else { showToast('⚠️ 歷史同步失敗，請手動按「同步到雲端」', '#f87171'); }
+    } catch(e) { showToast('⚠️ 網路異常，歷史可能未同步', '#f87171'); }
+  }
 
   async function syncCustomers() {
     try {
