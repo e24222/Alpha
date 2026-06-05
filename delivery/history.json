@@ -1,5 +1,140 @@
 [
   {
+    "id": "1780553982258",
+    "date": "2026/06/04 下午02:19",
+    "boxes": "103",
+    "totalKm": 100.9,
+    "stops": [
+      {
+        "code": "A5064",
+        "name": "歐萊德國際股份有限公司",
+        "address": "桃園市龍潭區中豐路高平段18號"
+      },
+      {
+        "code": "508",
+        "name": "方強企業有限公司",
+        "address": "桃園市龜山區頂湖九街2號"
+      },
+      {
+        "code": "030",
+        "name": "(巨門)啟新生物科技有限公司",
+        "address": "新北市新北產業園區五工五路21號4F"
+      },
+      {
+        "code": "417",
+        "name": "研宏有限公司",
+        "address": "台北市萬華區莒光路299巷3號"
+      },
+      {
+        "code": "031",
+        "name": "宏昇儀器行有限公司",
+        "address": "台北市萬華區萬大路424巷11號1F"
+      },
+      {
+        "code": "006",
+        "name": "信德儀器有限公司",
+        "address": "台北市中正區羅斯福路3段240巷7弄4-1號"
+      },
+      {
+        "code": "229",
+        "name": "信安儀器有限公司",
+        "address": "台北市中正區羅斯福路3段244巷10弄6-1號"
+      }
+    ],
+    "segments": [
+      {
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E4%B8%AD%E8%B1%90%E8%B7%AF%E9%AB%98%E5%B9%B3%E6%AE%B518%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%9C%E5%B1%B1%E5%8D%80%E9%A0%82%E6%B9%96%E4%B9%9D%E8%A1%972%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E5%8C%97%E7%94%A2%E6%A5%AD%E5%9C%92%E5%8D%80%E4%BA%94%E5%B7%A5%E4%BA%94%E8%B7%AF21%E8%99%9F4F|%E5%8F%B0%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%8E%92%E5%85%89%E8%B7%AF299%E5%B7%B73%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%90%AC%E5%A4%A7%E8%B7%AF424%E5%B7%B711%E8%99%9F1F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5240%E5%B7%B77%E5%BC%844-1%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5244%E5%B7%B710%E5%BC%846-1%E8%99%9F&travelmode=driving",
+        "label": "🗺️ 在 Google Maps 開啟導航"
+      }
+    ],
+    "label": "20260605"
+  },
+  {
+    "id": "1780471192308",
+    "date": "2026/06/03 下午03:19",
+    "boxes": "61",
+    "totalKm": 130.1,
+    "stops": [
+      {
+        "code": "A3021",
+        "name": "金蘭食品股份有限公司",
+        "address": "桃園市大溪區介壽路236號"
+      },
+      {
+        "code": "A5110",
+        "name": "德昂生物科技股份有限公司",
+        "address": "新北市新店區民權路126號3樓"
+      },
+      {
+        "code": "809",
+        "name": "揚積生物科技有公司",
+        "address": "台北市南港區中南街24號"
+      },
+      {
+        "code": "290",
+        "name": "百上企業有限公司",
+        "address": "台北市南港區忠孝東路六段212巷3弄5號1F"
+      },
+      {
+        "code": "120",
+        "name": "忠山儀器有限公司",
+        "address": "桃園市宏昌八街18號"
+      },
+      {
+        "code": "605",
+        "name": "文欣維有限公司",
+        "address": "桃園市中壢區福德路129巷3號"
+      },
+      {
+        "code": "A1049",
+        "name": "國立中央大學",
+        "address": "桃園市中壢區中大路300號生科館"
+      }
+    ],
+    "segments": [
+      {
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E5%A4%A7%E6%BA%AA%E5%8D%80%E4%BB%8B%E5%A3%BD%E8%B7%AF236%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E5%BA%97%E5%8D%80%E6%B0%91%E6%AC%8A%E8%B7%AF126%E8%99%9F3%E6%A8%93|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%8D%97%E6%B8%AF%E5%8D%80%E4%B8%AD%E5%8D%97%E8%A1%9724%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%8D%97%E6%B8%AF%E5%8D%80%E5%BF%A0%E5%AD%9D%E6%9D%B1%E8%B7%AF%E5%85%AD%E6%AE%B5212%E5%B7%B73%E5%BC%845%E8%99%9F1F|%E6%A1%83%E5%9C%92%E5%B8%82%E5%AE%8F%E6%98%8C%E5%85%AB%E8%A1%9718%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E7%A6%8F%E5%BE%B7%E8%B7%AF129%E5%B7%B73%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E4%B8%AD%E5%A4%A7%E8%B7%AF300%E8%99%9F%E7%94%9F%E7%A7%91%E9%A4%A8&travelmode=driving",
+        "label": "🗺️ 在 Google Maps 開啟導航"
+      }
+    ],
+    "label": "20260604"
+  },
+  {
+    "id": "1780380794467",
+    "date": "2026/06/02 下午02:13",
+    "boxes": "31",
+    "totalKm": 253.5,
+    "stops": [
+      {
+        "code": "640",
+        "name": "品宸企業有限公司",
+        "address": "新竹市香山區樹下街160號"
+      },
+      {
+        "code": "244",
+        "name": "誠達儀器有限公司",
+        "address": "台中市南屯區楓樹東街500巷21號"
+      },
+      {
+        "code": "Z003",
+        "name": "中國生化科技股份有限公司",
+        "address": "台中市工業區33路10號"
+      },
+      {
+        "code": "128",
+        "name": "華興化學原料有限公司",
+        "address": "台中市中區中山路50號"
+      }
+    ],
+    "segments": [
+      {
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E7%AB%B9%E5%B8%82%E9%A6%99%E5%B1%B1%E5%8D%80%E6%A8%B9%E4%B8%8B%E8%A1%97160%E8%99%9F|%E5%8F%B0%E4%B8%AD%E5%B8%82%E5%8D%97%E5%B1%AF%E5%8D%80%E6%A5%93%E6%A8%B9%E6%9D%B1%E8%A1%97500%E5%B7%B721%E8%99%9F|%E5%8F%B0%E4%B8%AD%E5%B8%82%E5%B7%A5%E6%A5%AD%E5%8D%8033%E8%B7%AF10%E8%99%9F|%E5%8F%B0%E4%B8%AD%E5%B8%82%E4%B8%AD%E5%8D%80%E4%B8%AD%E5%B1%B1%E8%B7%AF50%E8%99%9F&travelmode=driving",
+        "label": "🗺️ 在 Google Maps 開啟導航"
+      }
+    ],
+    "label": "20260603"
+  },
+  {
     "id": "1780295170046",
     "date": "2026/06/01 下午02:26",
     "boxes": "70",
