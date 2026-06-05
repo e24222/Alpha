@@ -629,6 +629,7 @@
   <div class="page" id="page-history">
     <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
       <button class="tool-btn" onclick="exportHistory()">📋 匯出歷史紀錄</button>
+      <button class="tool-btn" id="syncBtn" onclick="forceSyncHistory()" style="border-color:var(--green);color:var(--green)">☁️ 同步到雲端</button>
     </div>
     <div id="historyList">
       <div class="history-item">
@@ -1288,7 +1289,7 @@
   let selected = new Set();
   let editingId = null;
 
-  const GH_TOKEN = ['ghp_nHWg5QJ16InBy6A1', 'JR3spOqb8KUhCs1tRPFJ'].join('');
+  const GH_TOKEN = ['ghp_LlpdtCSwObbShdT', '4xA2C8SWvZgLdGZ1nq24z'].join('');
   const GH_REPO = 'e24222/Alpha';
 
   function save() { localStorage.setItem('customers_v3', JSON.stringify(customers)); }
@@ -1351,6 +1352,24 @@
       renderHistory();
       localStorage.setItem('gh_hist_etag', etag);
     } catch(e){console.warn('歷史同步失敗',e);}
+  }
+
+  async function forceSyncHistory() {
+    const btn = document.getElementById('syncBtn');
+    btn.textContent = '同步中...';
+    btn.disabled = true;
+    try {
+      const m = await (await fetch(`https://api.github.com/repos/${GH_REPO}/contents/delivery/history.json`,
+        {headers:{'Authorization':`token ${GH_TOKEN}`}})).json();
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(routeHistory.slice(0,60),null,2))));
+      const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/delivery/history.json`,{
+        method:'PUT', headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
+        body:JSON.stringify({message:'Force sync history',content,sha:m.sha})
+      });
+      if (r.ok) { btn.textContent = '✅ 同步完成'; }
+      else { btn.textContent = '❌ 失敗'; }
+    } catch(e) { btn.textContent = '❌ 失敗'; }
+    setTimeout(() => { btn.textContent = '☁️ 同步到雲端'; btn.disabled=false; }, 3000);
   }
 
   let ghPushTimer = null;
