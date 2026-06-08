@@ -3,7 +3,7 @@
     "id": "1780904965950",
     "date": "2026/06/08 下午03:49",
     "boxes": "",
-    "totalKm": 137.2,
+    "totalKm": 118.3,
     "stops": [
       {
         "code": "083",
@@ -31,11 +31,6 @@
         "address": "桃園市楊梅區民有路一段198號"
       },
       {
-        "code": "A3002",
-        "name": "佳格食品(股)公司",
-        "address": "桃園市大園區和平西路一段369號#568"
-      },
-      {
         "code": "120",
         "name": "忠山儀器有限公司",
         "address": "桃園市宏昌八街18號"
@@ -48,7 +43,7 @@
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E6%9D%B1%E5%A4%A7%E8%B7%AF%E5%9B%9B%E6%AE%B5156-1%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E5%90%89%E7%BE%8A%E8%B7%AF100-7%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%85%89%E8%8F%AF%E4%BA%8C%E8%A1%97108%E5%B7%B716-7%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E5%A4%A7%E5%9C%92%E5%8D%80%E5%92%8C%E5%B9%B3%E8%A5%BF%E8%B7%AF%E4%B8%80%E6%AE%B5369%E8%99%9F%23568|%E6%A1%83%E5%9C%92%E5%B8%82%E5%AE%8F%E6%98%8C%E5%85%AB%E8%A1%9718%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%BA%AB%E5%B7%9E%E8%A1%9715%E5%B7%B710%E5%BC%846%E8%99%9F&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E6%9D%B1%E5%A4%A7%E8%B7%AF%E5%9B%9B%E6%AE%B5156-1%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E5%90%89%E7%BE%8A%E8%B7%AF100-7%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%85%89%E8%8F%AF%E4%BA%8C%E8%A1%97108%E5%B7%B716-7%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E5%AE%8F%E6%98%8C%E5%85%AB%E8%A1%9718%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%BA%AB%E5%B7%9E%E8%A1%9715%E5%B7%B710%E5%BC%846%E8%99%9F&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ]
