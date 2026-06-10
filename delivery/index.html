@@ -1318,29 +1318,8 @@
   async function syncFromGitHub() {
     await syncCustomers();
     await syncHistory();
-    await autoUploadIfNewer();
   }
 
-  async function autoUploadIfNewer() {
-    if (!routeHistory.length) return;
-    try {
-      const res = await fetch(GITHUB_HIST_URL + '?t=' + Date.now());
-      if (!res.ok) { showToast('⚠️ 無法連線 GitHub，歷史可能未同步', '#f59e0b'); return; }
-      const gh = await res.json();
-      const localLatest = (routeHistory[0] || {}).label || '';
-      const ghLatest = (gh[0] || {}).label || '';
-      if (localLatest <= ghLatest) return;
-      const m = await (await fetch(`https://api.github.com/repos/${GH_REPO}/contents/delivery/history.json`,
-        {headers:{'Authorization':`token ${GH_TOKEN}`}})).json();
-      const payload = btoa(unescape(encodeURIComponent(JSON.stringify(routeHistory.slice(0,60),null,2))));
-      const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/delivery/history.json`,{
-        method:'PUT', headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
-        body:JSON.stringify({message:'Auto sync history',content:payload,sha:m.sha})
-      });
-      if (r.ok) { showToast('☁️ 歷史已自動同步', 'var(--green)'); }
-      else { showToast('⚠️ 歷史同步失敗，請手動按「同步到雲端」', '#f87171'); }
-    } catch(e) { showToast('⚠️ 網路異常，歷史可能未同步', '#f87171'); }
-  }
 
   async function syncCustomers() {
     try {
@@ -1367,26 +1346,18 @@
   async function syncHistory() {
     try {
       const res = await fetch(GITHUB_HIST_URL + '?t=' + Date.now());
-      if (!res.ok) return;
+      if (!res.ok) {
+        showToast('⚠️ 無法載入歷史紀錄，請確認網路連線', '#f59e0b');
+        return;
+      }
       const gh = await res.json();
-      const etag = gh.length + '_' + (gh[0]||{id:''}).id;
-      if (localStorage.getItem('gh_hist_etag') === etag) return;
-      const ids = new Set(routeHistory.map(r=>r.id));
-      gh.forEach(r => {
-        if (!ids.has(r.id)) {
-          r.stops = r.stops.map(s => {
-            if (s.id) return s;
-            const f = customers.find(c=>c.name===s.name);
-            return f ? {...s,id:f.id,addr:f.address,code:f.code} : s;
-          });
-          routeHistory.push(r);
-        }
-      });
-      routeHistory.sort((a,b)=>(b.label||'').localeCompare(a.label||''));
+      routeHistory = gh;
       localStorage.setItem('route_history_v2', JSON.stringify(routeHistory.slice(0,60)));
       renderHistory();
-      localStorage.setItem('gh_hist_etag', etag);
-    } catch(e){console.warn('歷史同步失敗',e);}
+    } catch(e) {
+      console.warn('歷史同步失敗', e);
+      showToast('⚠️ 歷史紀錄載入失敗', '#f87171');
+    }
   }
 
   async function forceSyncHistory() {
