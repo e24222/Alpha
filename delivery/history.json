@@ -3,12 +3,17 @@
     "id": "1781162828526",
     "date": "2026/06/11 下午03:27",
     "boxes": "",
-    "totalKm": 116.3,
+    "totalKm": 124.5,
     "stops": [
       {
         "code": "A7014",
         "name": "景泰順檢驗股份有限公司",
         "address": "苗栗縣竹南鎮光復路381巷13號"
+      },
+      {
+        "code": "870-2",
+        "name": "勁碩生物科技有限公司",
+        "address": "竹北市博愛街21號1樓"
       },
       {
         "code": "A5014",
@@ -33,7 +38,7 @@
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E8%8B%97%E6%A0%97%E7%B8%A3%E7%AB%B9%E5%8D%97%E9%8E%AE%E5%85%89%E5%BE%A9%E8%B7%AF381%E5%B7%B713%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%96%B0%E8%B1%90%E9%84%89%E4%B8%8A%E5%9D%91%E6%9D%91%E4%BA%8C%E9%84%B0%E5%9D%91%E5%AD%90%E5%8F%A3182-1%E8%99%9F|%E6%96%B0%E8%B1%90%E9%84%89%E9%9D%92%E5%9F%94%E6%9D%919%E9%84%B0152-1%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%B9%96%E5%8F%A3%E9%84%89%E6%96%B0%E7%AB%B9%E5%B7%A5%E6%A5%AD%E5%8D%80%E5%AF%A6%E8%B8%90%E8%B7%AF3%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E8%8B%97%E6%A0%97%E7%B8%A3%E7%AB%B9%E5%8D%97%E9%8E%AE%E5%85%89%E5%BE%A9%E8%B7%AF381%E5%B7%B713%E8%99%9F|%E7%AB%B9%E5%8C%97%E5%B8%82%E5%8D%9A%E6%84%9B%E8%A1%9721%E8%99%9F1%E6%A8%93|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%96%B0%E8%B1%90%E9%84%89%E4%B8%8A%E5%9D%91%E6%9D%91%E4%BA%8C%E9%84%B0%E5%9D%91%E5%AD%90%E5%8F%A3182-1%E8%99%9F|%E6%96%B0%E8%B1%90%E9%84%89%E9%9D%92%E5%9F%94%E6%9D%919%E9%84%B0152-1%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%B9%96%E5%8F%A3%E9%84%89%E6%96%B0%E7%AB%B9%E5%B7%A5%E6%A5%AD%E5%8D%80%E5%AF%A6%E8%B8%90%E8%B7%AF3%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ]
