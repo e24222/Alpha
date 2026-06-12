@@ -3,22 +3,22 @@
     "id": "1781243656829",
     "date": "2026/06/12 下午01:54",
     "boxes": "76",
-    "totalKm": 147,
+    "totalKm": 148.3,
     "stops": [
       {
-        "code": "579",
-        "name": "醫凡企業有限公司",
-        "address": "桃園市中壢區吉林路27-1號8F"
+        "code": "594",
+        "name": "盟基生物科技股份有限公司",
+        "address": "新北市汐止區新台五路一段75號13樓之4"
       },
       {
-        "code": "053",
-        "name": "海山儀器有限公司",
-        "address": "桃園市永安路277-2號"
+        "code": "290",
+        "name": "百上企業有限公司",
+        "address": "台北市南港區忠孝東路六段212巷3弄5號1F"
       },
       {
-        "code": "a5069",
-        "name": "七星化學製藥股份有限公司",
-        "address": "新北市土城區福安街75號"
+        "code": "281",
+        "name": "騰達行企業股份有限公司",
+        "address": "新北市深坑區北深路3段155巷29號3樓"
       },
       {
         "code": "006",
@@ -31,24 +31,24 @@
         "address": "台北市中正區寧波西街120號"
       },
       {
-        "code": "281",
-        "name": "騰達行企業股份有限公司",
-        "address": "新北市深坑區北深路3段155巷29號3樓"
+        "code": "a5069",
+        "name": "七星化學製藥股份有限公司",
+        "address": "新北市土城區福安街75號"
       },
       {
-        "code": "290",
-        "name": "百上企業有限公司",
-        "address": "台北市南港區忠孝東路六段212巷3弄5號1F"
+        "code": "053",
+        "name": "海山儀器有限公司",
+        "address": "桃園市永安路277-2號"
       },
       {
-        "code": "594",
-        "name": "盟基生物科技股份有限公司",
-        "address": "新北市汐止區新台五路一段75號13樓之4"
+        "code": "579",
+        "name": "醫凡企業有限公司",
+        "address": "桃園市中壢區吉林路27-1號8F"
       }
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E5%90%89%E6%9E%97%E8%B7%AF27-1%E8%99%9F8F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%B0%B8%E5%AE%89%E8%B7%AF277-2%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E5%9C%9F%E5%9F%8E%E5%8D%80%E7%A6%8F%E5%AE%89%E8%A1%9775%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5240%E5%B7%B77%E5%BC%844-1%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E5%AF%A7%E6%B3%A2%E8%A5%BF%E8%A1%97120%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E6%B7%B1%E5%9D%91%E5%8D%80%E5%8C%97%E6%B7%B1%E8%B7%AF3%E6%AE%B5155%E5%B7%B729%E8%99%9F3%E6%A8%93|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%8D%97%E6%B8%AF%E5%8D%80%E5%BF%A0%E5%AD%9D%E6%9D%B1%E8%B7%AF%E5%85%AD%E6%AE%B5212%E5%B7%B73%E5%BC%845%E8%99%9F1F|%E6%96%B0%E5%8C%97%E5%B8%82%E6%B1%90%E6%AD%A2%E5%8D%80%E6%96%B0%E5%8F%B0%E4%BA%94%E8%B7%AF%E4%B8%80%E6%AE%B575%E8%99%9F13%E6%A8%93%E4%B9%8B4&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E5%8C%97%E5%B8%82%E6%B1%90%E6%AD%A2%E5%8D%80%E6%96%B0%E5%8F%B0%E4%BA%94%E8%B7%AF%E4%B8%80%E6%AE%B575%E8%99%9F13%E6%A8%93%E4%B9%8B4|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%8D%97%E6%B8%AF%E5%8D%80%E5%BF%A0%E5%AD%9D%E6%9D%B1%E8%B7%AF%E5%85%AD%E6%AE%B5212%E5%B7%B73%E5%BC%845%E8%99%9F1F|%E6%96%B0%E5%8C%97%E5%B8%82%E6%B7%B1%E5%9D%91%E5%8D%80%E5%8C%97%E6%B7%B1%E8%B7%AF3%E6%AE%B5155%E5%B7%B729%E8%99%9F3%E6%A8%93|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5240%E5%B7%B77%E5%BC%844-1%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E5%AF%A7%E6%B3%A2%E8%A5%BF%E8%A1%97120%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E5%9C%9F%E5%9F%8E%E5%8D%80%E7%A6%8F%E5%AE%89%E8%A1%9775%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%B0%B8%E5%AE%89%E8%B7%AF277-2%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E5%90%89%E6%9E%97%E8%B7%AF27-1%E8%99%9F8F&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ],
