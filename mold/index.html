@@ -216,6 +216,36 @@ textarea { resize:vertical; min-height:64px; }
 </style>
 </head>
 <body>
+<style id="_pwo_s">
+#_pwo{position:fixed;inset:0;background:#0f1117;z-index:99999;display:flex;align-items:center;justify-content:center;font-family:'Noto Sans TC',sans-serif;}
+#_pwb{background:#1a1d27;border:1px solid #2e3147;border-radius:16px;padding:40px 32px;width:300px;text-align:center;}
+#_pwb h2{color:#eef0f8;margin-bottom:8px;font-size:20px;}
+#_pwb p{color:#7b7f9a;font-size:13px;margin-bottom:24px;}
+#_pwi{width:100%;background:#232637;border:1px solid #2e3147;color:#eef0f8;border-radius:10px;padding:12px 16px;font-size:18px;text-align:center;outline:none;letter-spacing:6px;margin-bottom:12px;box-sizing:border-box;}
+#_pwbtn{width:100%;background:#f5a623;color:#000;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;}
+#_pwerr{color:#f87171;font-size:13px;margin-top:8px;display:none;}
+</style>
+<div id="_pwo"><div id="_pwb">
+  <h2>🔒 系統登入</h2>
+  <p>請輸入密碼以繼續</p>
+  <input id="_pwi" type="password" placeholder="••••" onkeydown="if(event.key==='Enter')_cpw()">
+  <button id="_pwbtn" onclick="_cpw()">進入</button>
+  <div id="_pwerr">密碼錯誤，請重試</div>
+</div></div>
+<script>
+(function(){
+  var PW='22505047',KEY='sysauth_mold',TTL=5*60*1000;
+  function ok(){var t=sessionStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
+  if(ok()){document.getElementById('_pwo').style.display='none';return;}
+  window._cpw=function(){
+    var v=document.getElementById('_pwi').value;
+    if(v===PW){sessionStorage.setItem(KEY,String(Date.now()));document.getElementById('_pwo').style.display='none';}
+    else{document.getElementById('_pwerr').style.display='block';document.getElementById('_pwi').value='';document.getElementById('_pwi').focus();}
+  };
+  setTimeout(function(){document.getElementById('_pwi').focus();},100);
+})();
+</script>
+
 <style>
 #pw-overlay {
   position: fixed; inset: 0; z-index: 99999;
