@@ -190,12 +190,12 @@ code{font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 4px;bor
 </div></div>
 <script>
 (function(){
-  var PW='22505047',KEY='sysauth_complaint',TTL=5*60*1000;
-  function ok(){var t=sessionStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
+  var PW='22505047',KEY='sysauth_complaint',TTL=7*24*60*60*1000;
+  function ok(){var t=localStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
   if(ok()){document.getElementById('_pwo').style.display='none';return;}
   window._cpw=function(){
     var v=document.getElementById('_pwi').value;
-    if(v===PW){sessionStorage.setItem(KEY,String(Date.now()));document.getElementById('_pwo').style.display='none';}
+    if(v===PW){localStorage.setItem(KEY,String(Date.now()));document.getElementById('_pwo').style.display='none';}
     else{document.getElementById('_pwerr').style.display='block';document.getElementById('_pwi').value='';document.getElementById('_pwi').focus();}
   };
   setTimeout(function(){document.getElementById('_pwi').focus();},100);
@@ -686,8 +686,8 @@ function saveCfg() { localStorage.setItem('cmp_cfg', JSON.stringify(cfg)); }
 // ══════════════════════════════════
 function checkPw() {
   const v = document.getElementById('pwIn').value;
-  if (v === PW || sessionStorage.getItem('complaint_auth') === '1') {
-    sessionStorage.setItem('complaint_auth', '1');
+  if (v === PW || (function(){var t=localStorage.getItem('complaint_auth_t');return t&&(Date.now()-parseInt(t))<7*24*60*60*1000;})()) {
+    localStorage.setItem('complaint_auth_t', String(Date.now()));
     document.getElementById('gateScreen').style.display = 'none';
     boot();
   } else {
@@ -757,7 +757,7 @@ function showApp() {
 }
 
 function logout() {
-  sessionStorage.removeItem('complaint_auth');
+  localStorage.removeItem('complaint_auth_t');
   location.reload();
 }
 
