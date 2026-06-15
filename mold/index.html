@@ -234,12 +234,12 @@ textarea { resize:vertical; min-height:64px; }
 </div></div>
 <script>
 (function(){
-  var PW='22505047',KEY='sysauth_mold',TTL=5*60*1000;
-  function ok(){var t=sessionStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
+  var PW='22505047',KEY='sysauth_mold',TTL=7*24*60*60*1000;
+  function ok(){var t=localStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
   if(ok()){document.getElementById('_pwo').style.display='none';return;}
   window._cpw=function(){
     var v=document.getElementById('_pwi').value;
-    if(v===PW){sessionStorage.setItem(KEY,String(Date.now()));document.getElementById('_pwo').style.display='none';}
+    if(v===PW){localStorage.setItem(KEY,String(Date.now()));document.getElementById('_pwo').style.display='none';}
     else{document.getElementById('_pwerr').style.display='block';document.getElementById('_pwi').value='';document.getElementById('_pwi').focus();}
   };
   setTimeout(function(){document.getElementById('_pwi').focus();},100);
