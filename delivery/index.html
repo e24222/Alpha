@@ -170,12 +170,12 @@
 </div></div>
 <script>
 (function(){
-  var PWS=['0000','22505047'],KEY='sysauth_delivery',TTL=7*24*60*60*1000;
-  function ok(){var t=localStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
+  var PW='0000',KEY='sysauth_delivery',TTL=5*60*1000;
+  function ok(){var t=sessionStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
   if(ok()){document.getElementById('_pwo').style.display='none';return;}
   window._cpw=function(){
     var v=document.getElementById('_pwi').value;
-    if(PWS.indexOf(v)>=0){localStorage.setItem(KEY,String(Date.now()));document.getElementById('_pwo').style.display='none';}
+    if(v===PW){sessionStorage.setItem(KEY,String(Date.now()));document.getElementById('_pwo').style.display='none';}
     else{document.getElementById('_pwerr').style.display='block';document.getElementById('_pwi').value='';document.getElementById('_pwi').focus();}
   };
   setTimeout(function(){document.getElementById('_pwi').focus();},100);
@@ -2526,7 +2526,9 @@
   function toggleHDetail(id) { document.getElementById('hd-'+id).classList.toggle('show'); }
 
   function deleteHRecord(id) {
-    if (!confirm('確定刪除此筆紀錄？')) return;
+    const pw = prompt('請輸入刪除密碼：');
+    if (pw === null) return;
+    if (pw !== '0000') { alert('密碼錯誤，無法刪除'); return; }
     routeHistory = routeHistory.filter(r=>r.id!==id);
     saveHist(); renderHistory();
   }
