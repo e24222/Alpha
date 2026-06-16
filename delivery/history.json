@@ -3,22 +3,12 @@
     "id": "1781594154970",
     "date": "2026/06/16 下午03:15",
     "boxes": "",
-    "totalKm": 109.4,
+    "totalKm": 108,
     "stops": [
       {
-        "code": "600",
-        "name": "冠揚生物科技有限公司",
-        "address": "新北市中和區連城路451號1樓"
-      },
-      {
-        "code": "030",
-        "name": "(巨門)啟新生物科技有限公司(五工五路)",
-        "address": "新北市新北產業園區五工五路21號4F"
-      },
-      {
-        "code": "798",
-        "name": "勢得科研股份有限公司",
-        "address": "桃園市龜山區陳厝坑路997巷27號"
+        "code": "A3015",
+        "name": "光泉牧場股份有限公司",
+        "address": "桃園市大園區南港里14鄰大觀路1249號"
       },
       {
         "code": "A3043",
@@ -26,14 +16,24 @@
         "address": "桃園市中壢區自強一路111號"
       },
       {
-        "code": "A3015",
-        "name": "光泉牧場股份有限公司",
-        "address": "桃園市大園區南港里14鄰大觀路1249號"
+        "code": "798",
+        "name": "勢得科研股份有限公司",
+        "address": "桃園市龜山區陳厝坑路997巷27號"
+      },
+      {
+        "code": "030",
+        "name": "(巨門)啟新生物科技有限公司(五工五路)",
+        "address": "新北市新北產業園區五工五路21號4F"
+      },
+      {
+        "code": "600",
+        "name": "冠揚生物科技有限公司",
+        "address": "新北市中和區連城路451號1樓"
       }
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E9%80%A3%E5%9F%8E%E8%B7%AF451%E8%99%9F1%E6%A8%93|%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E5%8C%97%E7%94%A2%E6%A5%AD%E5%9C%92%E5%8D%80%E4%BA%94%E5%B7%A5%E4%BA%94%E8%B7%AF21%E8%99%9F4F|%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%9C%E5%B1%B1%E5%8D%80%E9%99%B3%E5%8E%9D%E5%9D%91%E8%B7%AF997%E5%B7%B727%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E8%87%AA%E5%BC%B7%E4%B8%80%E8%B7%AF111%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E5%A4%A7%E5%9C%92%E5%8D%80%E5%8D%97%E6%B8%AF%E9%87%8C14%E9%84%B0%E5%A4%A7%E8%A7%80%E8%B7%AF1249%E8%99%9F&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E5%A4%A7%E5%9C%92%E5%8D%80%E5%8D%97%E6%B8%AF%E9%87%8C14%E9%84%B0%E5%A4%A7%E8%A7%80%E8%B7%AF1249%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E8%87%AA%E5%BC%B7%E4%B8%80%E8%B7%AF111%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%9C%E5%B1%B1%E5%8D%80%E9%99%B3%E5%8E%9D%E5%9D%91%E8%B7%AF997%E5%B7%B727%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E5%8C%97%E7%94%A2%E6%A5%AD%E5%9C%92%E5%8D%80%E4%BA%94%E5%B7%A5%E4%BA%94%E8%B7%AF21%E8%99%9F4F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E9%80%A3%E5%9F%8E%E8%B7%AF451%E8%99%9F1%E6%A8%93&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ]
