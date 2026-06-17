@@ -134,51 +134,9 @@ p  { font-size: 0.9rem; opacity: 0.6; margin-top: 4px; }
   </div>
 </div>
 
-<!-- Password Modal -->
-<div class="pw-overlay" id="pwModal" style="display:none">
-  <div class="pw-box">
-    <div class="pw-icon">🔒</div>
-    <div class="pw-title" id="pwTitle"></div>
-    <div class="pw-sub">請輸入密碼以繼續</div>
-    <input class="pw-input" type="password" id="pwInput" placeholder="請輸入密碼"
-      onkeydown="if(event.key==='Enter')checkPw()">
-    <button class="pw-btn" onclick="checkPw()">進入系統</button>
-    <div class="pw-err" id="pwErr">密碼錯誤，請重試</div>
-    <div><button class="pw-cancel" onclick="document.getElementById('pwModal').style.display='none'">取消</button></div>
-  </div>
-</div>
-
 <script>
-const CORRECT = '22505047';
-const PW_TTL  = 7 * 24 * 60 * 60 * 1000;
-let pwTargetUrl = '';
-
-function isAuthed() {
-  const t = localStorage.getItem('auth_time');
-  return t && (Date.now() - parseInt(t)) < PW_TTL;
-}
-function setAuthed() { localStorage.setItem('auth_time', String(Date.now())); }
-
 function openSystem(title, url) {
-  if (isAuthed()) { window.location.href = url; return; }
-  pwTargetUrl = url;
-  document.getElementById('pwTitle').textContent = title;
-  document.getElementById('pwModal').style.display = 'flex';
-  document.getElementById('pwInput').value = '';
-  document.getElementById('pwErr').style.display = 'none';
-  setTimeout(() => document.getElementById('pwInput').focus(), 100);
-}
-
-function checkPw() {
-  const v = document.getElementById('pwInput').value;
-  if (v === CORRECT) {
-    setAuthed();
-    window.location.href = pwTargetUrl;
-  } else {
-    document.getElementById('pwErr').style.display = 'block';
-    document.getElementById('pwInput').value = '';
-    document.getElementById('pwInput').focus();
-  }
+  window.location.href = url;
 }
 </script>
 </body>
