@@ -6,6 +6,11 @@
     "totalKm": 115.1,
     "stops": [
       {
+        "code": "A5064",
+        "name": "歐萊德國際股份有限公司",
+        "address": "桃園市龍潭區中豐路高平段18號"
+      },
+      {
         "code": "116",
         "name": "詠欣有限公司",
         "address": "新竹市北區東大路三段298號"
@@ -31,11 +36,6 @@
         "address": "桃園市楊梅區民有路一段198號"
       },
       {
-        "code": "A5064",
-        "name": "歐萊德國際股份有限公司",
-        "address": "桃園市龍潭區中豐路高平段18號"
-      },
-      {
         "code": "A5015",
         "name": "勝昌製藥廠股份有限公司",
         "address": "桃園市中壢區民族路六段436號"
@@ -43,7 +43,7 @@
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E6%9D%B1%E5%A4%A7%E8%B7%AF%E4%B8%89%E6%AE%B5298%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E5%90%89%E7%BE%8A%E8%B7%AF100-7%E8%99%9F|%E6%96%B0%E8%B1%90%E9%84%89%E9%9D%92%E5%9F%94%E6%9D%919%E9%84%B0152-1%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%96%B0%E8%B1%90%E9%84%89%E6%98%8E%E6%96%B0%E8%A1%97248%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E4%B8%AD%E8%B1%90%E8%B7%AF%E9%AB%98%E5%B9%B3%E6%AE%B518%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E6%B0%91%E6%97%8F%E8%B7%AF%E5%85%AD%E6%AE%B5436%E8%99%9F&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E4%B8%AD%E8%B1%90%E8%B7%AF%E9%AB%98%E5%B9%B3%E6%AE%B518%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E6%9D%B1%E5%A4%A7%E8%B7%AF%E4%B8%89%E6%AE%B5298%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E5%90%89%E7%BE%8A%E8%B7%AF100-7%E8%99%9F|%E6%96%B0%E8%B1%90%E9%84%89%E9%9D%92%E5%9F%94%E6%9D%919%E9%84%B0152-1%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E6%96%B0%E8%B1%90%E9%84%89%E6%98%8E%E6%96%B0%E8%A1%97248%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E4%B8%AD%E5%A3%A2%E5%8D%80%E6%B0%91%E6%97%8F%E8%B7%AF%E5%85%AD%E6%AE%B5436%E8%99%9F&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ]
