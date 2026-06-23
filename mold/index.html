@@ -115,8 +115,11 @@ tr:hover td { background:#fafbff; }
 .b-ps-pending { background:#fef3c7; color:#92400e; }     .b-ps-pending::before { background:#f59e0b; }
 .b-ps-arrived { background:#d1fae5; color:#065f46; }     .b-ps-arrived::before { background:#10b981; }
 .b-ps-cancel  { background:#fee2e2; color:#991b1b; }     .b-ps-cancel::before  { background:#ef4444; }
+.b-ps-repair  { background:#ede9fe; color:#6d28d9; }     .b-ps-repair::before  { background:#7c3aed; }
 .tab.tab-amber.active { color:#b45309; border-bottom-color:#f59e0b; }
 .tab.tab-amber.active .cnt { background:#fef3c7; color:#92400e; }
+.tab.tab-orange.active { color:#7c3aed; border-bottom-color:#7c3aed; }
+.tab.tab-orange.active .cnt { background:#ede9fe; color:#6d28d9; }
 
 /* STATUS highlight */
 .note-warn { color:#b45309; font-weight:600; }
@@ -324,6 +327,7 @@ if (sessionStorage.getItem('mold_auth') === '1') {
     <div class="tab" id="tab-懋得" onclick="setTab(&#39;懋得&#39;)">懋得 <span class="cnt" id="tc-懋得">1</span></div>
     <div class="tab" id="tab-大陸模具" onclick="setTab(&#39;大陸模具&#39;)">大陸模具 <span class="cnt" id="tc-大陸模具">1</span></div>
     <div class="tab tab-amber" id="tab-請購中" onclick="setTab(&#39;請購中&#39;)">🛒 請購中 <span class="cnt" id="tc-請購中">3</span></div>
+    <div class="tab tab-orange" id="tab-維修中" onclick="setTab(&#39;維修中&#39;)">🔧 維修中 <span class="cnt" id="tc-維修中">0</span></div>
     <div class="tab tab-red" id="tab-報廢" onclick="setTab(&#39;報廢&#39;)">🗑 報廢 <span class="cnt" id="tc-報廢">9</span></div>
   </div>
 
@@ -348,7 +352,7 @@ if (sessionStorage.getItem('mold_auth') === '1') {
     </div>
     <div class="tbl-scroll">
       <table>
-        <thead id="tHead"><tr><th onclick="doSort(&#39;seq&#39;)" style="width:50px">序號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;procDate&#39;)" style="">請購日期<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;procNo&#39;)" style="">請購單號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;moldId&#39;)" style="">模具編號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;cavity&#39;)" style="">穴號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;productId&#39;)" style="">產品編號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;productName&#39;)" style="">產品名稱<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;material&#39;)" style="">原料<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;materialId&#39;)" style="">原料編號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;acceptDate&#39;)" style="">驗收日期<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;contractDate&#39;)" style="">訂約日期<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;factory&#39;)" style="">代工廠<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;procStatus&#39;)" style="">請購狀態<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;notes&#39;)" style="">備註<span style="opacity:.4;font-size:10px;"></span></th><th>操作</th></tr></thead>
+        <thead id="tHead"><tr><th onclick="doSort(&#39;seq&#39;)" style="width:50px">序號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;procDate&#39;)" style="">請購日期<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;procNo&#39;)" style="">請購單號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;moldId&#39;)" style="">模具編號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;cavity&#39;)" style="">穴號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;productId&#39;)" style="">產品編號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;productName&#39;)" style="">產品名稱<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;material&#39;)" style="">原料<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;materialId&#39;)" style="">原料編號<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;acceptDate&#39;)" style="">驗收日期<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;contractDate&#39;)" style="">訂約日期<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;factory&#39;)" style="">代工廠<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;procStatus&#39;)" style="">模具狀態<span style="opacity:.4;font-size:10px;"> ↕</span></th><th onclick="doSort(&#39;notes&#39;)" style="">備註<span style="opacity:.4;font-size:10px;"></span></th><th>操作</th></tr></thead>
         <tbody id="tBody"><tr>
       <td class="c-gray">1</td><td class="c-mono">112/7</td><td class="c-mono">—</td><td><span class="c-id">M16001-3R</span></td><td class="c-gray">3.4</td><td class="c-mono">16001-3</td><td class="c-prod">90*15mm 培養皿</td><td class="c-gray">PS</td><td class="c-mono">M0525N</td><td class="c-mono">112/7/17</td><td class="c-mono">112/7</td><td><span class="badge b-jh">駿翰</span></td><td><span class="badge b-ps-arrived">已到貨</span></td><td><span class="c-gray">—</span></td>
       <td><div class="acts">
@@ -500,7 +504,7 @@ if (sessionStorage.getItem('mold_auth') === '1') {
     <div class="fi"><label>訂約日期</label>
      <input type="text" id="f_contractDate" value=""></div>
     <div class="fi"><label>代工廠</label><select id="f_factory"><option value="駿翰">駿翰</option><option value="大慶">大慶</option><option value="懋得" selected="">懋得</option><option value="大陸模具">大陸模具</option></select></div>
-    <div class="fi"><label>請購狀態</label><select id="f_procStatus"><option value="未請購" selected="">未請購</option><option value="請購中">請購中</option><option value="已到貨">已到貨</option><option value="取消">取消</option><option value="已報廢">已報廢</option></select></div>
+    <div class="fi"><label>模具狀態</label><select id="f_procStatus"><option value="未請購" selected="">未請購</option><option value="請購中">請購中</option><option value="維修中">維修中</option><option value="已到貨">已到貨</option><option value="取消">取消</option><option value="已報廢">已報廢</option></select></div>
     <div class="fi full"><label>備註</label><textarea id="f_notes"></textarea></div>
   </div></div>
     </div>
@@ -660,6 +664,8 @@ function updateSummary() {
   document.getElementById('tc-清冊').textContent    = getAllActive().length;
   ACTIVE_TABS.forEach(t => document.getElementById('tc-'+t).textContent = DB[t].length);
   document.getElementById('tc-請購中').textContent  = procCount;
+  const repairCount = getAllActive().filter(r => r.procStatus === '維修中').length;
+  document.getElementById('tc-維修中').textContent = repairCount;
   document.getElementById('tc-報廢').textContent    = DB['報廢'].length;
 }
 
@@ -679,7 +685,7 @@ const COLS_NORMAL = [
   {k:'acceptDate', label:'驗收日期', cls:'c-mono'},
   {k:'contractDate',label:'訂約日期',cls:'c-mono'},
   {k:'factory',    label:'代工廠',  cls:''},
-  {k:'procStatus', label:'請購狀態', cls:''},
+  {k:'procStatus', label:'模具狀態', cls:''},
   {k:'notes',      label:'備註',   cls:'c-notes', noSort:true},
 ];
 const COLS_LISHU = COLS_NORMAL;
@@ -710,6 +716,7 @@ function getCols() {
 function getRows() {
   if (curTab === '清冊') return getAllActive();
   if (curTab === '請購中') return getAllActive().filter(r => r.procStatus === '請購中');
+  if (curTab === '維修中') return getAllActive().filter(r => r.procStatus === '維修中');
   return DB[curTab] || [];
 }
 
@@ -723,7 +730,7 @@ function factoryBadge(f) {
 }
 
 function procBadge(ps) {
-  const map = { '未請購':'b-ps-none', '請購中':'b-ps-pending', '已到貨':'b-ps-arrived', '取消':'b-ps-cancel' };
+  const map = { '未請購':'b-ps-none', '請購中':'b-ps-pending', '已到貨':'b-ps-arrived', '取消':'b-ps-cancel', '維修中':'b-ps-repair' };
   const cls = map[ps] || 'b-ps-none';
   const label = ps || '未請購';
   return `<span class="badge ${cls}">${label}</span>`;
@@ -767,7 +774,8 @@ function render() {
   document.getElementById('tblTitle').textContent =
     curTab === '清冊'  ? '清冊總覽（所有在用模具）' :
     curTab === '報廢'  ? '報廢模具清冊' :
-    curTab === '請購中' ? '請購中模具（跨廠）' : `${curTab} 模具清冊`;
+    curTab === '請購中' ? '請購中模具（跨廠）' :
+    curTab === '維修中' ? '維修中模具（跨廠）' : `${curTab} 模具清冊`;
   document.getElementById('tblMeta').textContent = `共 ${rows.length} 筆`;
 
   // thead
@@ -848,7 +856,7 @@ function buildForm(isScrap, r, defaultFactory='駿翰') {
       ${sel('factory','代工廠',v('factory'),['駿翰','大慶','懋得','大陸模具'])}
       ${fi('retrieveDate','取回/報廢日期',v('retrieveDate'))}
       ${fi('scrapped','報廢出售',v('scrapped'))}
-      ${sel('procStatus','請購狀態（移出報廢用）',v('procStatus','已報廢'),['已報廢','未請購','請購中','已到貨','取消'])}
+      ${sel('procStatus','模具狀態（移出報廢用）',v('procStatus','已報廢'),['已報廢','未請購','請購中','維修中','已到貨','取消'])}
       ${ta('notes','備註',v('notes'))}
     </div>`;
   }
@@ -865,7 +873,7 @@ function buildForm(isScrap, r, defaultFactory='駿翰') {
     ${fi('acceptDate','驗收日期',v('acceptDate'))}
     ${fi('contractDate','訂約日期',v('contractDate'))}
     ${sel('factory','代工廠',v('factory', defaultFactory),['駿翰','大慶','懋得','大陸模具'])}
-    ${sel('procStatus','請購狀態',v('procStatus','未請購'),['未請購','請購中','已到貨','取消','已報廢'])}
+    ${sel('procStatus','模具狀態',v('procStatus','未請購'),['未請購','請購中','維修中','已到貨','取消','已報廢'])}
     ${ta('notes','備註',v('notes'))}
   </div>`;
 }
