@@ -2655,23 +2655,9 @@
 
   async function printRoute() {
     if (!lastSorted.length) return;
-    // 先同步開視窗並注入 renderRoute 函式，避免 await 後被 popup blocker 擋
-    const w = window.open('','_blank');
-    if (!w) { alert('請允許彈出視窗後再試一次'); return; }
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-      <style>body{font-family:'Noto Sans TC',Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-size:16px;color:#555;}</style>
-      </head><body><p>⏳ 計算里程中，請稍候...</p>
-      <script>
-      window.renderRoute = function(html) {
-        document.open(); document.write(html); document.close();
-      };
-      <\/script></body></html>`);
-    w.document.close();
     const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
     const bc = document.getElementById('boxCount').value;
 
-    // 預計總里程（同區域 < 0.1km 不計入，含回程）
     const stopSum = lastSorted.reduce((acc, c) => acc + (c.dist != null && c.dist >= 0.1 ? c.dist : 0), 0);
     const last = lastSorted[lastSorted.length - 1];
     const lastCoord = last ? getCoordFromAddress(last.address) : null;
@@ -2702,15 +2688,19 @@
       ...(bc ? [`箱數：${bc} 箱`] : [])
     ].join('　|　');
 
-    // 取得導航段落的 Google Maps URL
     const segUrls = lastSegments.map(s => s.url);
-
-    // QR code 區塊（每段一個，橫排）
     const qrBlocks = segUrls.map((url, i) => `
       <div style="display:inline-block;text-align:center;margin:0 16px 0 0;vertical-align:top">
         <div id="qr-seg-${i}" style="display:inline-block"></div>
         <div style="font-size:11px;color:#666;margin-top:4px">${segUrls.length > 1 ? `第 ${i+1} 段導航` : '掃描開始導航'}</div>
       </div>`).join('');
+
+    const qrScript = `
+      var urls=${JSON.stringify(segUrls)};
+      async function su(u){try{var r=await fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(u));if(r.ok){var t=await r.text();if(t.startsWith('http'))return t.trim();}}catch(e){}return u;}
+      async function init(){for(var i=0;i<urls.length;i++){var el=document.getElementById('qr-seg-'+i);if(!el)continue;var s=await su(urls[i]);new QRCode(el,{text:s,width:128,height:128,correctLevel:QRCode.CorrectLevel.L});}
+      document.body.setAttribute('data-ready','1');}
+      init();`;
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
       <style>
@@ -2725,17 +2715,15 @@
         .qr-label{font-size:12px;font-weight:bold;color:#555;margin-bottom:10px;}
         @page{size:A4;margin:15mm;}
       </style>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><` + `/script>
+      <script>${qrScript}<` + `/script>
     </head><body>
       <h2>🚛 龍冶股份有限公司 — 送貨路線單</h2>
       <div class="sub">${subParts}</div>
       <table>
         <tr>
-          <th style="width:36px">站</th>
-          <th style="width:160px">公司名稱</th>
-          <th>送貨地址</th>
-          <th style="width:50px">編號</th>
-          <th style="width:50px">備註</th>
+          <th style="width:36px">站</th><th style="width:160px">公司名稱</th>
+          <th>送貨地址</th><th style="width:50px">編號</th><th style="width:50px">備註</th>
         </tr>
         ${rows}
       </table>
@@ -2743,35 +2731,30 @@
         <div class="qr-label">📱 Google Maps 導航 QR Code</div>
         ${qrBlocks}
       </div>
-      <script>
-        const urls = ${JSON.stringify(segUrls)};
-        async function shortenUrl(url) {
-          try {
-            const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
-            if (res.ok) { const txt = await res.text(); if (txt.startsWith('http')) return txt.trim(); }
-          } catch(e) {}
-          return url; // fallback 原始 URL
-        }
-        async function init() {
-          for (let i = 0; i < urls.length; i++) {
-            const el = document.getElementById('qr-seg-' + i);
-            if (!el) continue;
-            const short = await shortenUrl(urls[i]);
-            new QRCode(el, { text: short, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.L });
-          }
-          setTimeout(() => { window.focus(); window.print(); }, 600);
-        }
-        init();
-      <\/script>
     </body></html>`;
 
-    // 用 renderRoute 在視窗自己的 context 內更新，避免跨 context 寫入被擋
-    if (w.renderRoute) {
-      w.renderRoute(html);
-    } else {
-      w.document.write(html);
-      w.document.close();
-    }
+    // 用隱藏 iframe 列印，完全不需要彈出視窗
+    const old = document.getElementById('_pf');
+    if (old) old.remove();
+    const f = document.createElement('iframe');
+    f.id = '_pf';
+    f.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:0;';
+    document.body.appendChild(f);
+    f.srcdoc = html;
+
+    // 等 QR code 產生完畢再列印（最多等 5 秒）
+    let waited = 0;
+    const check = setInterval(() => {
+      waited += 200;
+      const ready = f.contentDocument && f.contentDocument.body &&
+                    f.contentDocument.body.getAttribute('data-ready') === '1';
+      if (ready || waited >= 5000) {
+        clearInterval(check);
+        f.contentWindow.focus();
+        f.contentWindow.print();
+        setTimeout(() => { if (f.parentNode) f.remove(); }, 2000);
+      }
+    }, 200);
   }
 
   function updateBoxCount(v) {
