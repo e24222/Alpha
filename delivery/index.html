@@ -2655,122 +2655,107 @@
 
   async function printRoute() {
     if (!lastSorted.length) return;
-    // 先同步開視窗並注入 renderRoute 函式，避免 await 後被 popup blocker 擋
+    const btn = document.getElementById('printBtn');
+    if (btn) { btn.textContent = '⏳ 計算中...'; btn.disabled = true; }
+
+    // 先同步開視窗（避開 popup blocker），只放樣式和 QRCode 函式庫，不放 </script> 跳脫問題
     const w = window.open('','_blank');
-    if (!w) { alert('請允許彈出視窗後再試一次'); return; }
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-      <style>body{font-family:'Noto Sans TC',Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-size:16px;color:#555;}</style>
-      </head><body><p>⏳ 計算里程中，請稍候...</p>
-      <script>
-      window.renderRoute = function(html) {
-        document.open(); document.write(html); document.close();
-      };
-      <\/script></body></html>`);
+    if (!w) {
+      if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
+      alert('請允許彈出視窗後再試'); return;
+    }
+    const SCRTAG = '<' + 'script';
+    const SCREND = '<' + '/script>';
+    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">'
+      + SCRTAG + ' src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">' + SCREND
+      + '<style>'
+      + 'body{font-family:"Noto Sans TC",Arial,sans-serif;padding:20px;margin:0;color:#111;}'
+      + 'h2{font-size:18px;margin:0 0 4px 0;}.sub{font-size:12px;color:#666;margin-bottom:16px;}'
+      + 'table{width:100%;border-collapse:collapse;font-size:13px;}'
+      + 'th{background:#f5a623;color:#000;padding:8px 10px;text-align:left;}'
+      + 'td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;}'
+      + 'tr:nth-child(even) td{background:#fafafa;}'
+      + '.qr-section{margin-top:20px;padding-top:14px;border-top:1px solid #ddd;}'
+      + '.qr-label{font-size:12px;font-weight:bold;color:#555;margin-bottom:10px;}'
+      + '@page{size:A4;margin:15mm;}'
+      + '#loading{display:flex;align-items:center;justify-content:center;height:80vh;font-size:18px;color:#555;}'
+      + '#content{display:none;}'
+      + '</style></head><body>'
+      + '<div id="loading">⏳ 計算里程中，請稍候...</div>'
+      + '<div id="content"></div>'
+      + '</body></html>');
     w.document.close();
-    const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
-    const bc = document.getElementById('boxCount').value;
 
-    // 預計總里程（同區域 < 0.1km 不計入，含回程）
-    const stopSum = lastSorted.reduce((acc, c) => acc + (c.dist != null && c.dist >= 0.1 ? c.dist : 0), 0);
-    const last = lastSorted[lastSorted.length - 1];
-    const lastCoord = last ? getCoordFromAddress(last.address) : null;
-    const returnDist = lastCoord ? await getRoadDistance(lastCoord[0], lastCoord[1], DEPOT_LAT, DEPOT_LNG) : 0;
-    const totalKm = Math.round((stopSum + returnDist) * 10) / 10;
+    try {
+      // 非同步計算
+      const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+      const bc = document.getElementById('boxCount').value;
+      const stopSum = lastSorted.reduce((acc,c)=>acc+(c.dist!=null&&c.dist>=0.1?c.dist:0),0);
+      const last = lastSorted[lastSorted.length-1];
+      const lastCoord = last ? getCoordFromAddress(last.address) : null;
+      const returnDist = lastCoord ? await getRoadDistance(lastCoord[0],lastCoord[1],DEPOT_LAT,DEPOT_LNG) : 0;
+      const totalKm = Math.round((stopSum+returnDist)*10)/10;
 
-    const rows = lastSorted.map((c,i) => `
-      <tr>
-        <td style="text-align:center;font-weight:bold;font-size:16px">${i+1}</td>
-        <td style="font-weight:bold">${c.name}</td>
-        <td style="color:#666">${c.address}</td>
-        <td style="text-align:center;color:#999;font-family:monospace">${c.code}</td>
-        <td></td>
-      </tr>`).join('') + `
-      <tr style="background:#fff8ee;">
-        <td style="text-align:center;font-weight:bold;font-size:13px;color:#f5a623">回</td>
-        <td style="font-weight:bold;color:#f5a623">【回公司】龍台貿易有限公司</td>
-        <td style="color:#999">桃園市龍潭區工五路250號</td>
-        <td></td>
-        <td></td>
-      </tr>`;
+      const rows = lastSorted.map((c,i)=>
+        '<tr><td style="text-align:center;font-weight:bold;font-size:16px">'+(i+1)+'</td>'
+        +'<td style="font-weight:bold">'+c.name+'</td>'
+        +'<td style="color:#666">'+c.address+'</td>'
+        +'<td style="text-align:center;color:#999;font-family:monospace">'+c.code+'</td>'
+        +'<td></td></tr>'
+      ).join('')
+      +'<tr style="background:#fff8ee;">'
+      +'<td style="text-align:center;font-weight:bold;font-size:13px;color:#f5a623">回</td>'
+      +'<td style="font-weight:bold;color:#f5a623">【回公司】龍冶股份有限公司</td>'
+      +'<td style="color:#999">桃園市龍潭區工五路250號</td>'
+      +'<td></td><td></td></tr>';
 
-    const subParts = [
-      '出發點：桃園市龍潭區工五路250號',
-      `日期：${date}`,
-      `共 ${lastSorted.length} 站`,
-      `預計總里程：${totalKm} km`,
-      ...(bc ? [`箱數：${bc} 箱`] : [])
-    ].join('　|　');
+      const subParts = ['出發點：桃園市龍潭區工五路250號','日期：'+date,
+        '共 '+lastSorted.length+' 站','預計總里程：'+totalKm+' km',
+        ...(bc?['箱數：'+bc+' 箱']:[])].join('　|　');
 
-    // 取得導航段落的 Google Maps URL
-    const segUrls = lastSegments.map(s => s.url);
+      const segUrls = lastSegments.map(s=>s.url);
+      const qrHtml = segUrls.map((u,i)=>
+        '<div style="display:inline-block;text-align:center;margin:0 16px 8px 0;vertical-align:top">'
+        +'<div id="qr-seg-'+i+'"></div>'
+        +'<div style="font-size:11px;color:#666;margin-top:4px">'+(segUrls.length>1?'第'+(i+1)+'段導航':'掃描開始導航')+'</div>'
+        +'</div>'
+      ).join('');
 
-    // QR code 區塊（每段一個，橫排）
-    const qrBlocks = segUrls.map((url, i) => `
-      <div style="display:inline-block;text-align:center;margin:0 16px 0 0;vertical-align:top">
-        <div id="qr-seg-${i}" style="display:inline-block"></div>
-        <div style="font-size:11px;color:#666;margin-top:4px">${segUrls.length > 1 ? `第 ${i+1} 段導航` : '掃描開始導航'}</div>
-      </div>`).join('');
+      // 注入內容（不需要 </script> 跳脫）
+      const contentEl = w.document.getElementById('content');
+      const loadingEl = w.document.getElementById('loading');
+      if (contentEl) {
+        contentEl.innerHTML =
+          '<h2>🚛 龍冶股份有限公司 — 送貨路線單</h2>'
+          +'<div class="sub">'+subParts+'</div>'
+          +'<table><tr><th style="width:36px">站</th><th style="width:160px">公司名稱</th>'
+          +'<th>送貨地址</th><th style="width:50px">編號</th><th style="width:50px">備註</th></tr>'
+          +rows+'</table>'
+          +'<div class="qr-section"><div class="qr-label">📱 Google Maps 導航 QR Code</div>'+qrHtml+'</div>';
+        if (loadingEl) loadingEl.style.display = 'none';
+        contentEl.style.display = 'block';
+      }
 
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-      <style>
-        body{font-family:'Noto Sans TC',Arial,sans-serif;padding:0;margin:0;color:#111;}
-        h2{font-size:18px;margin:0 0 4px 0;}
-        .sub{font-size:12px;color:#666;margin-bottom:16px;}
-        table{width:100%;border-collapse:collapse;font-size:13px;}
-        th{background:#f5a623;color:#000;padding:8px 10px;text-align:left;}
-        td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;}
-        tr:nth-child(even) td{background:#fafafa;}
-        .qr-section{margin-top:20px;padding-top:14px;border-top:1px solid #ddd;}
-        .qr-label{font-size:12px;font-weight:bold;color:#555;margin-bottom:10px;}
-        @page{size:A4;margin:15mm;}
-      </style>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-    </head><body>
-      <h2>🚛 龍冶股份有限公司 — 送貨路線單</h2>
-      <div class="sub">${subParts}</div>
-      <table>
-        <tr>
-          <th style="width:36px">站</th>
-          <th style="width:160px">公司名稱</th>
-          <th>送貨地址</th>
-          <th style="width:50px">編號</th>
-          <th style="width:50px">備註</th>
-        </tr>
-        ${rows}
-      </table>
-      <div class="qr-section">
-        <div class="qr-label">📱 Google Maps 導航 QR Code</div>
-        ${qrBlocks}
-      </div>
-      <script>
-        const urls = ${JSON.stringify(segUrls)};
-        async function shortenUrl(url) {
-          try {
-            const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
-            if (res.ok) { const txt = await res.text(); if (txt.startsWith('http')) return txt.trim(); }
-          } catch(e) {}
-          return url; // fallback 原始 URL
-        }
-        async function init() {
-          for (let i = 0; i < urls.length; i++) {
-            const el = document.getElementById('qr-seg-' + i);
-            if (!el) continue;
-            const short = await shortenUrl(urls[i]);
-            new QRCode(el, { text: short, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.L });
-          }
-          setTimeout(() => { window.focus(); window.print(); }, 600);
-        }
-        init();
-      <\/script>
-    </body></html>`;
+      // 產生 QR code（用新視窗的 QRCode 類別）
+      async function shortenUrl(url) {
+        try {
+          const r = await fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(url));
+          if (r.ok) { const t=await r.text(); if(t.startsWith('http')) return t.trim(); }
+        } catch(e) {}
+        return url;
+      }
+      for (let i=0; i<segUrls.length; i++) {
+        const el = w.document.getElementById('qr-seg-'+i);
+        if (!el || !w.QRCode) continue;
+        const short = await shortenUrl(segUrls[i]);
+        new w.QRCode(el, {text:short, width:128, height:128, correctLevel:w.QRCode.CorrectLevel.L});
+      }
 
-    // 用 renderRoute 在視窗自己的 context 內更新，避免跨 context 寫入被擋
-    if (w.renderRoute) {
-      w.renderRoute(html);
-    } else {
-      w.document.write(html);
-      w.document.close();
+      // 等 QR code render 完再列印
+      setTimeout(() => { w.focus(); w.print(); }, 600);
+
+    } finally {
+      if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
     }
   }
 
