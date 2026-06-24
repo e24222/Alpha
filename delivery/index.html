@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>送貨路線規劃 (OSRM版)</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
 <style>
   :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#232637;--accent:#f5a623;--accent2:#e8543a;--text:#eef0f8;--muted:#7b7f9a;--border:#2e3147;--green:#2ecc71;}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -2658,7 +2658,7 @@
     const btn = document.getElementById('printBtn');
     if (btn) { btn.textContent = '⏳ 計算中...'; btn.disabled = true; }
 
-    // 先同步開視窗（避開 popup blocker），只放樣式和 QRCode 函式庫，不放 </script> 跳脫問題
+    // 先同步開視窗（避開 popup blocker），只放樣式和 QRCode 函式庫，不放 <\/script> 跳脫問題
     const w = window.open('','_blank');
     if (!w) {
       if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
