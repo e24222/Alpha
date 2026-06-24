@@ -2658,7 +2658,7 @@
     const btn = document.getElementById('printBtn');
     if (btn) { btn.textContent = '⏳ 計算中...'; btn.disabled = true; }
 
-    // 先同步開視窗（避開 popup blocker），只放樣式和 QRCode 函式庫
+    // 先同步開視窗（避開 popup blocker），只放樣式和 QRCode 函式庫，不放 </script> 跳脫問題
     const w = window.open('','_blank');
     if (!w) {
       if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
@@ -2721,7 +2721,7 @@
         +'</div>'
       ).join('');
 
-      // 注入內容（不需要 </script> 跳脫）
+      // 注入內容到視窗
       const contentEl = w.document.getElementById('content');
       const loadingEl = w.document.getElementById('loading');
       if (contentEl) {
