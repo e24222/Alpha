@@ -2657,7 +2657,6 @@
     if (!lastSorted.length) return;
     const w = window.open('','_blank');
     if (!w) { alert('請允許彈出視窗後再試一次'); return; }
-    w.document.write('<html><body><p style="font-family:sans-serif;padding:20px">載入中...</p></body></html>');
     const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
     const bc = document.getElementById('boxCount').value;
 
@@ -2755,9 +2754,8 @@
       <\/script>
     </body></html>`;
 
-    const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
-    const blobUrl = URL.createObjectURL(blob);
-    w.location.href = blobUrl;
+    w.document.write(html);
+    w.document.close();
   }
 
   function updateBoxCount(v) {
