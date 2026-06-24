@@ -2655,8 +2655,19 @@
 
   async function printRoute() {
     if (!lastSorted.length) return;
+    // 先同步開視窗並注入 renderRoute 函式，避免 await 後被 popup blocker 擋
     const w = window.open('','_blank');
     if (!w) { alert('請允許彈出視窗後再試一次'); return; }
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+      <style>body{font-family:'Noto Sans TC',Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-size:16px;color:#555;}</style>
+      </head><body><p>⏳ 計算里程中，請稍候...</p>
+      <script>
+      window.renderRoute = function(html) {
+        document.open(); document.write(html); document.close();
+      };
+      <\/script></body></html>`);
+    w.document.close();
     const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
     const bc = document.getElementById('boxCount').value;
 
@@ -2754,8 +2765,13 @@
       <\/script>
     </body></html>`;
 
-    w.document.write(html);
-    w.document.close();
+    // 用 renderRoute 在視窗自己的 context 內更新，避免跨 context 寫入被擋
+    if (w.renderRoute) {
+      w.renderRoute(html);
+    } else {
+      w.document.write(html);
+      w.document.close();
+    }
   }
 
   function updateBoxCount(v) {
