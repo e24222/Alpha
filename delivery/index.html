@@ -1367,7 +1367,7 @@
       });
       customers = newC;
       renderManage(); renderList();
-    } catch(e){ console.warn('客戶同步失敗',e); showToast('⚠️ 客戶資料載入失敗', '#f87171'); }
+    } catch(e){ console.warn('客戶同步失敗',e); showToast('⚠️ 客戶資料載入失敗','#f87171'); }
   }
   async function syncHistory() {
     try {
@@ -2562,19 +2562,235 @@
   function closeModal() { document.getElementById('modal').classList.remove('show'); editingId=null; }
 
 
-  // ── 儲存客戶資料到 GitHub（唯一儲存位置）──
+  // ── 儲存客戶資料到 GitHub ──
   async function pushCustomersToGitHub() {
     const csvRows = customers.map(c =>
       [c.code||'', c.name||'', c.address||''].map(v => v.includes(',') ? '"'+v.replace(/"/g,'""')+'"' : v).join(',')
     );
     const csvText = '\uFEFF客戶編號,客戶名稱,送貨地址\n' + csvRows.join('\n');
     const apiUrl = `https://api.github.com/repos/${GH_REPO}/contents/delivery/customers.csv`;
-    const meta = await (await fetch(apiUrl, {headers:{'Authorization':`token ${GH_TOKEN}`}})).json();
+    const meta = await (await fetch(apiUrl,{headers:{'Authorization':`token ${GH_TOKEN}`}})).json();
     const encoded = btoa(unescape(encodeURIComponent(csvText)));
-    const r = await fetch(apiUrl, {
-      method: 'PUT',
-      headers: {'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
-      body: JSON.stringify({message:'Update customers via app', content: encoded, sha: meta.sha})
+    const res = await fetch(apiUrl,{
+      method:'PUT',
+      headers:{'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
+      body:JSON.stringify({message:'Update customers via app',content:encoded,sha:meta.sha})
     });
-    if (!r.ok) throw new Error('push failed');
-  }>
+    if (!res.ok) throw new Error('push failed');
+  }
+
+  async function saveCustomer() {
+    const code=document.getElementById('fCode').value.trim();
+    const name=document.getElementById('fName').value.trim();
+    const addr=cleanAddr(document.getElementById('fAddr').value.trim());
+    if (!name||!addr) { alert('請填入客戶名稱和地址！'); return; }
+    if (isDupCode(code,editingId)) { document.getElementById('codeError').classList.add('show'); document.getElementById('fCode').focus(); return; }
+    document.getElementById('codeError').classList.remove('show');
+    if (editingId) { const c=customers.find(x=>x.id===editingId); c.code=code; c.name=name; c.address=addr; }
+    else customers.push({id:Date.now().toString(),code,name,address:addr});
+    const saveBtn = document.querySelector('#modal .modal-save');
+    if (saveBtn) { saveBtn.textContent='儲存中...'; saveBtn.disabled=true; }
+    try { await pushCustomersToGitHub(); showToast('✅ 已儲存到雲端','#22c55e'); }
+    catch(e) { showToast('❌ 雲端儲存失敗，請重試','#f87171'); }
+    if (saveBtn) { saveBtn.textContent='儲存'; saveBtn.disabled=false; }
+    closeModal(); renderManage(); renderList();
+  }
+
+  async function deleteCustomer(id) {
+    if (!confirm('確定要刪除這筆客戶資料嗎？')) return;
+    customers=customers.filter(c=>c.id!==id); selected.delete(id);
+    renderManage(); renderList();
+    try { await pushCustomersToGitHub(); showToast('✅ 已刪除並同步雲端','#22c55e'); }
+    catch(e) { showToast('❌ 雲端同步失敗','#f87171'); }
+  }
+
+  // ── 匯入/匯出 ──
+  function openImport() { document.getElementById('importText').value=''; document.getElementById('importModal').classList.add('show'); }
+  function closeImport() { document.getElementById('importModal').classList.remove('show'); }
+  function cleanAddr(addr) { return addr.replace(/[（(]\d{3,6}[)）]/g,'').trim(); }
+
+  async function importCustomers() {
+    const text=document.getElementById('importText').value.trim();
+    if (!text) { alert('請貼上資料！'); return; }
+    let added=0, skipped=0;
+    text.split('\n').filter(l=>l.trim()).forEach(line=>{
+      if (line.startsWith('客戶編號') || line.startsWith('【') || line.startsWith('日期')) return;
+      const parts=line.split(/\t|，|,/).map(s=>s.trim()).filter(Boolean);
+      if (parts.length<2) return;
+      let code='',name='',address='';
+      if (parts.length>=3) { code=parts[0]; name=parts[1]; address=cleanAddr(parts.slice(2).join(' ')); }
+      else { name=parts[0]; address=cleanAddr(parts[1]); }
+      if (!name||!address) return;
+      if (isDupCode(code)) { skipped++; return; }
+      customers.push({id:Date.now().toString()+Math.random(),code,name,address}); added++;
+    });
+    renderManage(); renderList();
+    try { await pushCustomersToGitHub(); showToast('✅ 已匯入並同步雲端','#22c55e'); }
+    catch(e) { showToast('❌ 雲端同步失敗','#f87171'); }
+    closeImport();
+    alert(`匯入完成！新增 ${added} 筆${skipped>0?`，略過 ${skipped} 筆重複編號`:''}。`);
+  }
+
+  function handleFileImport(e) {
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=ev=>{ document.getElementById('importText').value=ev.target.result.replace(/^\uFEFF/,''); };
+    r.readAsText(file,'UTF-8'); e.target.value='';
+  }
+
+  function exportCSV() {
+    if (customers.length===0) { alert('還沒有客戶資料可以匯出！'); return; }
+    const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+    const custRows = customers.map(c=>`${esc(c.code)},${esc(c.name)},${esc(c.address)}`);
+    const csv = '\uFEFF' + '客戶編號,客戶名稱,送貨地址\n' + custRows.join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = `客戶資料_${date}.csv`;
+    a.click();
+  }
+
+  function exportHistory() {
+    if (routeHistory.length===0) { alert('還沒有歷史紀錄！'); return; }
+    const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+    const rows = routeHistory.map(r => {
+      const label = esc(r.label || r.date || '');
+      const km = r.totalKm != null ? r.totalKm : '';
+      const stops = r.stops.length;
+      const boxes = r.boxes || '';
+      const names = esc(r.stops.map(s=>s.name).join('、'));
+      return `${label},${km},${stops},${boxes},${names}`;
+    });
+    const csv = '\uFEFF' + '日期標籤,里程(km),站數,箱數,客戶清單\n' + rows.join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = `歷史紀錄_${date}.csv`;
+    a.click();
+  }
+
+  function esc(v) {
+    if (!v) return '';
+    if (v.includes(',')||v.includes('\n')||v.includes('"')) return '"'+v.replace(/"/g,'""')+'"';
+    return v;
+  }
+
+  // ── 列印 ──
+  let lastSorted = [];
+  let lastSegments = [];
+
+  async function printRoute() {
+    if (!lastSorted.length) { alert('請先加入送貨站點！'); return; }
+    const btn = document.getElementById('printBtn');
+    if (btn) { btn.textContent = '⏳ 計算中...'; btn.disabled = true; }
+
+    // 先開視窗（避開 popup blocker），async 結束後再寫入內容
+    const w = window.open('', '_blank');
+    if (!w) {
+      if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
+      alert('請允許彈出視窗後再試'); return;
+    }
+
+    try {
+      // 非同步計算回程距離
+      const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+      const bc = document.getElementById('boxCount').value;
+      const stopSum = lastSorted.reduce((acc,c)=>acc+(c.dist!=null&&c.dist>=0.1?c.dist:0),0);
+      const last = lastSorted[lastSorted.length-1];
+      const lastCoord = last ? getCoordFromAddress(last.address) : null;
+      const returnDist = lastCoord ? await getRoadDistance(lastCoord[0],lastCoord[1],DEPOT_LAT,DEPOT_LNG) : 0;
+      const totalKm = Math.round((stopSum+returnDist)*10)/10;
+
+      // 在母頁面用已載入的 QRCode 函式庫產生 QR 圖片（base64）
+      const segUrls = lastSegments.map(s=>s.url);
+      const qrImages = segUrls.map(u => {
+        try {
+          const tmp = document.createElement('div');
+          tmp.style.cssText = 'position:fixed;left:-9999px;top:0;';
+          document.body.appendChild(tmp);
+          new QRCode(tmp, {text:u, width:128, height:128, correctLevel:QRCode.CorrectLevel.L});
+          const cv = tmp.querySelector('canvas');
+          const b64 = cv ? cv.toDataURL() : '';
+          tmp.remove();
+          return b64;
+        } catch(e) { return ''; }
+      });
+
+      // 路線表格
+      const rows = lastSorted.map((c,i)=>
+        '<tr><td style="text-align:center;font-weight:bold;font-size:16px">'+(i+1)+'</td>'
+        +'<td style="font-weight:bold">'+c.name+'</td>'
+        +'<td style="color:#666">'+c.address+'</td>'
+        +'<td style="text-align:center;color:#999;font-family:monospace">'+c.code+'</td>'
+        +'<td></td></tr>'
+      ).join('')
+      +'<tr style="background:#fff8ee;">'
+      +'<td style="text-align:center;font-weight:bold;font-size:13px;color:#f5a623">回</td>'
+      +'<td style="font-weight:bold;color:#f5a623">【回公司】龍冶股份有限公司</td>'
+      +'<td style="color:#999">桃園市龍潭區工五路250號</td>'
+      +'<td></td><td></td></tr>';
+
+      const subParts = ['出發點：桃園市龍潭區工五路250號','日期：'+date,
+        '共 '+lastSorted.length+' 站','預計總里程：'+totalKm+' km',
+        ...(bc?['箱數：'+bc+' 箱']:[])].join('　|　');
+
+      // QR 圖片區塊（base64，不需要 CDN）
+      const qrBlocks = qrImages.map((img,i)=>
+        '<div style="display:inline-block;text-align:center;margin:0 16px 8px 0;vertical-align:top">'
+        +(img?'<img src="'+img+'" width="128" height="128">':'')
+        +'<div style="font-size:11px;color:#666;margin-top:4px">'+(qrImages.length>1?'第'+(i+1)+'段導航':'掃描開始導航')+'</div>'
+        +'</div>'
+      ).join('');
+
+      // 完整靜態 HTML（無任何 script 標籤）
+      const html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+        +'<style>'
+        +'body{font-family:"Noto Sans TC",Arial,sans-serif;padding:20px;margin:0;color:#111;}'
+        +'h2{font-size:18px;margin:0 0 4px 0;}'
+        +'.sub{font-size:12px;color:#666;margin-bottom:16px;}'
+        +'table{width:100%;border-collapse:collapse;font-size:13px;}'
+        +'th{background:#f5a623;color:#000;padding:8px 10px;text-align:left;}'
+        +'td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;}'
+        +'tr:nth-child(even) td{background:#fafafa;}'
+        +'.qr-section{margin-top:20px;padding-top:14px;border-top:1px solid #ddd;}'
+        +'.qr-label{font-size:12px;font-weight:bold;color:#555;margin-bottom:10px;}'
+        +'@page{size:A4;margin:15mm;}'
+        +'</style></head><body>'
+        +'<h2>🚛 龍冶股份有限公司 — 送貨路線單</h2>'
+        +'<div class="sub">'+subParts+'</div>'
+        +'<table><tr>'
+        +'<th style="width:36px">站</th>'
+        +'<th style="width:160px">公司名稱</th>'
+        +'<th>送貨地址</th>'
+        +'<th style="width:50px">編號</th>'
+        +'<th style="width:50px">備註</th>'
+        +'</tr>'+rows+'</table>'
+        +(qrBlocks?'<div class="qr-section"><div class="qr-label">📱 Google Maps 導航 QR Code</div>'+qrBlocks+'</div>':'')
+        +'</body></html>';
+
+      // 寫入視窗（純靜態 HTML，無 script，無跳脫問題）
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+
+      // 等 HTML 渲染完成後列印
+      setTimeout(() => { w.focus(); w.print(); }, 400);
+
+    } finally {
+      if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
+    }
+  }
+
+  function updateBoxCount(v) {
+    if (!editingHistoryId) return;
+    const idx = routeHistory.findIndex(r => r.id === editingHistoryId);
+    if (idx !== -1) {
+      routeHistory[idx].boxes = v || '';
+      saveHist();
+    }
+  }
+
+  load(); renderList();
+  syncFromGitHub();
+</script>
+
+
+</body></html>
