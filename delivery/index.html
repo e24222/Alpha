@@ -2654,40 +2654,19 @@
   let lastSegments = [];
 
   async function printRoute() {
-    if (!lastSorted.length) return;
+    if (!lastSorted.length) { alert('請先加入送貨站點！'); return; }
     const btn = document.getElementById('printBtn');
     if (btn) { btn.textContent = '⏳ 計算中...'; btn.disabled = true; }
 
-    // 先同步開視窗（避開 popup blocker），只放樣式和 QRCode 函式庫，不放 <\/script> 跳脫問題
-    const w = window.open('','_blank');
+    // 先開視窗（避開 popup blocker），async 結束後再寫入內容
+    const w = window.open('', '_blank');
     if (!w) {
       if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
       alert('請允許彈出視窗後再試'); return;
     }
-    const SCRTAG = '<' + 'script';
-    const SCREND = '<' + '/script>';
-    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">'
-      + SCRTAG + ' src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">' + SCREND
-      + '<style>'
-      + 'body{font-family:"Noto Sans TC",Arial,sans-serif;padding:20px;margin:0;color:#111;}'
-      + 'h2{font-size:18px;margin:0 0 4px 0;}.sub{font-size:12px;color:#666;margin-bottom:16px;}'
-      + 'table{width:100%;border-collapse:collapse;font-size:13px;}'
-      + 'th{background:#f5a623;color:#000;padding:8px 10px;text-align:left;}'
-      + 'td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;}'
-      + 'tr:nth-child(even) td{background:#fafafa;}'
-      + '.qr-section{margin-top:20px;padding-top:14px;border-top:1px solid #ddd;}'
-      + '.qr-label{font-size:12px;font-weight:bold;color:#555;margin-bottom:10px;}'
-      + '@page{size:A4;margin:15mm;}'
-      + '#loading{display:flex;align-items:center;justify-content:center;height:80vh;font-size:18px;color:#555;}'
-      + '#content{display:none;}'
-      + '</style></head><body>'
-      + '<div id="loading">⏳ 計算里程中，請稍候...</div>'
-      + '<div id="content"></div>'
-      + '</body></html>');
-    w.document.close();
 
     try {
-      // 非同步計算
+      // 非同步計算回程距離
       const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
       const bc = document.getElementById('boxCount').value;
       const stopSum = lastSorted.reduce((acc,c)=>acc+(c.dist!=null&&c.dist>=0.1?c.dist:0),0);
@@ -2696,6 +2675,22 @@
       const returnDist = lastCoord ? await getRoadDistance(lastCoord[0],lastCoord[1],DEPOT_LAT,DEPOT_LNG) : 0;
       const totalKm = Math.round((stopSum+returnDist)*10)/10;
 
+      // 在母頁面用已載入的 QRCode 函式庫產生 QR 圖片（base64）
+      const segUrls = lastSegments.map(s=>s.url);
+      const qrImages = segUrls.map(u => {
+        try {
+          const tmp = document.createElement('div');
+          tmp.style.cssText = 'position:fixed;left:-9999px;top:0;';
+          document.body.appendChild(tmp);
+          new QRCode(tmp, {text:u, width:128, height:128, correctLevel:QRCode.CorrectLevel.L});
+          const cv = tmp.querySelector('canvas');
+          const b64 = cv ? cv.toDataURL() : '';
+          tmp.remove();
+          return b64;
+        } catch(e) { return ''; }
+      });
+
+      // 路線表格
       const rows = lastSorted.map((c,i)=>
         '<tr><td style="text-align:center;font-weight:bold;font-size:16px">'+(i+1)+'</td>'
         +'<td style="font-weight:bold">'+c.name+'</td>'
@@ -2713,46 +2708,47 @@
         '共 '+lastSorted.length+' 站','預計總里程：'+totalKm+' km',
         ...(bc?['箱數：'+bc+' 箱']:[])].join('　|　');
 
-      const segUrls = lastSegments.map(s=>s.url);
-      const qrHtml = segUrls.map((u,i)=>
+      // QR 圖片區塊（base64，不需要 CDN）
+      const qrBlocks = qrImages.map((img,i)=>
         '<div style="display:inline-block;text-align:center;margin:0 16px 8px 0;vertical-align:top">'
-        +'<div id="qr-seg-'+i+'"></div>'
-        +'<div style="font-size:11px;color:#666;margin-top:4px">'+(segUrls.length>1?'第'+(i+1)+'段導航':'掃描開始導航')+'</div>'
+        +(img?'<img src="'+img+'" width="128" height="128">':'')
+        +'<div style="font-size:11px;color:#666;margin-top:4px">'+(qrImages.length>1?'第'+(i+1)+'段導航':'掃描開始導航')+'</div>'
         +'</div>'
       ).join('');
 
-      // 注入內容到視窗
-      const contentEl = w.document.getElementById('content');
-      const loadingEl = w.document.getElementById('loading');
-      if (contentEl) {
-        contentEl.innerHTML =
-          '<h2>🚛 龍冶股份有限公司 — 送貨路線單</h2>'
-          +'<div class="sub">'+subParts+'</div>'
-          +'<table><tr><th style="width:36px">站</th><th style="width:160px">公司名稱</th>'
-          +'<th>送貨地址</th><th style="width:50px">編號</th><th style="width:50px">備註</th></tr>'
-          +rows+'</table>'
-          +'<div class="qr-section"><div class="qr-label">📱 Google Maps 導航 QR Code</div>'+qrHtml+'</div>';
-        if (loadingEl) loadingEl.style.display = 'none';
-        contentEl.style.display = 'block';
-      }
+      // 完整靜態 HTML（無任何 script 標籤）
+      const html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+        +'<style>'
+        +'body{font-family:"Noto Sans TC",Arial,sans-serif;padding:20px;margin:0;color:#111;}'
+        +'h2{font-size:18px;margin:0 0 4px 0;}'
+        +'.sub{font-size:12px;color:#666;margin-bottom:16px;}'
+        +'table{width:100%;border-collapse:collapse;font-size:13px;}'
+        +'th{background:#f5a623;color:#000;padding:8px 10px;text-align:left;}'
+        +'td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;}'
+        +'tr:nth-child(even) td{background:#fafafa;}'
+        +'.qr-section{margin-top:20px;padding-top:14px;border-top:1px solid #ddd;}'
+        +'.qr-label{font-size:12px;font-weight:bold;color:#555;margin-bottom:10px;}'
+        +'@page{size:A4;margin:15mm;}'
+        +'</style></head><body>'
+        +'<h2>🚛 龍冶股份有限公司 — 送貨路線單</h2>'
+        +'<div class="sub">'+subParts+'</div>'
+        +'<table><tr>'
+        +'<th style="width:36px">站</th>'
+        +'<th style="width:160px">公司名稱</th>'
+        +'<th>送貨地址</th>'
+        +'<th style="width:50px">編號</th>'
+        +'<th style="width:50px">備註</th>'
+        +'</tr>'+rows+'</table>'
+        +(qrBlocks?'<div class="qr-section"><div class="qr-label">📱 Google Maps 導航 QR Code</div>'+qrBlocks+'</div>':'')
+        +'</body></html>';
 
-      // 產生 QR code（用新視窗的 QRCode 類別）
-      async function shortenUrl(url) {
-        try {
-          const r = await fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(url));
-          if (r.ok) { const t=await r.text(); if(t.startsWith('http')) return t.trim(); }
-        } catch(e) {}
-        return url;
-      }
-      for (let i=0; i<segUrls.length; i++) {
-        const el = w.document.getElementById('qr-seg-'+i);
-        if (!el || !w.QRCode) continue;
-        const short = await shortenUrl(segUrls[i]);
-        new w.QRCode(el, {text:short, width:128, height:128, correctLevel:w.QRCode.CorrectLevel.L});
-      }
+      // 寫入視窗（純靜態 HTML，無 script，無跳脫問題）
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
 
-      // 等 QR code render 完再列印
-      setTimeout(() => { w.focus(); w.print(); }, 600);
+      // 等 HTML 渲染完成後列印
+      setTimeout(() => { w.focus(); w.print(); }, 400);
 
     } finally {
       if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
