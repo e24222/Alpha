@@ -2700,19 +2700,21 @@
       const totalKm = Math.round((stopSum+returnDist)*10)/10;
 
       // 在母頁面用已載入的 QRCode 函式庫產生 QR 圖片（base64）
+      // 用 Promise + setTimeout 確保 QRCode.js 畫完 canvas 再讀取
       const segUrls = lastSegments.map(s=>s.url);
-      const qrImages = segUrls.map(u => {
+      const qrImages = await Promise.all(segUrls.map(u => new Promise(resolve => {
         try {
           const tmp = document.createElement('div');
           tmp.style.cssText = 'position:fixed;left:-9999px;top:0;';
           document.body.appendChild(tmp);
           new QRCode(tmp, {text:u, width:128, height:128, correctLevel:QRCode.CorrectLevel.L});
-          const cv = tmp.querySelector('canvas');
-          const b64 = cv ? cv.toDataURL() : '';
-          tmp.remove();
-          return b64;
-        } catch(e) { return ''; }
-      });
+          setTimeout(() => {
+            const cv = tmp.querySelector('canvas');
+            const b64 = cv ? cv.toDataURL() : '';
+            tmp.remove(); resolve(b64);
+          }, 200);
+        } catch(e) { resolve(''); }
+      })));
 
       // 路線表格
       const rows = lastSorted.map((c,i)=>
@@ -2746,9 +2748,9 @@
         +'body{font-family:"Noto Sans TC",Arial,sans-serif;padding:20px;margin:0;color:#111;}'
         +'h2{font-size:18px;margin:0 0 4px 0;}'
         +'.sub{font-size:12px;color:#666;margin-bottom:16px;}'
-        +'table{width:100%;border-collapse:collapse;font-size:13px;}'
-        +'th{background:#f5a623;color:#000;padding:8px 10px;text-align:left;}'
-        +'td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;}'
+        +'table{width:100%;border-collapse:collapse;font-size:14px;}'
+        +'th{background:#f5a623;color:#000;padding:10px 10px;text-align:left;font-size:14px;}'
+        +'td{padding:14px 10px;border-bottom:1px solid #eee;vertical-align:middle;font-size:14px;line-height:1.5;}'
         +'tr:nth-child(even) td{background:#fafafa;}'
         +'.qr-section{margin-top:20px;padding-top:14px;border-top:1px solid #ddd;}'
         +'.qr-label{font-size:12px;font-weight:bold;color:#555;margin-bottom:10px;}'
