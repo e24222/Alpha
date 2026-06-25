@@ -2565,6 +2565,32 @@
 
   function closeModal() { document.getElementById('modal').classList.remove('show'); editingId=null; }
 
+
+  // ── 同步客戶資料到 GitHub ──
+  let ghCustPushTimer = null;
+  function pushCustomersToGitHub() {
+    clearTimeout(ghCustPushTimer);
+    ghCustPushTimer = setTimeout(async () => {
+      try {
+        const csvRows = customers.map(c =>
+          [c.code||'', c.name||'', c.address||''].map(v => v.includes(',') ? '"'+v.replace(/"/g,'""')+'"' : v).join(',')
+        );
+        const csvText = '﻿客戶編號,客戶名稱,送貨地址\n' + csvRows.join('\n');
+        const apiUrl = `https://api.github.com/repos/${GH_REPO}/contents/delivery/customers.csv`;
+        const meta = await fetch(apiUrl, {headers:{'Authorization':`token ${GH_TOKEN}`}});
+        const metaJson = await meta.json();
+        const encoded = btoa(unescape(encodeURIComponent(csvText)));
+        await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {'Authorization':`token ${GH_TOKEN}`,'Content-Type':'application/json'},
+          body: JSON.stringify({message:'Update customers via app', content: encoded, sha: metaJson.sha})
+        });
+        // 清除 etag 快取，下次開啟會重新同步
+        localStorage.removeItem('gh_csv_etag');
+      } catch(e) { console.warn('客戶雲端同步失敗', e); }
+    }, 1500);
+  }
+
   function saveCustomer() {
     const code=document.getElementById('fCode').value.trim();
     const name=document.getElementById('fName').value.trim();
@@ -2575,12 +2601,14 @@
     if (editingId) { const c=customers.find(x=>x.id===editingId); c.code=code; c.name=name; c.address=addr; }
     else customers.push({id:Date.now().toString(),code,name,address:addr});
     save(); closeModal(); renderManage(); renderList();
+    pushCustomersToGitHub();
   }
 
   function deleteCustomer(id) {
     if (!confirm('確定要刪除這筆客戶資料嗎？')) return;
     customers=customers.filter(c=>c.id!==id); selected.delete(id);
     save(); renderManage(); renderList();
+    pushCustomersToGitHub();
   }
 
   // ── 匯入/匯出 ──
@@ -2604,6 +2632,7 @@
       customers.push({id:Date.now().toString()+Math.random(),code,name,address}); added++;
     });
     save(); closeImport(); renderManage(); renderList();
+    pushCustomersToGitHub();
     alert(`匯入完成！新增 ${added} 筆${skipped>0?`，略過 ${skipped} 筆重複編號`:''}。`);
   }
 
