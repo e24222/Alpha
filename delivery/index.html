@@ -2681,14 +2681,6 @@
     if (!lastSorted.length) { alert('請先加入送貨站點！'); return; }
     const btn = document.getElementById('printBtn');
     if (btn) { btn.textContent = '⏳ 計算中...'; btn.disabled = true; }
-
-    // 先開視窗（避開 popup blocker），async 結束後再寫入內容
-    const w = window.open('', '_blank');
-    if (!w) {
-      if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
-      alert('請允許彈出視窗後再試'); return;
-    }
-
     try {
       // 非同步計算回程距離
       const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
@@ -2699,7 +2691,7 @@
       const returnDist = lastCoord ? await getRoadDistance(lastCoord[0],lastCoord[1],DEPOT_LAT,DEPOT_LNG) : 0;
       const totalKm = Math.round((stopSum+returnDist)*10)/10;
 
-      // 在母頁面用已載入的 QRCode 函式庫產生 QR 圖片（base64）
+      // QR code 在母頁面產生（已載入 QRCode 函式庫），轉成 base64 圖片嵌入
       const segUrls = lastSegments.map(s=>s.url);
       const qrImages = segUrls.map(u => {
         try {
@@ -2709,12 +2701,11 @@
           new QRCode(tmp, {text:u, width:128, height:128, correctLevel:QRCode.CorrectLevel.L});
           const cv = tmp.querySelector('canvas');
           const b64 = cv ? cv.toDataURL() : '';
-          tmp.remove();
-          return b64;
+          tmp.remove(); return b64;
         } catch(e) { return ''; }
       });
 
-      // 路線表格
+      // 表格
       const rows = lastSorted.map((c,i)=>
         '<tr><td style="text-align:center;font-weight:bold;font-size:16px">'+(i+1)+'</td>'
         +'<td style="font-weight:bold">'+c.name+'</td>'
@@ -2732,16 +2723,16 @@
         '共 '+lastSorted.length+' 站','預計總里程：'+totalKm+' km',
         ...(bc?['箱數：'+bc+' 箱']:[])].join('　|　');
 
-      // QR 圖片區塊（base64，不需要 CDN）
       const qrBlocks = qrImages.map((img,i)=>
         '<div style="display:inline-block;text-align:center;margin:0 16px 8px 0;vertical-align:top">'
         +(img?'<img src="'+img+'" width="128" height="128">':'')
-        +'<div style="font-size:11px;color:#666;margin-top:4px">'+(qrImages.length>1?'第'+(i+1)+'段導航':'掃描開始導航')+'</div>'
-        +'</div>'
+        +'<div style="font-size:11px;color:#666;margin-top:4px">'
+        +(qrImages.length>1?'第'+(i+1)+'段導航':'掃描開始導航')+'</div></div>'
       ).join('');
 
-      // 完整靜態 HTML（無任何 script 標籤）
-      const html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+      // 純靜態 HTML（無 script，QR 已嵌入 base64）
+      const html =
+        '<!DOCTYPE html><html><head><meta charset="UTF-8">'
         +'<style>'
         +'body{font-family:"Noto Sans TC",Arial,sans-serif;padding:20px;margin:0;color:#111;}'
         +'h2{font-size:18px;margin:0 0 4px 0;}'
@@ -2757,27 +2748,32 @@
         +'<h2>🚛 龍冶股份有限公司 — 送貨路線單</h2>'
         +'<div class="sub">'+subParts+'</div>'
         +'<table><tr>'
-        +'<th style="width:36px">站</th>'
-        +'<th style="width:160px">公司名稱</th>'
-        +'<th>送貨地址</th>'
-        +'<th style="width:50px">編號</th>'
-        +'<th style="width:50px">備註</th>'
+        +'<th style="width:36px">站</th><th style="width:160px">公司名稱</th>'
+        +'<th>送貨地址</th><th style="width:50px">編號</th><th style="width:50px">備註</th>'
         +'</tr>'+rows+'</table>'
         +(qrBlocks?'<div class="qr-section"><div class="qr-label">📱 Google Maps 導航 QR Code</div>'+qrBlocks+'</div>':'')
         +'</body></html>';
 
-      // 寫入視窗（純靜態 HTML，無 script，無跳脫問題）
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-
-      // 等 HTML 渲染完成後列印
-      setTimeout(() => { w.focus(); w.print(); }, 400);
-
+      // 用隱藏 iframe 列印（不需要彈出視窗，不受 popup blocker 影響）
+      const old = document.getElementById('_printFrame');
+      if (old) old.remove();
+      const f = document.createElement('iframe');
+      f.id = '_printFrame';
+      f.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:0;visibility:hidden;';
+      document.body.appendChild(f);
+      f.srcdoc = html;
+      f.onload = () => {
+        setTimeout(() => {
+          f.contentWindow.focus();
+          f.contentWindow.print();
+          setTimeout(() => { if(f.parentNode) f.remove(); }, 3000);
+        }, 200);
+      };
     } finally {
-      if (btn) { btn.textContent = '🖨️ 列印 A4 路線單'; btn.disabled = false; }
+      if (btn) { btn.textContent = '🖸️ 列印 A4 路線單'; btn.disabled = false; }
     }
   }
+
 
   function updateBoxCount(v) {
     if (!editingHistoryId) return;
