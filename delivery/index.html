@@ -1323,13 +1323,13 @@
   const GH_TOKEN = ['ghp_LlpdtCSwObbShdT', '4xA2C8SWvZgLdGZ1nq24z'].join('');
   const GH_REPO = 'e24222/Alpha';
 
-  function save() { localStorage.setItem('customers_v3', JSON.stringify(customers)); }
+  function save() { /* 客戶資料只存 GitHub，不用 localStorage */ }
   function saveHist() {
     localStorage.setItem('route_history_v2', JSON.stringify(routeHistory.slice(0,60)));
     pushHistoryToGitHub();
   }
   function load() {
-    try { customers = JSON.parse(localStorage.getItem('customers_v3') || '[]'); } catch(e) { customers = []; }
+    customers = []; // 改由 syncCustomers() 從 GitHub 載入
     try { routeHistory = JSON.parse(localStorage.getItem('route_history_v2') || '[]'); } catch(e) { routeHistory = []; }
   }
 
@@ -2591,7 +2591,7 @@
     }, 1500);
   }
 
-  function saveCustomer() {
+  async function saveCustomer() {
     const code=document.getElementById('fCode').value.trim();
     const name=document.getElementById('fName').value.trim();
     const addr=cleanAddr(document.getElementById('fAddr').value.trim());
@@ -2600,15 +2600,24 @@
     document.getElementById('codeError').classList.remove('show');
     if (editingId) { const c=customers.find(x=>x.id===editingId); c.code=code; c.name=name; c.address=addr; }
     else customers.push({id:Date.now().toString(),code,name,address:addr});
-    save(); closeModal(); renderManage(); renderList();
-    pushCustomersToGitHub();
+    const saveBtn = document.querySelector('#modal .modal-save');
+    if (saveBtn) { saveBtn.textContent='儲存中...'; saveBtn.disabled=true; }
+    try {
+      await pushCustomersToGitHub();
+      showToast('✅ 已儲存到雲端', '#22c55e');
+    } catch(e) { showToast('❌ 雲端儲存失敗，請重試', '#f87171'); }
+    if (saveBtn) { saveBtn.textContent='儲存'; saveBtn.disabled=false; }
+    closeModal(); renderManage(); renderList();
   }
 
-  function deleteCustomer(id) {
+  async function deleteCustomer(id) {
     if (!confirm('確定要刪除這筆客戶資料嗎？')) return;
     customers=customers.filter(c=>c.id!==id); selected.delete(id);
-    save(); renderManage(); renderList();
-    pushCustomersToGitHub();
+    renderManage(); renderList();
+    try {
+      await pushCustomersToGitHub();
+      showToast('✅ 已刪除並同步雲端', '#22c55e');
+    } catch(e) { showToast('❌ 雲端同步失敗', '#f87171'); }
   }
 
   // ── 匯入/匯出 ──
@@ -2616,7 +2625,7 @@
   function closeImport() { document.getElementById('importModal').classList.remove('show'); }
   function cleanAddr(addr) { return addr.replace(/[（(]\d{3,6}[)）]/g,'').trim(); }
 
-  function importCustomers() {
+  async function importCustomers() {
     const text=document.getElementById('importText').value.trim();
     if (!text) { alert('請貼上資料！'); return; }
     let added=0, skipped=0;
@@ -2631,8 +2640,12 @@
       if (isDupCode(code)) { skipped++; return; }
       customers.push({id:Date.now().toString()+Math.random(),code,name,address}); added++;
     });
-    save(); closeImport(); renderManage(); renderList();
-    pushCustomersToGitHub();
+    renderManage(); renderList();
+    try {
+      await pushCustomersToGitHub();
+      showToast('✅ 已匯入並同步雲端', '#22c55e');
+    } catch(e) { showToast('❌ 雲端同步失敗', '#f87171'); }
+    closeImport();
     alert(`匯入完成！新增 ${added} 筆${skipped>0?`，略過 ${skipped} 筆重複編號`:''}。`);
   }
 
