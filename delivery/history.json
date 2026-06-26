@@ -2,7 +2,7 @@
   {
     "id": "1782365913445",
     "date": "2026/06/25 下午01:38",
-    "boxes": "",
+    "boxes": "35",
     "totalKm": 117.5,
     "stops": [
       {
@@ -36,8 +36,7 @@
         "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E8%8B%97%E6%A0%97%E7%B8%A3%E7%AB%B9%E5%8D%97%E9%8E%AE%E5%85%89%E5%BE%A9%E8%B7%AF381%E5%B7%B713%E8%99%9F|%E8%8B%97%E6%A0%97%E7%B8%A3%E9%A0%AD%E4%BB%BD%E5%B8%82%E5%B0%96%E8%B1%90%E8%B7%AF206%E5%B7%B792%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E9%A6%99%E5%B1%B1%E5%8D%80%E6%A8%B9%E4%B8%8B%E9%87%8C%E7%89%9B%E5%9F%94%E5%8D%97%E8%B7%AF448%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%92%8C%E5%B9%B3%E8%B7%AF6%E5%B7%B742%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E7%AB%B9%E5%8C%97%E5%B8%82%E6%96%B0%E5%BA%84%E9%87%8C%E6%96%B0%E5%AF%AE%E8%A1%97300%E8%99%9F%E5%9B%9B%E6%A8%93&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
-    ],
-    "label": "2026/06/25 下午01:38"
+    ]
   },
   {
     "id": "1782289446106",
