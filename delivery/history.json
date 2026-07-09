@@ -24,7 +24,7 @@
     "date": "2026/07/09 下午12:00",
     "label": "20260709",
     "boxes": "68",
-    "totalKm": 107.1,
+    "totalKm": 125.1,
     "stops": [
       {
         "code": "462",
@@ -37,9 +37,14 @@
         "address": "桃園市蘆竹區光明路一段80號3樓"
       },
       {
-        "code": "085",
-        "name": "新新儀器股份有限公司",
-        "address": "台北市大同區環河北路2段283號"
+        "code": "260",
+        "name": "慧眾生物科技有限公司",
+        "address": "新北市中和區橋和路85號3F"
+      },
+      {
+        "code": "292",
+        "name": "心意有限公司",
+        "address": "新北市三重區成功路110號16F之18"
       },
       {
         "code": "006",
@@ -47,14 +52,14 @@
         "address": "台北市中正區羅斯福路3段240巷7弄4-1號"
       },
       {
-        "code": "260",
-        "name": "慧眾生物科技有限公司",
-        "address": "新北市中和區橋和路85號3F"
+        "code": "085",
+        "name": "新新儀器股份有限公司",
+        "address": "台北市大同區環河北路2段283號"
       }
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E5%B9%B3%E9%8E%AE%E5%8D%80%E5%A4%AA%E5%B9%B3%E6%9D%B1%E8%B7%AF2%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E8%98%86%E7%AB%B9%E5%8D%80%E5%85%89%E6%98%8E%E8%B7%AF%E4%B8%80%E6%AE%B580%E8%99%9F3%E6%A8%93|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%A4%A7%E5%90%8C%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8C%97%E8%B7%AF2%E6%AE%B5283%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5240%E5%B7%B77%E5%BC%844-1%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E6%A9%8B%E5%92%8C%E8%B7%AF85%E8%99%9F3F&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E5%B9%B3%E9%8E%AE%E5%8D%80%E5%A4%AA%E5%B9%B3%E6%9D%B1%E8%B7%AF2%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E8%98%86%E7%AB%B9%E5%8D%80%E5%85%89%E6%98%8E%E8%B7%AF%E4%B8%80%E6%AE%B580%E8%99%9F3%E6%A8%93|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E6%A9%8B%E5%92%8C%E8%B7%AF85%E8%99%9F3F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%89%E9%87%8D%E5%8D%80%E6%88%90%E5%8A%9F%E8%B7%AF110%E8%99%9F16F%E4%B9%8B18|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5240%E5%B7%B77%E5%BC%844-1%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%A4%A7%E5%90%8C%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8C%97%E8%B7%AF2%E6%AE%B5283%E8%99%9F&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ]
