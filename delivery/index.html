@@ -2427,12 +2427,72 @@
     showRoute(true, true); // isEdit=true, reSort=true
   }
 
-  function addStop() {
+  async function addStop() {
     const sel = document.getElementById('addStopSelect');
     const id = sel.value;
     if (!id) return;
     selected.add(id);
-    showRoute(true, true); // isEdit=true, reSort=true
+
+    // 直接把新站加到現有路線最後，不重新排序
+    const c = customers.find(x => x.id === id);
+    if (!c || !lastSorted.length) {
+      // 路線還沒初始化，全新排
+      showRoute(true, true);
+      return;
+    }
+    const prev = lastSorted[lastSorted.length - 1];
+    const prevCoord = getCoordFromAddress(prev.address);
+    const newCoord = getCoordFromAddress(c.address);
+    const dist = (prevCoord && newCoord)
+      ? await getRoadDistance(prevCoord[0], prevCoord[1], newCoord[0], newCoord[1])
+      : null;
+    lastSorted.push({ ...c, dist });
+
+    // 重新建立導航分段並更新畫面
+    lastSegments = buildSegments(lastSorted);
+    const returnCoord = newCoord;
+    const returnDist = returnCoord
+      ? await getRoadDistance(returnCoord[0], returnCoord[1], DEPOT_LAT, DEPOT_LNG)
+      : null;
+
+    const list = document.getElementById('addressList');
+    const notSelected = customers.filter(c=>!selected.has(c.id))
+      .sort((a,b)=>a.code.localeCompare(b.code,'zh-TW',{numeric:true}));
+
+    // 只重繪路線清單（不重新排序）
+    list.innerHTML =
+      `<div class="address-item" style="animation-delay:0s">
+        <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">出發</div>
+        <div class="addr-info"><div class="addr-name">【出發點】龍台貿易有限公司</div><div class="addr-text">📍 ${DEPOT}</div></div>
+      </div>` +
+      lastSorted.map((c,i)=>`
+        <div class="address-item draggable" draggable="true" data-id="${c.id}" style="animation-delay:${(i+1)*0.05}s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num" ${priority.has(c.id)?'style="background:var(--accent2)"':''}>${i+1}</div>
+          <div class="addr-info">
+            <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
+            <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+        </div>`).join('') +
+      `<div class="address-item" style="opacity:0.7">
+        <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">回程</div>
+        <div class="addr-info"><div class="addr-name">【回公司】龍台貿易有限公司</div><div class="addr-text">📍 ${DEPOT}${returnDist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 ${returnDist.toFixed(1)} km</span>` : ''}</div></div>
+      </div>`;
+
+    initDragSort(list, lastSorted);
+
+    // 更新導航按鈕與下拉選單
+    const addArea = notSelected.length > 0 ? `
+      <div class="add-stop-area">
+        <select id="addStopSelect">
+          <option value="">＋ 新增客戶到路線...</option>
+          ${notSelected.map(c=>`<option value="${c.id}">${c.code} ${c.name}</option>`).join('')}
+        </select>
+        <button onclick="addStop()">加入</button>
+      </div>` : '';
+    document.getElementById('addStopArea').innerHTML = addArea;
+    renderSegmentButtons();
   }
 
   function backToSelect() {
