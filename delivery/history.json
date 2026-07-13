@@ -3,7 +3,7 @@
     "id": "1783919781348",
     "date": "2026/07/13 下午01:16",
     "boxes": "47",
-    "totalKm": 170.1,
+    "totalKm": 217.6,
     "stops": [
       {
         "code": "362",
@@ -11,14 +11,14 @@
         "address": "桃園市大園區大工路11號"
       },
       {
-        "code": "A5021",
-        "name": "瑞寶基因股份有限公司",
-        "address": "桃園市觀音區草漯里大同一路26號"
-      },
-      {
         "code": "代寄01",
         "name": "望隼",
         "address": "苗栗縣竹南鎮公義里友義路66號"
+      },
+      {
+        "code": "083",
+        "name": "廣瀚儀器有限公司",
+        "address": "新竹市北區東大路四段156-1號"
       },
       {
         "code": "383",
@@ -26,19 +26,14 @@
         "address": "新竹市建功一路51巷20號2樓"
       },
       {
+        "code": "A5021",
+        "name": "瑞寶基因股份有限公司",
+        "address": "桃園市觀音區草漯里大同一路26號"
+      },
+      {
         "code": "a5025",
         "name": "台裕化學製藥廠股份有限公司",
         "address": "新竹縣竹東鎮員山路11巷13弄1號(3號電梯)"
-      },
-      {
-        "code": "A9078",
-        "name": "極星光電股份有限公司",
-        "address": "桃園市楊梅區中山北路一段199巷53號"
-      },
-      {
-        "code": "A5045",
-        "name": "明德製藥股份有限公司",
-        "address": "桃園縣楊梅鎮民富路二段360號"
       },
       {
         "code": "Z005",
@@ -46,15 +41,29 @@
         "address": "桃園市楊梅區民有路一段198號"
       },
       {
+        "code": "A9078",
+        "name": "極星光電股份有限公司",
+        "address": "桃園市楊梅區中山北路一段199巷53號"
+      },
+      {
         "code": "A5010",
         "name": "寶齡富錦生技股份有限公司",
         "address": "桃園市平鎮區興隆路266號"
+      },
+      {
+        "code": "A5045",
+        "name": "明德製藥股份有限公司",
+        "address": "桃園縣楊梅鎮民富路二段360號"
       }
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E5%A4%A7%E5%9C%92%E5%8D%80%E5%A4%A7%E5%B7%A5%E8%B7%AF11%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E8%A7%80%E9%9F%B3%E5%8D%80%E8%8D%89%E6%BC%AF%E9%87%8C%E5%A4%A7%E5%90%8C%E4%B8%80%E8%B7%AF26%E8%99%9F|%E8%8B%97%E6%A0%97%E7%B8%A3%E7%AB%B9%E5%8D%97%E9%8E%AE%E5%85%AC%E7%BE%A9%E9%87%8C%E5%8F%8B%E7%BE%A9%E8%B7%AF66%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%96%B0%E7%AB%B9%E7%B8%A3%E7%AB%B9%E6%9D%B1%E9%8E%AE%E5%93%A1%E5%B1%B1%E8%B7%AF11%E5%B7%B713%E5%BC%841%E8%99%9F(3%E8%99%9F%E9%9B%BB%E6%A2%AF)|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E4%B8%AD%E5%B1%B1%E5%8C%97%E8%B7%AF%E4%B8%80%E6%AE%B5199%E5%B7%B753%E8%99%9F|%E6%A1%83%E5%9C%92%E7%B8%A3%E6%A5%8A%E6%A2%85%E9%8E%AE%E6%B0%91%E5%AF%8C%E8%B7%AF%E4%BA%8C%E6%AE%B5360%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E5%B9%B3%E9%8E%AE%E5%8D%80%E8%88%88%E9%9A%86%E8%B7%AF266%E8%99%9F&travelmode=driving",
-        "label": "🗺️ 在 Google Maps 開啟導航"
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E5%B9%B3%E9%8E%AE%E5%8D%80%E8%88%88%E9%9A%86%E8%B7%AF266%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E5%B8%82%E5%A4%A7%E5%9C%92%E5%8D%80%E5%A4%A7%E5%B7%A5%E8%B7%AF11%E8%99%9F|%E8%8B%97%E6%A0%97%E7%B8%A3%E7%AB%B9%E5%8D%97%E9%8E%AE%E5%85%AC%E7%BE%A9%E9%87%8C%E5%8F%8B%E7%BE%A9%E8%B7%AF66%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%8C%97%E5%8D%80%E6%9D%B1%E5%A4%A7%E8%B7%AF%E5%9B%9B%E6%AE%B5156-1%E8%99%9F|%E6%96%B0%E7%AB%B9%E5%B8%82%E5%BB%BA%E5%8A%9F%E4%B8%80%E8%B7%AF51%E5%B7%B720%E8%99%9F2%E6%A8%93|%E6%A1%83%E5%9C%92%E5%B8%82%E8%A7%80%E9%9F%B3%E5%8D%80%E8%8D%89%E6%BC%AF%E9%87%8C%E5%A4%A7%E5%90%8C%E4%B8%80%E8%B7%AF26%E8%99%9F|%E6%96%B0%E7%AB%B9%E7%B8%A3%E7%AB%B9%E6%9D%B1%E9%8E%AE%E5%93%A1%E5%B1%B1%E8%B7%AF11%E5%B7%B713%E5%BC%841%E8%99%9F(3%E8%99%9F%E9%9B%BB%E6%A2%AF)|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E6%B0%91%E6%9C%89%E8%B7%AF%E4%B8%80%E6%AE%B5198%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E6%A5%8A%E6%A2%85%E5%8D%80%E4%B8%AD%E5%B1%B1%E5%8C%97%E8%B7%AF%E4%B8%80%E6%AE%B5199%E5%B7%B753%E8%99%9F&travelmode=driving",
+        "label": "🗺️ 第 1 段導航（第 1～9 站）"
+      },
+      {
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E5%B9%B3%E9%8E%AE%E5%8D%80%E8%88%88%E9%9A%86%E8%B7%AF266%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%A1%83%E5%9C%92%E7%B8%A3%E6%A5%8A%E6%A2%85%E9%8E%AE%E6%B0%91%E5%AF%8C%E8%B7%AF%E4%BA%8C%E6%AE%B5360%E8%99%9F&travelmode=driving",
+        "label": "🗺️ 第 2 段導航（第 10～10 站）"
       }
     ]
   },
