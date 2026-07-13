@@ -3,18 +3,8 @@
     "id": "1783932871786",
     "date": "2026/07/13 下午04:54",
     "boxes": "",
-    "totalKm": 202.8,
+    "totalKm": 124.4,
     "stops": [
-      {
-        "code": "733",
-        "name": "立騰玻璃儀器企業社",
-        "address": "新竹市東區食品路331號"
-      },
-      {
-        "code": "A3048",
-        "name": "葡萄王生技(股)公司 (龍潭廠)",
-        "address": "桃園市龍潭區龍園一路68號"
-      },
       {
         "code": "110",
         "name": "(永吉)承濱實業有限公司",
@@ -43,7 +33,7 @@
     ],
     "segments": [
       {
-        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E7%AB%B9%E5%B8%82%E6%9D%B1%E5%8D%80%E9%A3%9F%E5%93%81%E8%B7%AF331%E8%99%9F|%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E9%BE%8D%E5%9C%92%E4%B8%80%E8%B7%AF68%E8%99%9F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%89%E9%87%8D%E5%8D%80%E4%B8%89%E9%99%BD%E8%B7%AF45%E8%99%9F1F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%89%E9%87%8D%E5%8D%80%E4%B8%89%E9%99%BD%E8%B7%AF59%E8%99%9F10%E6%A8%93|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%A4%A7%E5%90%8C%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8C%97%E8%B7%AF2%E6%AE%B5283%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E6%96%87%E5%B1%B1%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF6%E6%AE%B5150%E5%B7%B722%E8%99%9F4F|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%85%A7%E6%B9%96%E5%8D%80%E6%96%B0%E6%98%8E%E8%B7%AF143%E5%B7%B78%E8%99%9F1%E6%A8%93&travelmode=driving",
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%89%E9%87%8D%E5%8D%80%E4%B8%89%E9%99%BD%E8%B7%AF45%E8%99%9F1F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%89%E9%87%8D%E5%8D%80%E4%B8%89%E9%99%BD%E8%B7%AF59%E8%99%9F10%E6%A8%93|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%A4%A7%E5%90%8C%E5%8D%80%E7%92%B0%E6%B2%B3%E5%8C%97%E8%B7%AF2%E6%AE%B5283%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E6%96%87%E5%B1%B1%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF6%E6%AE%B5150%E5%B7%B722%E8%99%9F4F|%E5%8F%B0%E5%8C%97%E5%B8%82%E5%85%A7%E6%B9%96%E5%8D%80%E6%96%B0%E6%98%8E%E8%B7%AF143%E5%B7%B78%E8%99%9F1%E6%A8%93&travelmode=driving",
         "label": "🗺️ 在 Google Maps 開啟導航"
       }
     ]
