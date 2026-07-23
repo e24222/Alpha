@@ -1,5 +1,44 @@
 [
   {
+    "id": "1784786353183",
+    "date": "2026/07/23 下午01:59",
+    "boxes": "",
+    "totalKm": 84.9,
+    "stops": [
+      {
+        "code": "260",
+        "name": "慧眾生物科技有限公司",
+        "address": "新北市中和區橋和路85號3F"
+      },
+      {
+        "code": "011",
+        "name": "保吉生化學股份有限公司",
+        "address": "新北市中和區中山路2段348巷8號11F"
+      },
+      {
+        "code": "417",
+        "name": "研宏有限公司",
+        "address": "台北市萬華區莒光路299巷3號"
+      },
+      {
+        "code": "006",
+        "name": "信德儀器有限公司",
+        "address": "台北市中正區羅斯福路3段240巷7弄4-1號"
+      },
+      {
+        "code": "229",
+        "name": "信安儀器有限公司",
+        "address": "台北市中正區羅斯福路3段244巷10弄6-1號"
+      }
+    ],
+    "segments": [
+      {
+        "url": "https://www.google.com/maps/dir/?api=1&origin=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%8D%E6%BD%AD%E5%8D%80%E5%B7%A5%E4%BA%94%E8%B7%AF250%E8%99%9F&waypoints=%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E6%A9%8B%E5%92%8C%E8%B7%AF85%E8%99%9F3F|%E6%96%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E5%92%8C%E5%8D%80%E4%B8%AD%E5%B1%B1%E8%B7%AF2%E6%AE%B5348%E5%B7%B78%E8%99%9F11F|%E5%8F%B0%E5%8C%97%E5%B8%82%E8%90%AC%E8%8F%AF%E5%8D%80%E8%8E%92%E5%85%89%E8%B7%AF299%E5%B7%B73%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5240%E5%B7%B77%E5%BC%844-1%E8%99%9F|%E5%8F%B0%E5%8C%97%E5%B8%82%E4%B8%AD%E6%AD%A3%E5%8D%80%E7%BE%85%E6%96%AF%E7%A6%8F%E8%B7%AF3%E6%AE%B5244%E5%B7%B710%E5%BC%846-1%E8%99%9F&travelmode=driving",
+        "label": "🗺️ 在 Google Maps 開啟導航"
+      }
+    ]
+  },
+  {
     "id": "1784275327607",
     "date": "2026/07/17 下午04:02",
     "boxes": "",
