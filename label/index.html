@@ -420,8 +420,9 @@ window.switchTab = function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
   document.getElementById('page-'+tab).classList.add('active');
   document.getElementById('tabbtn-'+tab).classList.add('active');
-  if (tab === 'summary') renderSummary();
-  if (tab === 'send') renderQueue();
+  if (tab === 'summary' || tab === 'send') {
+    fetchQueueFromGist().then(function(){ renderQueue(); renderSummary(); });
+  }
 }
 
 // ════════════ 寄件區：輸入框自動長高，避免內容被裁掉/需要捲動 ════════════
@@ -473,18 +474,62 @@ document.getElementById('btnSpClear').addEventListener('click', function() {
   autoGrow(document.getElementById('sp-receiver'));
 });
 
-// ════════════ 寄件清單（今日批次）════════════
-var QUEUE_KEY = 'a4label_shipment_queue';
+// ════════════ 寄件清單（雲端共用，存在 GitHub Gist，所有人／裝置共用同一份）════════════
+var GIST_ID    = '601d4b50d0916cc84c021b26a97c170a';
+var GIST_TOKEN = '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'; // gist-only scope token
+var GIST_FILE  = 'shipment_queue.json';
 
-function loadQueue() {
-  try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
-  catch(e) { return []; }
-}
-function saveQueue(list) {
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(list));
+var queueCache = [];   // 目前記憶體中的清單快照
+var queueSyncing = false;
+
+function gistHeaders(extra) {
+  return Object.assign({
+    'Authorization': 'token ' + GIST_TOKEN,
+    'Accept': 'application/vnd.github+json'
+  }, extra || {});
 }
 
-document.getElementById('btnSpAdd').addEventListener('click', function() {
+// 從 Gist 抓最新清單（供其他人／其他裝置同步）
+async function fetchQueueFromGist() {
+  try {
+    var res = await fetch('https://api.github.com/gists/' + GIST_ID, { headers: gistHeaders() });
+    if (!res.ok) throw new Error('gist fetch failed: ' + res.status);
+    var data = await res.json();
+    var content = data.files && data.files[GIST_FILE] ? data.files[GIST_FILE].content : '[]';
+    queueCache = JSON.parse(content || '[]');
+  } catch (e) {
+    console.error('讀取雲端清單失敗，暫時使用本機快取', e);
+  }
+}
+
+// 把目前清單寫回 Gist
+async function pushQueueToGist() {
+  queueSyncing = true;
+  try {
+    var filesPayload = {};
+    filesPayload[GIST_FILE] = { content: JSON.stringify(queueCache) };
+    var res = await fetch('https://api.github.com/gists/' + GIST_ID, {
+      method: 'PATCH',
+      headers: gistHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ files: filesPayload })
+    });
+    if (!res.ok) throw new Error('gist patch failed: ' + res.status);
+  } catch (e) {
+    console.error('同步清單到雲端失敗', e);
+  } finally {
+    queueSyncing = false;
+  }
+}
+
+function loadQueue() { return queueCache; }
+async function saveQueue(list) {
+  queueCache = list;
+  renderQueue();
+  renderSummary();
+  await pushQueueToGist();
+}
+
+document.getElementById('btnSpAdd').addEventListener('click', async function() {
   var receiver = document.getElementById('sp-receiver').value.trim();
   var countRaw = document.getElementById('sp-count').value.trim();
   var count = parseInt(countRaw, 10);
@@ -508,9 +553,13 @@ document.getElementById('btnSpAdd').addEventListener('click', function() {
     addedAt: new Date().toLocaleString('zh-TW', { hour12:false })
   };
 
+  msg.style.color = '#1a5fa8';
+  msg.textContent = '同步中...';
+
+  await fetchQueueFromGist();       // 先拉最新的，避免蓋掉別人剛加的資料
   var list = loadQueue();
   list.push(entry);
-  saveQueue(list);
+  await saveQueue(list);
 
   // 清空表單，準備輸入下一位客戶（保留公司別選擇）
   ['sp-custid','sp-sender','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
@@ -519,20 +568,17 @@ document.getElementById('btnSpAdd').addEventListener('click', function() {
   document.getElementById('sp-hint').textContent = '';
   autoGrow(document.getElementById('sp-sender'));
   autoGrow(document.getElementById('sp-receiver'));
-  msg.style.color = '#1a5fa8';
-  msg.textContent = '✓ 已加入清單：' + entry.receiverName + '（' + entry.count + ' 件）';
+  msg.textContent = '✓ 已加入清單並同步：' + entry.receiverName + '（' + entry.count + ' 件）';
   document.getElementById('sp-custid').focus();
-
-  renderQueue();
 });
 
-document.getElementById('btnQueueClear').addEventListener('click', function() {
-  if (!confirm('確定要清空目前的寄件清單嗎？（列印過的資料若尚未清空仍會留著）')) return;
-  saveQueue([]);
-  renderQueue();
+document.getElementById('btnQueueClear').addEventListener('click', async function() {
+  if (!confirm('確定要清空目前的寄件清單嗎？（所有人共用，清空後大家都看不到）')) return;
+  await saveQueue([]);
 });
 
-document.getElementById('btnQueuePrint').addEventListener('click', function() {
+document.getElementById('btnQueuePrint').addEventListener('click', async function() {
+  await fetchQueueFromGist();
   var list = loadQueue();
   if (!list.length) { alert('清單是空的，請先在上方加入寄件資料'); return; }
   buildQueuePrintArea(list);
@@ -542,12 +588,10 @@ document.getElementById('btnQueuePrint').addEventListener('click', function() {
   }, 100);
 });
 
-function removeQueueEntry(id) {
+async function removeQueueEntry(id) {
   if (!confirm('確定刪除這一筆嗎？')) return;
   var list = loadQueue().filter(function(e){ return e.id !== id; });
-  saveQueue(list);
-  renderQueue();
-  renderSummary();
+  await saveQueue(list);
 }
 window.removeQueueEntry = removeQueueEntry;
 
@@ -917,10 +961,10 @@ btnToggle.addEventListener('click', function() {
   btnToggle.textContent = (previewOpen?'▼':'▶') + ' 版面校正';
 });
 
-// 初始載入客戶資料與寄件清單
+// 初始載入客戶資料與寄件清單（雲端 Gist）
 fetchAllCustomers();
-renderQueue();
-renderSummary();
+document.getElementById('queueTotal').textContent = '讀取雲端清單中...';
+fetchQueueFromGist().then(function(){ renderQueue(); renderSummary(); });
 </script>
 </body>
 </html>
