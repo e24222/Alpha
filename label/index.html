@@ -206,6 +206,27 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
   <button type="button" class="tab-btn active" id="tabbtn-send" onclick="switchTab('send')">📦 寄件區</button>
   <button type="button" class="tab-btn" id="tabbtn-summary" onclick="switchTab('summary')">📋 整合頁面</button>
   <button type="button" class="tab-btn" id="tabbtn-print" onclick="switchTab('print')">🖨️ 標籤列印（原始格）</button>
+  <button type="button" class="tab-btn" style="margin-left:auto;" onclick="showTokenUI()" title="同步設定">⚙️ 同步設定</button>
+</div>
+
+<!-- Token 設定小視窗（僅存這台瀏覽器的 localStorage，不會寫進網頁原始碼） -->
+<div id="tokenOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:22px 24px;width:380px;max-width:92vw;font-family:sans-serif;box-shadow:0 6px 30px rgba(0,0,0,0.3);">
+    <div style="font-size:17px;font-weight:bold;color:#1a3c6e;margin-bottom:8px;">⚙️ 雲端同步設定</div>
+    <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:12px;">
+      輸入一組只有 <code style="background:#f0f2f6;padding:1px 5px;border-radius:4px;">gist</code> 權限的 GitHub Token，
+      寄件清單就會同步到雲端 Gist，這樣不同人／不同裝置都能看到同一份清單。
+      這組 Token 只會存在您這個瀏覽器裡，不會寫進網頁程式碼。
+    </div>
+    <input id="tokenInput" type="password" placeholder="ghp_..." autocomplete="off"
+      style="width:100%;padding:10px 12px;font-size:14px;border:2px solid #cdd9ea;border-radius:8px;outline:none;font-family:monospace;margin-bottom:8px;">
+    <div id="tokenTestResult" style="font-size:13px;min-height:18px;margin-bottom:10px;text-align:center;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button type="button" onclick="testGistToken()" style="padding:8px 14px;font-size:13px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer;">測試連線</button>
+      <button type="button" onclick="hideTokenUI()" style="padding:8px 14px;font-size:13px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer;">取消</button>
+      <button type="button" onclick="applyGistToken()" style="padding:8px 14px;font-size:13px;border-radius:6px;border:none;background:#1a5fa8;color:#fff;font-weight:bold;cursor:pointer;">儲存</button>
+    </div>
+  </div>
 </div>
 
 <!-- ════════════ 分頁 1：寄件區（主要操作頁）════════════ -->
@@ -475,24 +496,29 @@ document.getElementById('btnSpClear').addEventListener('click', function() {
 });
 
 // ════════════ 寄件清單（雲端共用，存在 GitHub Gist，所有人／裝置共用同一份）════════════
-var GIST_ID    = '601d4b50d0916cc84c021b26a97c170a';
-var GIST_TOKEN = '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'; // gist-only scope token
-var GIST_FILE  = 'shipment_queue.json';
+// 注意：這裡完全不寫死 token！Token 只存在使用者自己瀏覽器的 localStorage，
+// 不會出現在原始碼／git 記錄裡，所以不會被 GitHub 的 secret scanning 擋下或自動吊銷。
+var GIST_ID   = '601d4b50d0916cc84c021b26a97c170a';
+var GIST_FILE = 'shipment_queue.json';
+var TOKEN_KEY = 'a4label_gist_token';
 
 var queueCache = [];   // 目前記憶體中的清單快照
 var queueSyncing = false;
 
-function gistHeaders(extra) {
-  return Object.assign({
-    'Authorization': 'token ' + GIST_TOKEN,
-    'Accept': 'application/vnd.github+json'
-  }, extra || {});
+function getGistToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+function saveGistToken(t) { localStorage.setItem(TOKEN_KEY, t.trim()); }
+
+function gistHeaders(extra, withAuth) {
+  var h = Object.assign({ 'Accept': 'application/vnd.github+json' }, extra || {});
+  var token = getGistToken();
+  if (withAuth && token) h['Authorization'] = 'token ' + token;
+  return h;
 }
 
-// 從 Gist 抓最新清單（供其他人／其他裝置同步）
+// 讀取用不用 token 都可以（secret gist 只要知道 ID 就能讀），所有人都能看到整合頁面／清單
 async function fetchQueueFromGist() {
   try {
-    var res = await fetch('https://api.github.com/gists/' + GIST_ID, { headers: gistHeaders() });
+    var res = await fetch('https://api.github.com/gists/' + GIST_ID, { headers: gistHeaders(null, true) });
     if (!res.ok) throw new Error('gist fetch failed: ' + res.status);
     var data = await res.json();
     var content = data.files && data.files[GIST_FILE] ? data.files[GIST_FILE].content : '[]';
@@ -502,31 +528,66 @@ async function fetchQueueFromGist() {
   }
 }
 
-// 把目前清單寫回 Gist
+// 寫入（加入清單／刪除／清空）一定要 token，沒有的話跳出設定視窗
 async function pushQueueToGist() {
+  var token = getGistToken();
+  if (!token) { showTokenUI(); return false; }
   queueSyncing = true;
   try {
     var filesPayload = {};
     filesPayload[GIST_FILE] = { content: JSON.stringify(queueCache) };
     var res = await fetch('https://api.github.com/gists/' + GIST_ID, {
       method: 'PATCH',
-      headers: gistHeaders({ 'Content-Type': 'application/json' }),
+      headers: gistHeaders({ 'Content-Type': 'application/json' }, true),
       body: JSON.stringify({ files: filesPayload })
     });
+    if (res.status === 401) { showTokenUI(); throw new Error('token 無效'); }
     if (!res.ok) throw new Error('gist patch failed: ' + res.status);
+    return true;
   } catch (e) {
     console.error('同步清單到雲端失敗', e);
+    return false;
   } finally {
     queueSyncing = false;
   }
 }
+
+// ── Token 設定小視窗（僅存在這台瀏覽器，不會寫進網頁原始碼）──
+window.showTokenUI = function showTokenUI() {
+  document.getElementById('tokenOverlay').style.display = 'flex';
+  document.getElementById('tokenInput').value = getGistToken();
+  document.getElementById('tokenTestResult').textContent = '';
+};
+window.hideTokenUI = function hideTokenUI() {
+  document.getElementById('tokenOverlay').style.display = 'none';
+};
+window.testGistToken = async function testGistToken() {
+  var t = document.getElementById('tokenInput').value.trim() || getGistToken();
+  var res = document.getElementById('tokenTestResult');
+  if (!t) { res.style.color = '#999'; res.textContent = '尚未輸入 Token'; return; }
+  try {
+    var r = await fetch('https://api.github.com/gists/' + GIST_ID, { headers: { 'Authorization': 'token ' + t } });
+    if (r.ok) { res.style.color = '#1a8a3a'; res.textContent = '✅ 連線正常，可以同步'; }
+    else if (r.status === 401) { res.style.color = '#c00'; res.textContent = '❌ Token 無效或已失效'; }
+    else { res.style.color = '#c00'; res.textContent = '❌ 連線失敗（' + r.status + '）'; }
+  } catch (e) { res.style.color = '#c00'; res.textContent = '❌ 連線失敗'; }
+};
+window.applyGistToken = async function applyGistToken() {
+  var t = document.getElementById('tokenInput').value.trim();
+  if (!t) return;
+  saveGistToken(t);
+  hideTokenUI();
+  await fetchQueueFromGist();
+  renderQueue();
+  renderSummary();
+};
 
 function loadQueue() { return queueCache; }
 async function saveQueue(list) {
   queueCache = list;
   renderQueue();
   renderSummary();
-  await pushQueueToGist();
+  return await pushQueueToGist();
 }
 
 document.getElementById('btnSpAdd').addEventListener('click', async function() {
@@ -559,17 +620,23 @@ document.getElementById('btnSpAdd').addEventListener('click', async function() {
   await fetchQueueFromGist();       // 先拉最新的，避免蓋掉別人剛加的資料
   var list = loadQueue();
   list.push(entry);
-  await saveQueue(list);
+  var ok = await saveQueue(list);
 
-  // 清空表單，準備輸入下一位客戶（保留公司別選擇）
-  ['sp-custid','sp-sender','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('sp-hint').textContent = '';
-  autoGrow(document.getElementById('sp-sender'));
-  autoGrow(document.getElementById('sp-receiver'));
-  msg.textContent = '✓ 已加入清單並同步：' + entry.receiverName + '（' + entry.count + ' 件）';
-  document.getElementById('sp-custid').focus();
+  if (ok) {
+    // 清空表單，準備輸入下一位客戶（保留公司別選擇）
+    ['sp-custid','sp-sender','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('sp-hint').textContent = '';
+    autoGrow(document.getElementById('sp-sender'));
+    autoGrow(document.getElementById('sp-receiver'));
+    msg.style.color = '#1a5fa8';
+    msg.textContent = '✓ 已加入清單並同步：' + entry.receiverName + '（' + entry.count + ' 件）';
+    document.getElementById('sp-custid').focus();
+  } else {
+    msg.style.color = '#c00';
+    msg.textContent = '⚠️ 尚未設定同步 Token，請點右上角 ⚙️ 設定後再試一次';
+  }
 });
 
 document.getElementById('btnQueueClear').addEventListener('click', async function() {
