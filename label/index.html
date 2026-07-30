@@ -77,8 +77,8 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
   outline:none; font-family:"標楷體","DFKai-SB",serif; color:#111; resize:vertical;
 }
 .sp-field textarea:focus, .sp-field input[type=text]:focus { border-color:#1a5fa8; }
-#sp-receiver { min-height:110px; font-size:26px; font-weight:bold; line-height:1.5; }
-#sp-sender { min-height:60px; font-size:20px; }
+#sp-receiver { min-height:70px; font-size:22px; font-weight:bold; line-height:1.5; overflow:hidden; resize:none; }
+#sp-sender { min-height:50px; font-size:18px; overflow:hidden; resize:none; }
 .sp-actions { display:flex; gap:12px; justify-content:flex-end; margin-top:6px; flex-wrap:wrap; }
 .sp-actions button {
   padding:14px 28px; font-size:17px; font-weight:bold; cursor:pointer;
@@ -424,6 +424,16 @@ window.switchTab = function switchTab(tab) {
   if (tab === 'send') renderQueue();
 }
 
+// ════════════ 寄件區：輸入框自動長高，避免內容被裁掉/需要捲動 ════════════
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 2) + 'px';
+}
+['sp-sender','sp-receiver'].forEach(function(id) {
+  var el = document.getElementById(id);
+  el.addEventListener('input', function(){ autoGrow(el); });
+});
+
 // ════════════ 寄件區：客戶查詢 ════════════
 document.getElementById('sp-custid').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') applySendCustomer();
@@ -445,6 +455,8 @@ function applySendCustomer() {
     if (cust.phone) document.getElementById('sp-phone').value = cust.phone;
     hint.style.color = '#1a5fa8';
     hint.textContent = '✓ ' + cust.name;
+    autoGrow(document.getElementById('sp-sender'));
+    autoGrow(document.getElementById('sp-receiver'));
   } else {
     hint.style.color = '#c00';
     hint.textContent = '找不到';
@@ -457,6 +469,8 @@ document.getElementById('btnSpClear').addEventListener('click', function() {
   });
   document.getElementById('sp-hint').textContent = '';
   document.getElementById('sp-msg').textContent = '';
+  autoGrow(document.getElementById('sp-sender'));
+  autoGrow(document.getElementById('sp-receiver'));
 });
 
 // ════════════ 寄件清單（今日批次）════════════
@@ -503,6 +517,8 @@ document.getElementById('btnSpAdd').addEventListener('click', function() {
     document.getElementById(id).value = '';
   });
   document.getElementById('sp-hint').textContent = '';
+  autoGrow(document.getElementById('sp-sender'));
+  autoGrow(document.getElementById('sp-receiver'));
   msg.style.color = '#1a5fa8';
   msg.textContent = '✓ 已加入清單：' + entry.receiverName + '（' + entry.count + ' 件）';
   document.getElementById('sp-custid').focus();
