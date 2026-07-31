@@ -138,6 +138,38 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
   font-size:16px; font-weight:bold;
 }
 
+/* ── 客戶管理 ── */
+.mgmt-wrap { max-width:1100px; margin:0 auto 30px; font-family:sans-serif; }
+.co-subtabs { display:flex; gap:0; margin:14px 0; border-bottom:2px solid #1a5fa8; }
+.co-subtabs button {
+  padding:8px 28px; font-size:15px; font-family:sans-serif; font-weight:bold;
+  border:none; background:#e0e8f5; color:#1a5fa8; cursor:pointer; border-radius:6px 6px 0 0; margin-right:4px;
+}
+.co-subtabs button.active { background:#1a5fa8; color:#fff; }
+.mgmt-bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+.mgmt-bar input[type=text] { padding:8px 12px; font-size:14px; border:1px solid #aaa; border-radius:6px; outline:none; width:240px; font-family:sans-serif; }
+.mgmt-bar button { padding:8px 18px; font-size:14px; cursor:pointer; border-radius:6px; border:1px solid #999; background:#fff; font-family:sans-serif; }
+.mgmt-bar button.primary { background:#1a5fa8; color:#fff; border-color:#1a5fa8; }
+.mgmt-bar .mb-count { font-size:12px; color:#666; }
+.cust-table-wrap { overflow-x:auto; }
+.cust-table { width:100%; border-collapse:collapse; font-family:sans-serif; font-size:14px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(26,95,168,0.12); }
+.cust-table th { background:#1a3c6e; color:#fff; padding:10px 12px; text-align:left; white-space:nowrap; }
+.cust-table td { padding:9px 12px; border-bottom:1px solid #eee; vertical-align:top; }
+.cust-table tr:hover td { background:#f4f8fd; }
+.cust-table td.actions { white-space:nowrap; }
+.cust-table td.actions button { padding:3px 10px; font-size:12px; cursor:pointer; border-radius:5px; border:1px solid #aaa; background:#fff; font-family:sans-serif; margin-right:4px; }
+.cust-table td.actions button.del { border-color:#c00; color:#c00; }
+.cmodal-bg { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center; }
+.cmodal-bg.open { display:flex; }
+.cmodal { background:#fff; border-radius:10px; padding:24px; width:420px; max-width:95vw; font-family:sans-serif; box-shadow:0 4px 24px rgba(0,0,0,0.25); }
+.cmodal h2 { font-size:16px; margin-bottom:16px; color:#1a3c6e; }
+.cmodal label { display:block; font-size:13px; color:#444; margin-bottom:3px; margin-top:10px; }
+.cmodal input, .cmodal textarea { width:100%; padding:7px 10px; font-size:14px; border:1px solid #bbb; border-radius:5px; outline:none; font-family:sans-serif; }
+.cmodal textarea { height:60px; resize:vertical; }
+.cmodal .cmodal-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+.cmodal .cmodal-btns button { padding:8px 20px; font-size:14px; cursor:pointer; border-radius:6px; border:1px solid #999; background:#fff; font-family:sans-serif; }
+.cmodal .cmodal-btns button.primary { background:#1a5fa8; color:#fff; border-color:#1a5fa8; }
+
 /* ── A4 版面（畫面上以比例縮小顯示，方便編輯）── */
 .sheet {
   position:relative; margin:0 auto; background:#fff;
@@ -206,6 +238,7 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
   <button type="button" class="tab-btn active" id="tabbtn-send" onclick="switchTab('send')">📦 寄件區</button>
   <button type="button" class="tab-btn" id="tabbtn-summary" onclick="switchTab('summary')">📋 整合頁面</button>
   <button type="button" class="tab-btn" id="tabbtn-print" onclick="switchTab('print')">🖨️ 標籤列印（原始格）</button>
+  <button type="button" class="tab-btn" id="tabbtn-customers" onclick="switchTab('customers')">👥 客戶管理</button>
   <button type="button" class="tab-btn" style="margin-left:auto;" onclick="showTokenUI()" title="同步設定">⚙️ 同步設定</button>
 </div>
 
@@ -309,7 +342,7 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
 <!-- ════════════ 分頁 3：標籤列印（原始格，供手動微調用）════════════ -->
 <div class="page" id="page-print">
   <h1 style="margin-top:14px;">新航快遞 － A4 八格標籤列印（原始格）</h1>
-  <div class="sub">此頁為手動編輯用的原始 8 格，一般不需直接操作；平時請從「寄件區」輸入並列印。客戶資料與 <a href="新航快遞標籤列印(線上版).html" target="_blank">標籤列印工具（客戶管理）</a> 共用</div>
+  <div class="sub">此頁為手動編輯用的原始 8 格，一般不需直接操作；平時請從「寄件區」輸入並列印。客戶資料請到「👥 客戶管理」分頁編輯</div>
 
   <div class="controls">
     <button type="button" id="btnPrint" class="primary">🖨️ 列印</button>
@@ -331,6 +364,61 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
   </div>
 
   <div class="sheet" id="sheet"></div>
+</div>
+
+<!-- ════════════ 分頁 4：客戶管理 ════════════ -->
+<div class="page" id="page-customers">
+  <h1 style="margin-top:14px;">新航快遞 － 客戶管理</h1>
+  <div class="sub">新增／編輯／刪除客戶資料，與寄件區、標籤列印共用同一份資料庫</div>
+
+  <div class="mgmt-wrap">
+    <div class="co-subtabs">
+      <button type="button" id="cbtn-co-AL" onclick="switchCoTab('AL')">AL</button>
+      <button type="button" id="cbtn-co-GM" onclick="switchCoTab('GM')">GM</button>
+    </div>
+    <div class="mgmt-bar">
+      <input type="text" id="custSearch" placeholder="搜尋編號 / 姓名 / 電話..." oninput="renderCustTable()">
+      <button type="button" class="primary" onclick="openCustModal(null)">＋ 新增客戶</button>
+      <button type="button" onclick="exportCustCSV()">⬇ 匯出 CSV</button>
+      <button type="button" onclick="document.getElementById('custImportFile').click()">⬆ 匯入 CSV</button>
+      <input type="file" id="custImportFile" accept=".csv" style="display:none" onchange="importCustCSV(event)">
+      <span class="mb-count" id="custCount"></span>
+    </div>
+    <div class="cust-table-wrap">
+      <table class="cust-table" id="custTable">
+        <thead>
+          <tr><th>客戶編號</th><th>收件人姓名</th><th>收件地址</th><th>寄件人姓名</th><th>寄件人電話</th><th>操作</th></tr>
+        </thead>
+        <tbody id="custTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 客戶新增/編輯 Modal -->
+<div class="cmodal-bg" id="custModalBg">
+  <div class="cmodal">
+    <h2 id="custModalTitle">新增客戶</h2>
+    <label>客戶編號（唯一）</label>
+    <input type="text" id="cmId" placeholder="例：006">
+    <hr style="margin:14px 0;border-color:#eee;">
+    <div style="font-weight:bold;font-size:13px;color:#1a3c6e;margin-bottom:4px;">📦 收件人</div>
+    <label>姓名／公司</label>
+    <input type="text" id="cmName" placeholder="龍冶股份有限公司">
+    <label>地址</label>
+    <textarea id="cmAddr" placeholder="台北市中山區..."></textarea>
+    <hr style="margin:14px 0;border-color:#eee;">
+    <div style="font-weight:bold;font-size:13px;color:#1a3c6e;margin-bottom:4px;">🏠 寄件人</div>
+    <label>姓名／公司</label>
+    <input type="text" id="cmSname" placeholder="龍冶股份有限公司">
+    <hr style="margin:14px 0;border-color:#eee;">
+    <label>寄件人電話</label>
+    <input type="text" id="cmPhone" placeholder="0912-345-678">
+    <div class="cmodal-btns">
+      <button type="button" onclick="closeCustModal()">取消</button>
+      <button type="button" class="primary" onclick="saveCustModal()">儲存</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -359,6 +447,151 @@ async function fetchCompany(co) {
 }
 async function fetchAllCustomers() {
   await Promise.all([fetchCompany('AL'), fetchCompany('GM')]);
+}
+
+// ════════════ 客戶管理（新增／編輯／刪除／匯入匯出）════════════
+var currentCoTab = 'AL';
+var editingCustId = null;
+
+window.switchCoTab = function switchCoTab(co) {
+  currentCoTab = co;
+  document.getElementById('cbtn-co-AL').classList.toggle('active', co === 'AL');
+  document.getElementById('cbtn-co-GM').classList.toggle('active', co === 'GM');
+  document.getElementById('custSearch').value = '';
+  renderCustTable();
+}
+
+window.renderCustTable = function renderCustTable() {
+  var data = custCache[currentCoTab] || [];
+  var q = (document.getElementById('custSearch').value || '').toLowerCase();
+  if (q) {
+    data = data.filter(function(c) {
+      return c.id.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q);
+    });
+  }
+  document.getElementById('custCount').textContent = '共 ' + (custCache[currentCoTab]||[]).length + ' 筆';
+  var tbody = document.getElementById('custTbody');
+  tbody.innerHTML = data.map(function(c) {
+    return '<tr>' +
+      '<td>' + esc(c.id) + '</td>' +
+      '<td>' + esc(c.name) + '</td>' +
+      '<td style="max-width:280px;white-space:pre-wrap">' + esc(c.addr) + '</td>' +
+      '<td>' + esc(c.sname||'') + '</td>' +
+      '<td>' + esc(c.phone||'') + '</td>' +
+      '<td class="actions">' +
+        '<button type="button" onclick="openCustModal(\''+esc(c.id)+'\')">編輯</button>' +
+        '<button type="button" class="del" onclick="deleteCustomer(\''+esc(c.id)+'\')">刪除</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+window.openCustModal = function openCustModal(id) {
+  editingCustId = id;
+  document.getElementById('custModalTitle').textContent = id ? '編輯客戶' : '新增客戶';
+  var c = id ? (custCache[currentCoTab]||[]).find(function(x){ return x.id === id; }) : null;
+  document.getElementById('cmId').value    = c ? c.id    : '';
+  document.getElementById('cmName').value  = c ? c.name  : '';
+  document.getElementById('cmAddr').value  = c ? c.addr  : '';
+  document.getElementById('cmSname').value = c ? (c.sname||'') : '';
+  document.getElementById('cmPhone').value = c ? c.phone : '';
+  document.getElementById('cmId').readOnly = !!id;
+  document.getElementById('custModalBg').classList.add('open');
+}
+window.closeCustModal = function closeCustModal() { document.getElementById('custModalBg').classList.remove('open'); }
+
+window.saveCustModal = async function saveCustModal() {
+  var id    = normalizeId(document.getElementById('cmId').value);
+  var name  = document.getElementById('cmName').value.trim();
+  var addr  = document.getElementById('cmAddr').value.trim();
+  var sname = document.getElementById('cmSname').value.trim();
+  var phone = document.getElementById('cmPhone').value.trim();
+  if (!id || !name) { alert('請填入客戶編號與收件人姓名'); return; }
+
+  var list = custCache[currentCoTab] || [];
+  if (!editingCustId && list.some(function(c){ return c.id.toUpperCase() === id.toUpperCase(); })) {
+    alert('客戶編號已存在'); return;
+  }
+
+  var rec = { company: currentCoTab, id: id, name: name, addr: addr, sname: sname, phone: phone, updated_at: new Date().toISOString() };
+  var res = await supaFetch('customers', {
+    method: 'POST',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify(rec)
+  });
+  if (!res.ok) { alert('儲存失敗：' + await res.text()); return; }
+
+  await fetchCompany(currentCoTab);
+  closeCustModal();
+  renderCustTable();
+}
+
+window.deleteCustomer = async function deleteCustomer(id) {
+  if (!confirm('確定刪除客戶「' + id + '」？')) return;
+  var res = await supaFetch('customers?company=eq.' + currentCoTab + '&id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+  if (!res.ok) { alert('刪除失敗'); return; }
+  custCache[currentCoTab] = (custCache[currentCoTab]||[]).filter(function(c){ return c.id !== id; });
+  renderCustTable();
+}
+
+window.exportCustCSV = function exportCustCSV() {
+  var data = custCache[currentCoTab] || [];
+  var rows = ['客戶編號,收件人姓名,收件地址,寄件人姓名,電話'];
+  data.forEach(function(c) {
+    rows.push([c.id, c.name, c.addr, c.sname||'', c.phone].map(function(v){
+      return '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+    }).join(','));
+  });
+  var blob = new Blob(['﻿' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '新航快遞客戶資料_' + currentCoTab + '.csv';
+  a.click();
+}
+
+function parseCustCSVLine(line) {
+  var result = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else { inQ = !inQ; }
+    } else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else { cur += ch; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+window.importCustCSV = async function importCustCSV(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(ev) {
+    var text = ev.target.result.replace(/^﻿/, '');
+    var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+    if (lines.length < 2) { alert('CSV 格式錯誤或無資料'); return; }
+    var imported = [];
+    for (var i = 1; i < lines.length; i++) {
+      var cols = parseCustCSVLine(lines[i]);
+      if (cols.length >= 3) {
+        imported.push({ id: normalizeId(cols[0]||''), name: cols[1]||'', addr: cols[2]||'', sname: cols[3]||'', phone: cols[4]||cols[3]||'' });
+      }
+    }
+    if (!imported.length) { alert('無法讀取任何資料，請確認格式：客戶編號,姓名,地址,寄件人,電話'); return; }
+    imported.forEach(function(c){ c.company = currentCoTab; });
+    var res = await supaFetch('customers', {
+      method: 'POST',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(imported)
+    });
+    if (!res.ok) { alert('匯入失敗：' + await res.text()); return; }
+    await fetchCompany(currentCoTab);
+    renderCustTable();
+    alert('匯入完成，共 ' + imported.length + ' 筆。');
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
 }
 
 function normalizeId(raw) {
@@ -444,6 +677,7 @@ window.switchTab = function switchTab(tab) {
   if (tab === 'summary' || tab === 'send') {
     fetchQueueFromGist().then(function(){ renderQueue(); renderSummary(); });
   }
+  if (tab === 'customers') renderCustTable();
 }
 
 // ════════════ 寄件區：輸入框自動長高，避免內容被裁掉/需要捲動 ════════════
@@ -1029,7 +1263,8 @@ btnToggle.addEventListener('click', function() {
 });
 
 // 初始載入客戶資料與寄件清單（雲端 Gist）
-fetchAllCustomers();
+document.getElementById('cbtn-co-AL').classList.add('active');
+fetchAllCustomers().then(function(){ renderCustTable(); });
 document.getElementById('queueTotal').textContent = '讀取雲端清單中...';
 fetchQueueFromGist().then(function(){ renderQueue(); renderSummary(); });
 </script>
