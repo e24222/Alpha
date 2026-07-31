@@ -113,6 +113,8 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
 .queue-table td { padding:10px 12px; border-bottom:1px solid #e5e9f2; font-size:14px; vertical-align:top; }
 .queue-table tr:last-child td { border-bottom:none; }
 .queue-table tr:hover td { background:#f4f8fd; }
+.qrow { cursor:pointer; }
+.summary-group tr.qrow:hover td { background:#f4f8fd; }
 .queue-table td.qcount { text-align:center; font-weight:bold; color:#c00; font-size:16px; }
 .queue-table td.qdel button {
   padding:4px 10px; font-size:12px; cursor:pointer; border-radius:5px;
@@ -303,7 +305,7 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
       <div class="sp-row">
         <div class="sp-field">
           <label>寄件人</label>
-          <textarea id="sp-sender" placeholder="公司名稱&#10;&#10;地址（可留空）"></textarea>
+          <textarea id="sp-sender" placeholder="公司名稱&#10;&#10;地址（可留空）">龍冶股份有限公司</textarea>
         </div>
       </div>
       <div class="sp-row">
@@ -351,6 +353,21 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
     <button type="button" id="btnWipeAll" style="padding:6px 16px;font-size:13px;font-weight:bold;border-radius:6px;border:1px solid #ff9b9b;background:#c00;color:#fff;cursor:pointer;">🗑️ 清空全部紀錄</button>
   </div>
   <div class="queue-wrap" id="summaryWrap"></div>
+</div>
+
+<!-- 寄件明細 詳情視窗 -->
+<div id="detailOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:22px 24px;width:460px;max-width:92vw;max-height:85vh;overflow-y:auto;font-family:sans-serif;box-shadow:0 6px 30px rgba(0,0,0,0.3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:17px;font-weight:bold;color:#1a3c6e;">📄 寄件明細</div>
+      <button type="button" onclick="hideEntryDetail()" style="border:none;background:none;font-size:20px;color:#999;cursor:pointer;">✕</button>
+    </div>
+    <div id="detailBody" style="font-size:14px;line-height:1.8;color:#333;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;">
+      <button type="button" id="detailDeleteBtn" style="padding:8px 16px;font-size:13px;border-radius:6px;border:1px solid #c00;color:#c00;background:#fff;cursor:pointer;">刪除這筆</button>
+      <button type="button" onclick="hideEntryDetail()" style="padding:8px 16px;font-size:13px;border-radius:6px;border:none;background:#1a5fa8;color:#fff;font-weight:bold;cursor:pointer;">關閉</button>
+    </div>
+  </div>
 </div>
 
 <!-- 清空全部紀錄 密碼確認視窗 -->
@@ -748,10 +765,13 @@ function applySendCustomer() {
   }
 }
 
+var DEFAULT_SENDER = '龍冶股份有限公司';
+
 document.getElementById('btnSpClear').addEventListener('click', function() {
-  ['sp-custid','sp-sender','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
+  ['sp-custid','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
     document.getElementById(id).value = '';
   });
+  document.getElementById('sp-sender').value = DEFAULT_SENDER;
   document.getElementById('sp-hint').textContent = '';
   document.getElementById('sp-msg').textContent = '';
   autoGrow(document.getElementById('sp-sender'));
@@ -886,10 +906,11 @@ document.getElementById('btnSpAdd').addEventListener('click', async function() {
   var ok = await saveQueue(list);
 
   if (ok) {
-    // 清空表單，準備輸入下一位客戶（保留公司別選擇）
-    ['sp-custid','sp-sender','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
+    // 清空表單，準備輸入下一位客戶（保留公司別選擇，寄件人回復預設值）
+    ['sp-custid','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
       document.getElementById(id).value = '';
     });
+    document.getElementById('sp-sender').value = DEFAULT_SENDER;
     document.getElementById('sp-hint').textContent = '';
     autoGrow(document.getElementById('sp-sender'));
     autoGrow(document.getElementById('sp-receiver'));
@@ -949,6 +970,35 @@ async function removeQueueEntry(id) {
 }
 window.removeQueueEntry = removeQueueEntry;
 
+// ════════════ 寄件明細詳情視窗 ════════════
+window.showEntryDetail = function showEntryDetail(id) {
+  var e = loadQueue().find(function(x){ return x.id === id; });
+  if (!e) return;
+  var rows = [
+    ['客戶編號', (e.custId || '－') + (e.company ? '（' + e.company + '）' : '')],
+    ['收件人／地址', e.receiverVal || e.receiverName],
+    ['寄件人', e.senderVal || '－'],
+    ['件數', e.count + ' 件'],
+    ['貨品內容', e.goods || '未填寫'],
+    ['電話', e.phone || '－'],
+    ['加入時間', e.addedAt]
+  ];
+  document.getElementById('detailBody').innerHTML = rows.map(function(r) {
+    return '<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f0f2f6;">' +
+      '<div style="width:90px;flex-shrink:0;color:#1a5fa8;font-weight:bold;">' + esc(r[0]) + '</div>' +
+      '<div style="white-space:pre-wrap;flex:1;">' + esc(r[1]) + '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('detailDeleteBtn').onclick = function() {
+    hideEntryDetail();
+    removeQueueEntry(id);
+  };
+  document.getElementById('detailOverlay').style.display = 'flex';
+}
+window.hideEntryDetail = function hideEntryDetail() {
+  document.getElementById('detailOverlay').style.display = 'none';
+}
+
 function renderQueue() {
   var list = loadQueue();
   var totalCount = list.reduce(function(s,e){ return s + e.count; }, 0);
@@ -963,14 +1013,14 @@ function renderQueue() {
     return;
   }
   var rows = list.map(function(e) {
-    return '<tr>' +
+    return '<tr class="qrow" onclick="showEntryDetail(\''+e.id+'\')">' +
       '<td>' + esc(e.custId || '－') + (e.company ? ' <span style="color:#999">('+esc(e.company)+')</span>' : '') + '</td>' +
       '<td>' + esc(e.receiverName) + '</td>' +
       '<td class="qcount">' + e.count + '</td>' +
       '<td>' + esc(e.goods || '－') + '</td>' +
       '<td>' + esc(e.phone || '－') + '</td>' +
       '<td style="color:#999;font-size:12px;">' + esc(e.addedAt) + '</td>' +
-      '<td class="qdel"><button type="button" onclick="removeQueueEntry(\''+e.id+'\')">刪除</button></td>' +
+      '<td class="qdel"><button type="button" onclick="event.stopPropagation();removeQueueEntry(\''+e.id+'\')">刪除</button></td>' +
     '</tr>';
   }).join('');
   wrap.innerHTML =
@@ -1028,7 +1078,7 @@ function renderSummary() {
     var customerBlocks = order.map(function(key) {
       var g = groups[key];
       var rows = g.entries.map(function(e) {
-        return '<tr>' +
+        return '<tr class="qrow" onclick="showEntryDetail(\''+e.id+'\')">' +
           '<td style="width:70px;color:#999;">' + esc(e.addedAt.split(' ')[1] || e.addedAt) + '</td>' +
           '<td class="sg-count" style="width:70px;">' + e.count + ' 件</td>' +
           '<td>' + esc(e.goods || '未填寫貨品內容') + '</td>' +
@@ -1343,6 +1393,7 @@ btnToggle.addEventListener('click', function() {
 });
 
 // 初始載入客戶資料與寄件清單（雲端 Gist）
+autoGrow(document.getElementById('sp-sender'));
 document.getElementById('cbtn-co-AL').classList.add('active');
 fetchAllCustomers().then(function(){ renderCustTable(); });
 document.getElementById('queueTotal').textContent = '讀取雲端清單中...';
