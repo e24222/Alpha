@@ -121,6 +121,17 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
 .queue-table td.qdel button:hover { background:#fff0f0; }
 .queue-empty { text-align:center; color:#999; padding:30px; font-family:sans-serif; }
 
+/* ── 整合頁面：日期分組 ── */
+.summary-date-block { margin-bottom:26px; }
+.summary-date-head {
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;
+  background:#1a3c6e; color:#fff; padding:10px 16px; border-radius:10px 10px 0 0;
+  font-size:15px; font-weight:bold; font-family:sans-serif;
+}
+.summary-date-head .sd-sub { font-size:13px; font-weight:normal; color:#cfe0f5; }
+.summary-date-block .summary-group:first-of-type { border-radius:0; }
+.summary-date-block .summary-group:last-of-type { border-radius:0 0 10px 10px; margin-bottom:0; }
+
 /* ── 整合頁面：客戶分組 ── */
 .summary-group { background:#fff; border-radius:10px; margin-bottom:16px; box-shadow:0 2px 10px rgba(26,95,168,0.12); overflow:hidden; }
 .summary-group .sg-head {
@@ -929,43 +940,70 @@ function renderQueue() {
 function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ════════════ 整合頁面 ════════════
+function entryDateOf(e) {
+  return (e.addedAt || '').split(' ')[0] || '（無日期）';
+}
+
 function renderSummary() {
   var list = loadQueue();
   var totalCount = list.reduce(function(s,e){ return s + e.count; }, 0);
-
-  // 依「客戶編號＋公司」分組
-  var groups = {};
-  var order = [];
-  list.forEach(function(e) {
-    var key = (e.custId || '（無編號）') + '|' + (e.company || '') + '|' + e.receiverName;
-    if (!groups[key]) { groups[key] = { custId:e.custId, company:e.company, receiverName:e.receiverName, entries:[], total:0 }; order.push(key); }
-    groups[key].entries.push(e);
-    groups[key].total += e.count;
-  });
+  var custKeySet = {};
+  list.forEach(function(e){ custKeySet[(e.custId||'')+'|'+(e.company||'')+'|'+e.receiverName] = 1; });
 
   document.getElementById('summaryTotal').textContent =
-    '共 ' + order.length + ' 位客戶　｜　合計 ' + totalCount + ' 件';
+    '共 ' + Object.keys(custKeySet).length + ' 位客戶　｜　合計 ' + totalCount + ' 件';
 
   var wrap = document.getElementById('summaryWrap');
-  if (!order.length) {
+  if (!list.length) {
     wrap.innerHTML = '<div class="queue-empty">今日尚無寄件資料，請先到「寄件區」輸入</div>';
     return;
   }
 
-  wrap.innerHTML = order.map(function(key) {
-    var g = groups[key];
-    var rows = g.entries.map(function(e) {
-      return '<tr>' +
-        '<td style="width:70px;color:#999;">' + esc(e.addedAt.split(' ')[1] || e.addedAt) + '</td>' +
-        '<td class="sg-count" style="width:70px;">' + e.count + ' 件</td>' +
-        '<td>' + esc(e.goods || '未填寫貨品內容') + '</td>' +
-        '<td style="width:140px;color:#666;">' + esc(e.phone || '') + '</td>' +
-      '</tr>';
+  // ── 第一層：依日期分組 ──
+  var dateGroups = {};
+  var dateOrder = [];
+  list.forEach(function(e) {
+    var d = entryDateOf(e);
+    if (!dateGroups[d]) { dateGroups[d] = []; dateOrder.push(d); }
+    dateGroups[d].push(e);
+  });
+  dateOrder.sort(function(a, b) { return new Date(b) - new Date(a); }); // 新到舊
+
+  wrap.innerHTML = dateOrder.map(function(dateKey) {
+    var dayEntries = dateGroups[dateKey];
+    var dayTotal = dayEntries.reduce(function(s,e){ return s + e.count; }, 0);
+
+    // ── 第二層：同一天內依「客戶編號＋公司＋收件人」分組 ──
+    var groups = {};
+    var order = [];
+    dayEntries.forEach(function(e) {
+      var key = (e.custId || '（無編號）') + '|' + (e.company || '') + '|' + e.receiverName;
+      if (!groups[key]) { groups[key] = { custId:e.custId, company:e.company, receiverName:e.receiverName, entries:[], total:0 }; order.push(key); }
+      groups[key].entries.push(e);
+      groups[key].total += e.count;
+    });
+
+    var customerBlocks = order.map(function(key) {
+      var g = groups[key];
+      var rows = g.entries.map(function(e) {
+        return '<tr>' +
+          '<td style="width:70px;color:#999;">' + esc(e.addedAt.split(' ')[1] || e.addedAt) + '</td>' +
+          '<td class="sg-count" style="width:70px;">' + e.count + ' 件</td>' +
+          '<td>' + esc(e.goods || '未填寫貨品內容') + '</td>' +
+          '<td style="width:140px;color:#666;">' + esc(e.phone || '') + '</td>' +
+        '</tr>';
+      }).join('');
+      return '<div class="summary-group">' +
+        '<div class="sg-head"><span>👤 ' + esc(g.receiverName) + (g.custId ? '（客編 '+esc(g.custId)+(g.company?'/'+esc(g.company):'')+'）' : '') + '</span>' +
+        '<span class="sg-sub">小計 ' + g.total + ' 件，共 ' + g.entries.length + ' 筆</span></div>' +
+        '<table>' + rows + '</table></div>';
     }).join('');
-    return '<div class="summary-group">' +
-      '<div class="sg-head"><span>👤 ' + esc(g.receiverName) + (g.custId ? '（客編 '+esc(g.custId)+(g.company?'/'+esc(g.company):'')+'）' : '') + '</span>' +
-      '<span class="sg-sub">小計 ' + g.total + ' 件，共 ' + g.entries.length + ' 筆</span></div>' +
-      '<table>' + rows + '</table></div>';
+
+    return '<div class="summary-date-block">' +
+      '<div class="summary-date-head"><span>📅 ' + esc(dateKey) + '</span>' +
+      '<span class="sd-sub">' + order.length + ' 位客戶　｜　合計 ' + dayTotal + ' 件</span></div>' +
+      customerBlocks +
+    '</div>';
   }).join('');
 }
 
