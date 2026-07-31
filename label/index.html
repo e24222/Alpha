@@ -77,7 +77,8 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
   outline:none; font-family:"標楷體","DFKai-SB",serif; color:#111; resize:vertical;
 }
 .sp-field textarea:focus, .sp-field input[type=text]:focus { border-color:#1a5fa8; }
-#sp-receiver { min-height:70px; font-size:22px; font-weight:bold; line-height:1.5; overflow:hidden; resize:none; }
+#sp-recvName { font-size:24px; font-weight:bold; }
+#sp-recvAddr { min-height:60px; font-size:22px; font-weight:bold; line-height:1.5; overflow:hidden; resize:none; }
 #sp-sender { min-height:50px; font-size:18px; overflow:hidden; resize:none; }
 .sp-actions { display:flex; gap:12px; justify-content:flex-end; margin-top:6px; flex-wrap:wrap; }
 .sp-actions button {
@@ -298,14 +299,20 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
       </div>
       <div class="sp-row">
         <div class="sp-field">
-          <label>收件人（姓名 / 地址）</label>
-          <textarea id="sp-receiver" placeholder="姓名&#10;&#10;地址"></textarea>
+          <label>收件人姓名</label>
+          <input type="text" id="sp-recvName" placeholder="姓名／公司">
         </div>
       </div>
       <div class="sp-row">
         <div class="sp-field">
-          <label>寄件人</label>
-          <textarea id="sp-sender" placeholder="公司名稱&#10;&#10;地址（可留空）">龍冶股份有限公司</textarea>
+          <label>收件人電話</label>
+          <input type="text" id="sp-phone" placeholder="0912-345-678">
+        </div>
+      </div>
+      <div class="sp-row">
+        <div class="sp-field">
+          <label>收件人地址</label>
+          <textarea id="sp-recvAddr" placeholder="地址"></textarea>
         </div>
       </div>
       <div class="sp-row">
@@ -313,9 +320,11 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
           <label>共幾件</label>
           <input type="text" id="sp-count" placeholder="1">
         </div>
+      </div>
+      <div class="sp-row">
         <div class="sp-field">
-          <label>電話</label>
-          <input type="text" id="sp-phone" placeholder="0912-345-678">
+          <label>寄件人</label>
+          <textarea id="sp-sender" placeholder="公司名稱&#10;&#10;地址（可留空）">龍冶股份有限公司</textarea>
         </div>
       </div>
       <div class="sp-row">
@@ -730,7 +739,7 @@ function autoGrow(el) {
   el.style.height = 'auto';
   el.style.height = (el.scrollHeight + 2) + 'px';
 }
-['sp-sender','sp-receiver'].forEach(function(id) {
+['sp-sender','sp-recvAddr'].forEach(function(id) {
   var el = document.getElementById(id);
   el.addEventListener('input', function(){ autoGrow(el); });
 });
@@ -750,14 +759,15 @@ function applySendCustomer() {
   document.getElementById('sp-custid').value = normId;
   var cust = findCustomer(normId, co);
   if (cust) {
-    document.getElementById('sp-receiver').value = cust.name + (cust.addr ? '\n\n' + cust.addr : '');
+    document.getElementById('sp-recvName').value = cust.name;
+    document.getElementById('sp-recvAddr').value = cust.addr || '';
     if (cust.sname || cust.saddr)
       document.getElementById('sp-sender').value = (cust.sname||'') + (cust.saddr ? '\n\n' + cust.saddr : '');
     if (cust.phone) document.getElementById('sp-phone').value = cust.phone;
     hint.style.color = '#1a5fa8';
     hint.textContent = '✓ ' + cust.name;
     autoGrow(document.getElementById('sp-sender'));
-    autoGrow(document.getElementById('sp-receiver'));
+    autoGrow(document.getElementById('sp-recvAddr'));
   } else {
     hint.style.color = '#c00';
     hint.textContent = '找不到';
@@ -767,14 +777,14 @@ function applySendCustomer() {
 var DEFAULT_SENDER = '龍冶股份有限公司';
 
 document.getElementById('btnSpClear').addEventListener('click', function() {
-  ['sp-custid','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
+  ['sp-custid','sp-recvName','sp-recvAddr','sp-count','sp-phone','sp-goods'].forEach(function(id){
     document.getElementById(id).value = '';
   });
   document.getElementById('sp-sender').value = DEFAULT_SENDER;
   document.getElementById('sp-hint').textContent = '';
   document.getElementById('sp-msg').textContent = '';
   autoGrow(document.getElementById('sp-sender'));
-  autoGrow(document.getElementById('sp-receiver'));
+  autoGrow(document.getElementById('sp-recvAddr'));
 });
 
 // ════════════ 寄件清單（雲端共用，存在 GitHub Gist，所有人／裝置共用同一份）════════════
@@ -873,23 +883,24 @@ async function saveQueue(list) {
 }
 
 document.getElementById('btnSpAdd').addEventListener('click', async function() {
-  var receiver = document.getElementById('sp-receiver').value.trim();
+  var recvName = document.getElementById('sp-recvName').value.trim();
+  var recvAddr = document.getElementById('sp-recvAddr').value.trim();
   var countRaw = document.getElementById('sp-count').value.trim();
   var count = parseInt(countRaw, 10);
   var msg = document.getElementById('sp-msg');
-  if (!receiver) { msg.textContent = '請先填寫收件人資料'; return; }
+  if (!recvName) { msg.textContent = '請先填寫收件人姓名'; return; }
   if (!count || count <= 0) { msg.textContent = '請填寫正確的件數（大於 0）'; return; }
 
   var custIdRaw = document.getElementById('sp-custid').value.trim();
-  var receiverNameLine = document.getElementById('sp-receiver').value.split('\n')[0] || receiver;
+  var receiverVal = recvName + (recvAddr ? '\n\n' + recvAddr : '');
 
   var entry = {
     id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
     custId: custIdRaw ? normalizeId(custIdRaw) : '',
     company: document.getElementById('sp-co').value,
-    receiverName: receiverNameLine,
+    receiverName: recvName,
     senderVal: document.getElementById('sp-sender').value,
-    receiverVal: document.getElementById('sp-receiver').value,
+    receiverVal: receiverVal,
     phone: document.getElementById('sp-phone').value,
     count: count,
     goods: document.getElementById('sp-goods').value.trim(),
@@ -906,13 +917,13 @@ document.getElementById('btnSpAdd').addEventListener('click', async function() {
 
   if (ok) {
     // 清空表單，準備輸入下一位客戶（保留公司別選擇，寄件人回復預設值）
-    ['sp-custid','sp-receiver','sp-count','sp-phone','sp-goods'].forEach(function(id){
+    ['sp-custid','sp-recvName','sp-recvAddr','sp-count','sp-phone','sp-goods'].forEach(function(id){
       document.getElementById(id).value = '';
     });
     document.getElementById('sp-sender').value = DEFAULT_SENDER;
     document.getElementById('sp-hint').textContent = '';
     autoGrow(document.getElementById('sp-sender'));
-    autoGrow(document.getElementById('sp-receiver'));
+    autoGrow(document.getElementById('sp-recvAddr'));
     msg.style.color = '#1a5fa8';
     msg.textContent = '✓ 已加入清單並同步：' + entry.receiverName + '（' + entry.count + ' 件）';
     document.getElementById('sp-custid').focus();
