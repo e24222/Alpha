@@ -145,7 +145,7 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
 .summary-group td.sg-count { text-align:center; font-weight:bold; color:#c00; }
 .summary-total {
   max-width:1000px; margin:0 auto 30px; background:#1a3c6e; color:#fff; border-radius:10px;
-  padding:16px 22px; font-family:sans-serif; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  padding:16px 22px; font-family:sans-serif; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
   font-size:16px; font-weight:bold;
 }
 
@@ -346,8 +346,26 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
 <div class="page" id="page-summary">
   <h1 style="margin-top:14px;">新航快遞 － 整合頁面</h1>
   <div class="sub">以客戶做區隔，清楚顯示今天寄給誰、幾件、出了什麼貨</div>
-  <div class="summary-total" id="summaryTotal">共 0 位客戶　｜　合計 0 件</div>
+  <div class="summary-total" id="summaryTotal">
+    <span id="summaryTotalText">共 0 位客戶　｜　合計 0 件</span>
+    <button type="button" id="btnWipeAll" style="padding:6px 16px;font-size:13px;font-weight:bold;border-radius:6px;border:1px solid #ff9b9b;background:#c00;color:#fff;cursor:pointer;">🗑️ 清空全部紀錄</button>
+  </div>
   <div class="queue-wrap" id="summaryWrap"></div>
+</div>
+
+<!-- 清空全部紀錄 密碼確認視窗 -->
+<div id="wipeOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:22px 24px;width:320px;max-width:92vw;font-family:sans-serif;box-shadow:0 6px 30px rgba(0,0,0,0.3);">
+    <div style="font-size:17px;font-weight:bold;color:#c00;margin-bottom:8px;">🗑️ 清空全部紀錄</div>
+    <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:12px;">此動作會刪除所有人的寄件紀錄，無法復原。請輸入密碼確認。</div>
+    <input id="wipePwInput" type="password" placeholder="密碼" autocomplete="off"
+      style="width:100%;padding:10px 12px;font-size:16px;letter-spacing:4px;text-align:center;border:2px solid #cdd9ea;border-radius:8px;outline:none;margin-bottom:8px;">
+    <div id="wipePwMsg" style="font-size:13px;color:#c00;min-height:18px;text-align:center;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button type="button" id="btnWipeCancel" style="padding:8px 14px;font-size:13px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer;">取消</button>
+      <button type="button" id="btnWipeConfirm" style="padding:8px 14px;font-size:13px;border-radius:6px;border:none;background:#c00;color:#fff;font-weight:bold;cursor:pointer;">確認刪除</button>
+    </div>
+  </div>
 </div>
 
 <!-- ════════════ 分頁 3：標籤列印（原始格，供手動微調用）════════════ -->
@@ -889,6 +907,30 @@ document.getElementById('btnQueueClear').addEventListener('click', async functio
   await saveQueue([]);
 });
 
+// ── 整合頁面：清空全部紀錄（需密碼 0000）──
+var WIPE_PASSWORD = '0000';
+document.getElementById('btnWipeAll').addEventListener('click', function() {
+  document.getElementById('wipePwInput').value = '';
+  document.getElementById('wipePwMsg').textContent = '';
+  document.getElementById('wipeOverlay').style.display = 'flex';
+  document.getElementById('wipePwInput').focus();
+});
+document.getElementById('btnWipeCancel').addEventListener('click', function() {
+  document.getElementById('wipeOverlay').style.display = 'none';
+});
+async function confirmWipeAll() {
+  var pw = document.getElementById('wipePwInput').value.trim();
+  var msg = document.getElementById('wipePwMsg');
+  if (pw !== WIPE_PASSWORD) { msg.textContent = '密碼錯誤'; return; }
+  document.getElementById('wipeOverlay').style.display = 'none';
+  var ok = await saveQueue([]);
+  if (!ok) alert('尚未設定同步 Token，請先到右上角「⚙️ 同步設定」輸入 token 再試一次');
+}
+document.getElementById('btnWipeConfirm').addEventListener('click', confirmWipeAll);
+document.getElementById('wipePwInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') confirmWipeAll();
+});
+
 document.getElementById('btnQueuePrint').addEventListener('click', async function() {
   await fetchQueueFromGist();
   var list = loadQueue();
@@ -950,7 +992,7 @@ function renderSummary() {
   var custKeySet = {};
   list.forEach(function(e){ custKeySet[(e.custId||'')+'|'+(e.company||'')+'|'+e.receiverName] = 1; });
 
-  document.getElementById('summaryTotal').textContent =
+  document.getElementById('summaryTotalText').textContent =
     '共 ' + Object.keys(custKeySet).length + ' 位客戶　｜　合計 ' + totalCount + ' 件';
 
   var wrap = document.getElementById('summaryWrap');
