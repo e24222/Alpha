@@ -495,8 +495,18 @@ var custCache = { AL: [], GM: [] };
 
 async function fetchCompany(co) {
   try {
-    var res = await supaFetch('customers?company=eq.' + co + '&order=id');
-    if (res.ok) custCache[co] = await res.json();
+    var all = [];
+    var offset = 0;
+    var pageSize = 1000;
+    while (true) {
+      var res = await supaFetch('customers?company=eq.' + co + '&order=id&offset=' + offset + '&limit=' + pageSize);
+      if (!res.ok) break;
+      var page = await res.json();
+      all = all.concat(page);
+      if (page.length < pageSize) break;
+      offset += pageSize;
+    }
+    custCache[co] = all;
   } catch(e) { console.error('fetchCompany error:', e); }
 }
 async function fetchAllCustomers() {
