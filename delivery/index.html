@@ -2491,8 +2491,9 @@
         </select>
         <button onclick="addStop()">加入</button>
       </div>` : '';
-    document.getElementById('addStopArea').innerHTML = addArea;
-    renderSegmentButtons();
+    document.getElementById('mapBtns').innerHTML =
+      addArea +
+      lastSegments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
   }
 
   function backToSelect() {
