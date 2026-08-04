@@ -343,9 +343,9 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
 
   <div class="queue-wrap">
     <div class="queue-bar">
-      <div class="qb-total" id="queueTotal">待列印清單：0 位客戶、共 <b>0</b> 件</div>
+      <div class="qb-total" id="queueTotal">目前清單：0 位客戶、共 <b>0</b> 件</div>
       <div class="qb-actions">
-        <button type="button" class="qb-clear" id="btnQueueClear">清空待列印</button>
+        <button type="button" class="qb-clear" id="btnQueueClear">清空清單</button>
         <button type="button" class="qb-print" id="btnQueuePrint">🖨️ 列印全部標籤（0 張）</button>
       </div>
     </div>
@@ -825,7 +825,8 @@ async function fetchQueueFromGist() {
     var data = await res.json();
     var content = data.files && data.files[GIST_FILE] ? data.files[GIST_FILE].content : '[]';
     queueCache = JSON.parse(content || '[]').map(function(e){
-      if (typeof e.printed === 'undefined') e.printed = true; // 舊資料（改版前）視為已處理，避免全部灌進待列印清單
+      if (typeof e.printed === 'undefined') e.printed = true; // 舊資料（改版前）視為已處理
+      if (typeof e.spCleared === 'undefined') e.spCleared = true; // 舊資料視為已從寄件區清空過，避免全部灌進待列印清單
       return e;
     });
   } catch (e) {
@@ -918,7 +919,8 @@ document.getElementById('btnSpAdd').addEventListener('click', async function() {
     count: count,
     goods: document.getElementById('sp-goods').value.trim(),
     addedAt: new Date().toLocaleString('zh-TW', { hour12:false }),
-    printed: false
+    printed: false,
+    spCleared: false
   };
 
   msg.style.color = '#1a5fa8';
@@ -948,10 +950,13 @@ document.getElementById('btnSpAdd').addEventListener('click', async function() {
 });
 
 document.getElementById('btnQueueClear').addEventListener('click', async function() {
-  if (!confirm('確定要清空「尚未列印」的清單嗎？（已列印過的歷史紀錄仍會保留在整合頁面）')) return;
+  if (!confirm('確定要清空寄件區目前顯示的清單嗎？（整合頁面的歷史紀錄不會被刪除，仍會保留）')) return;
   await fetchQueueFromGist();
-  var keep = loadQueue().filter(function(e){ return e.printed; }); // 只保留已列印過的歷史紀錄
-  await saveQueue(keep);
+  var list = loadQueue().map(function(e){
+    if (!e.spCleared) e.spCleared = true; // 只是從寄件區隱藏，不刪除資料，整合頁面仍看得到
+    return e;
+  });
+  await saveQueue(list);
 });
 
 // ── 整合頁面：清空全部紀錄（需密碼 0000）──
@@ -980,7 +985,7 @@ document.getElementById('wipePwInput').addEventListener('keydown', function(e) {
 
 document.getElementById('btnQueuePrint').addEventListener('click', async function() {
   await fetchQueueFromGist();
-  var pending = loadQueue().filter(function(e){ return !e.printed; });
+  var pending = loadQueue().filter(function(e){ return !e.spCleared; });
   if (!pending.length) { alert('清單是空的，請先在上方加入寄件資料'); return; }
   buildQueuePrintArea(pending);
   setTimeout(function() {
@@ -990,10 +995,10 @@ document.getElementById('btnQueuePrint').addEventListener('click', async functio
       var ids = {};
       pending.forEach(function(e){ ids[e.id] = 1; });
       var latest = loadQueue().map(function(e){
-        if (ids[e.id]) e.printed = true;
+        if (ids[e.id]) e.printed = true; // 只做記錄用，不會把項目從寄件區清單移除
         return e;
       });
-      await saveQueue(latest); // 列印完自動標記為已列印，移出「待列印」清單但保留在整合頁面歷史
+      await saveQueue(latest);
     }, 500);
   }, 100);
 });
@@ -1035,11 +1040,11 @@ window.hideEntryDetail = function hideEntryDetail() {
 }
 
 function renderQueue() {
-  var list = loadQueue().filter(function(e){ return !e.printed; }); // 寄件區只顯示「尚未列印」的項目
+  var list = loadQueue().filter(function(e){ return !e.spCleared; }); // 寄件區顯示本次「還沒清空」的項目（印過也留著）
   var totalCount = list.reduce(function(s,e){ return s + e.count; }, 0);
   var pages = Math.ceil(totalCount / N) || 0;
   document.getElementById('queueTotal').innerHTML =
-    '待列印清單：' + list.length + ' 位客戶、共 <b>' + totalCount + '</b> 件';
+    '目前清單：' + list.length + ' 位客戶、共 <b>' + totalCount + '</b> 件';
   document.getElementById('btnQueuePrint').textContent = '🖨️ 列印全部標籤（' + pages + ' 張）';
 
   var wrap = document.getElementById('queueTableWrap');
@@ -1050,7 +1055,7 @@ function renderQueue() {
   var rows = list.map(function(e) {
     return '<tr class="qrow" onclick="showEntryDetail(\''+e.id+'\')">' +
       '<td>' + esc(e.custId || '－') + (e.company ? ' <span style="color:#999">('+esc(e.company)+')</span>' : '') + '</td>' +
-      '<td>' + esc(e.receiverName) + '</td>' +
+      '<td>' + esc(e.receiverName) + (e.printed ? ' <span style="color:#1a8f4a;font-size:12px;">✓已列印</span>' : '') + '</td>' +
       '<td class="qcount">' + e.count + '</td>' +
       '<td>' + esc(e.goods || '－') + '</td>' +
       '<td>' + esc(e.phone || '－') + '</td>' +
