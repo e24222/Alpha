@@ -313,7 +313,11 @@ if (sessionStorage.getItem('mold_auth') === '1') {
 
 <div class="header">
   <div><h1>🔧 模具清冊管理系統<small>Mold Registry</small></h1></div>
-  <div class="header-date" id="hDate">2026.04.29 週三</div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <span id="syncStatus" style="font-size:13px;color:#cbd5e1;" title=""></span>
+    <button onclick="showTokenUI()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:2px 4px;line-height:1;opacity:.9;" title="Gist 同步設定">⚙️</button>
+    <div class="header-date" id="hDate">2026.04.29 週三</div>
+  </div>
 </div>
 
 <div class="wrap">
@@ -551,6 +555,31 @@ if (sessionStorage.getItem('mold_auth') === '1') {
 <!-- 隱藏的 file input -->
 <input type="file" id="filePickerInput" accept=".pdf,image/*" multiple="" style="display:none" onchange="handleFilePicked(event)">
 
+<!-- Gist 同步設定 -->
+<div class="overlay" id="tokenOverlay" onclick="if(event.target===this) hideTokenUI()">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head">
+      <h3>☁️ Gist 同步設定</h3>
+      <button class="btn-x" onclick="hideTokenUI()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:0 0 14px;">
+        輸入有 <code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;">gist</code> 權限的 GitHub Token，資料會自動同步到私人 Gist，換裝置或換瀏覽器也能看到同一份清冊（跟健身課表用同一套機制）。
+      </p>
+      <div class="fi">
+        <label>GitHub Token</label>
+        <input id="tokenInput" type="password" placeholder="ghp_xxxxxxxxxxxx">
+      </div>
+      <div id="tokenTestResult" style="font-size:13px;min-height:18px;margin-top:8px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="testToken()">🔍 測試連線</button>
+      <button class="btn btn-outline" onclick="hideTokenUI()">取消</button>
+      <button class="btn btn-primary" onclick="applyToken()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════
 //  DATA SEED (from 模具清冊.xls)
@@ -613,14 +642,18 @@ const SEED = {
 //  STATE
 // ════════════════════════════════════
 const SK = 'moldv3';
+const GIST_ID = 'f252faf6041355ab8905005b8f8839de';
+const GIST_FILE = 'yentool-mold.json';
 let DB = {};
 let curTab = '清冊';
 let sortK = null, sortD = 1;
 let editKey = null; // "tab::moldId"
+let _syncTimer = null;
 
-function loadDB() {
-  try { const s = localStorage.getItem(SK); DB = s ? JSON.parse(s) : deepCopy(SEED); }
-  catch { DB = deepCopy(SEED); }
+function getToken(){ return localStorage.getItem('mold_token') || ''; }
+function saveToken(t){ localStorage.setItem('mold_token', t.trim()); }
+
+function normalizeDB() {
   // ensure all tabs exist
   ['駿翰','大慶','懋得','大陸模具','報廢'].forEach(t => { if(!DB[t]) DB[t] = []; });
   // 補上舊資料缺少的 procStatus 欄位（自動從備註偵測）
@@ -632,8 +665,112 @@ function loadDB() {
     });
   });
 }
-function saveDB() { localStorage.setItem(SK, JSON.stringify(DB)); }
+
+function loadDB() {
+  try { const s = localStorage.getItem(SK); DB = s ? JSON.parse(s) : deepCopy(SEED); }
+  catch { DB = deepCopy(SEED); }
+  normalizeDB();
+}
+function saveDB() { localStorage.setItem(SK, JSON.stringify(DB)); schedulSync(); }
 function deepCopy(o) { return JSON.parse(JSON.stringify(o)); }
+
+function schedulSync(){
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(syncToGist, 1500);
+}
+
+async function syncToGist(){
+  const token = getToken();
+  if(!token) return;
+  setSyncStatus('syncing');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(DB) } } })
+    });
+    if(!res.ok) throw new Error(res.status);
+    setSyncStatus('ok');
+  } catch(e) {
+    setSyncStatus('err');
+  }
+}
+
+async function loadFromGist(){
+  const token = getToken();
+  if(!token){ return; }
+  setSyncStatus('syncing');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if(res.status === 401){ setSyncStatus('err'); return; }
+    if(!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    const content = data.files[GIST_FILE]?.content;
+    if(content){
+      const remote = JSON.parse(content);
+      if(Object.keys(remote).length > 0){
+        DB = remote;
+        normalizeDB();
+        localStorage.setItem(SK, JSON.stringify(DB));
+        updateSummary();
+        render();
+      }
+    }
+    setSyncStatus('ok');
+  } catch(e) {
+    setSyncStatus('err');
+  }
+}
+
+function setSyncStatus(state){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  const map = { syncing:'☁️ 同步中', ok:'✓ 已同步', err:'⚠️ 同步失敗' };
+  const color = { syncing:'#cbd5e1', ok:'#86efac', err:'#fca5a5' };
+  el.textContent = map[state] || '';
+  el.style.color = color[state] || '#cbd5e1';
+  el.title = state === 'err' ? '同步失敗，請檢查 token' : state === 'syncing' ? '同步中…' : '已同步至 Gist';
+}
+
+function showTokenUI(){
+  document.getElementById('tokenOverlay').classList.add('open');
+  const inp = document.getElementById('tokenInput');
+  if(inp) inp.value = getToken();
+  const res = document.getElementById('tokenTestResult');
+  if(res) res.textContent = '';
+}
+function hideTokenUI(){
+  document.getElementById('tokenOverlay').classList.remove('open');
+}
+
+async function testToken(){
+  const t = document.getElementById('tokenInput').value.trim() || getToken();
+  const res = document.getElementById('tokenTestResult');
+  if(!t){ res.style.color='#94a3b8'; res.textContent='尚未輸入 Token'; return; }
+  res.style.color='#94a3b8'; res.textContent='測試中…';
+  try{
+    const r = await fetch('https://api.github.com/gists/' + GIST_ID, {
+      headers:{'Authorization':'token '+t}
+    });
+    if(r.ok){ res.style.color='#16a34a'; res.textContent='✅ 連線正常，Gist 可存取'; }
+    else if(r.status===401){ res.style.color='#dc2626'; res.textContent='❌ Token 無效或已失效'; }
+    else { res.style.color='#dc2626'; res.textContent='❌ 錯誤：'+r.status; }
+  }catch(e){
+    res.style.color='#dc2626'; res.textContent='❌ 網路錯誤';
+  }
+}
+function applyToken(){
+  const t = document.getElementById('tokenInput').value.trim();
+  if(!t) return;
+  saveToken(t);
+  hideTokenUI();
+  loadFromGist();
+}
 
 // Active (non-廢) tabs for 清冊 view
 const ACTIVE_TABS = ['駿翰','大慶','懋得','大陸模具'];
@@ -1457,6 +1594,7 @@ function closeProcView(e) {
 //  INIT
 // ════════════════════════════════════
 loadDB(); loadDocDB(); setDate(); updateSummary(); render();
+loadFromGist();
 document.addEventListener('keydown', e => {
   if (e.key==='Escape') {
     closeModal();
