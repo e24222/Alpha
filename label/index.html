@@ -1003,16 +1003,24 @@ document.getElementById('btnQueuePrint').addEventListener('click', async functio
   }, 100);
 });
 
-async function removeQueueEntry(id, requirePassword) {
-  if (requirePassword) {
+async function removeQueueEntry(id, hardDelete) {
+  await fetchQueueFromGist();
+  if (hardDelete) {
+    // 整合頁面：真正永久刪除，需要密碼
     var pw = prompt('這是整合頁面的歷史紀錄，刪除需要密碼：');
     if (pw === null) return; // 取消
     if (pw !== WIPE_PASSWORD) { alert('密碼錯誤，未刪除'); return; }
+    var list = loadQueue().filter(function(e){ return e.id !== id; });
+    await saveQueue(list);
   } else {
-    if (!confirm('確定刪除這一筆嗎？')) return;
+    // 寄件區：只從寄件區清單移除，整合頁面的歷史紀錄不受影響
+    if (!confirm('確定要從寄件區清單移除這一筆嗎？（整合頁面的歷史紀錄不會被刪除）')) return;
+    var list = loadQueue().map(function(e){
+      if (e.id === id) e.spCleared = true;
+      return e;
+    });
+    await saveQueue(list);
   }
-  var list = loadQueue().filter(function(e){ return e.id !== id; });
-  await saveQueue(list);
 }
 window.removeQueueEntry = removeQueueEntry;
 
