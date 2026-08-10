@@ -83,6 +83,8 @@ body { font-family: 'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f4
 .tbl-header h2 { font-size:14px; font-weight:700; }
 .tbl-meta { font-size:12px; color:#9ca3af; }
 .tbl-scroll { overflow-x:auto; }
+.print-banner { display:none; }
+.print-date-tag { display:none; }
 table { width:100%; border-collapse:collapse; min-width:900px; }
 th {
   background:#f8fafc; padding:10px 12px; text-align:left;
@@ -208,8 +210,34 @@ textarea { resize:vertical; min-height:64px; }
 /* Print */
 @page { size: landscape; margin: 12mm; }
 @media print {
+  html, body { background:white; }
+  * { -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }
   .header,.tabs,.toolbar,.acts,.overlay,.toast { display:none!important; }
   .tbl-wrap { box-shadow:none; border-radius:0; }
+
+  /* 標題列印區 */
+  .print-banner { display:block; margin-bottom:10px; padding-bottom:8px; border-bottom:3px solid #1e40af; }
+  .print-banner-title { font-size:19px; font-weight:800; color:#1e3a8a; letter-spacing:.3px; }
+  .print-banner-title span { font-size:11px; font-weight:500; color:#6b7280; margin-left:8px; }
+  .tbl-header { border-bottom:none; padding:0 0 12px; }
+  .tbl-header h2 { font-size:15px; color:#111827; }
+  .print-date-tag { display:inline-block; font-size:11px; color:#9ca3af; }
+  .tbl-meta { font-size:11.5px; }
+
+  /* 表格 */
+  table { min-width:0; width:100%; }
+  thead { display:table-header-group; }
+  tr { page-break-inside:avoid; }
+  th {
+    background:#eef2ff; color:#1e3a8a; font-size:10.5px;
+    padding:7px 10px; border-bottom:2px solid #1e40af; border-top:none;
+  }
+  th:hover { background:#eef2ff; }
+  th span { display:none!important; }
+  td { font-size:11px; padding:6.5px 10px; border-bottom:1px solid #e5e7eb; }
+  tbody tr:nth-child(even) td { background:#f8fafc; }
+  tr:hover td { background:inherit; }
+
   /* 列印只保留：模具編號、穴號、產品編號、產品名稱、驗收日期、備註 */
   [data-col="seq"],[data-col="procDate"],[data-col="procNo"],
   [data-col="material"],[data-col="materialId"],
@@ -220,6 +248,7 @@ textarea { resize:vertical; min-height:64px; }
   [data-col="moldId"] { white-space:nowrap; }
   [data-col="notes"] { max-width:130px; }
   [data-col="notes"] .c-notes { max-width:none; white-space:normal; overflow:visible; text-overflow:clip; }
+  .c-id { color:#1e3a8a; }
 }
 @media (max-width:640px) {
   .header h1 { font-size:16px; }
@@ -359,11 +388,19 @@ if (sessionStorage.getItem('mold_auth') === '1') {
     <button class="btn btn-outline" onclick="window.print()">🖨️ 列印</button>
   </div>
 
+  <!-- 列印專用標題（畫面上不顯示） -->
+  <div id="printBanner" class="print-banner">
+    <div class="print-banner-title">🔧 模具清冊管理系統 <span>Mold Registry</span></div>
+  </div>
+
   <!-- Table -->
   <div class="tbl-wrap">
     <div class="tbl-header">
       <h2 id="tblTitle">駿翰 模具清冊</h2>
-      <div class="tbl-meta" id="tblMeta">共 18 筆</div>
+      <div style="display:flex;align-items:baseline;gap:12px;">
+        <span id="printDate" class="print-date-tag"></span>
+        <div class="tbl-meta" id="tblMeta">共 18 筆</div>
+      </div>
     </div>
     <div class="tbl-scroll">
       <table>
@@ -1352,8 +1389,10 @@ function showToast(msg, type='ok') {
 function setDate() {
   const d = new Date();
   const wk = ['日','一','二','三','四','五','六'][d.getDay()];
-  document.getElementById('hDate').textContent =
-    `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} 週${wk}`;
+  const s = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} 週${wk}`;
+  document.getElementById('hDate').textContent = s;
+  const pd = document.getElementById('printDate');
+  if (pd) pd.textContent = `列印日期：${s}`;
 }
 
 // ════════════════════════════════════
