@@ -209,6 +209,16 @@ textarea { resize:vertical; min-height:64px; }
 @media print {
   .header,.tabs,.toolbar,.acts,.overlay,.toast { display:none!important; }
   .tbl-wrap { box-shadow:none; border-radius:0; }
+  /* 列印只保留：模具編號、穴號、產品編號、產品名稱、驗收日期、備註 */
+  [data-col="seq"],[data-col="procDate"],[data-col="procNo"],
+  [data-col="material"],[data-col="materialId"],
+  [data-col="contractNo"],[data-col="contractDate"],
+  [data-col="factory"],[data-col="procStatus"],
+  [data-col="retrieveDate"],[data-col="scrapped"],
+  [data-col="actions"] { display:none!important; }
+  [data-col="moldId"] { white-space:nowrap; }
+  [data-col="notes"] { max-width:130px; }
+  [data-col="notes"] .c-notes { max-width:none; white-space:normal; overflow:visible; text-overflow:clip; }
 }
 @media (max-width:640px) {
   .header h1 { font-size:16px; }
@@ -918,8 +928,8 @@ function render() {
   const thCells = cols.map(c => {
     const arrow = c.noSort ? '' : (sortK === c.k ? (sortD === 1 ? ' ↑' : ' ↓') : ' ↕');
     const style = c.w ? `width:${c.w}` : '';
-    return `<th onclick="doSort('${c.k}')" style="${style}">${c.label}<span style="opacity:.4;font-size:10px;">${arrow}</span></th>`;
-  }).join('') + '<th>操作</th>';
+    return `<th data-col="${c.k}" onclick="doSort('${c.k}')" style="${style}">${c.label}<span style="opacity:.4;font-size:10px;">${arrow}</span></th>`;
+  }).join('') + '<th data-col="actions">操作</th>';
   document.getElementById('tHead').innerHTML = `<tr>${thCells}</tr>`;
 
   // tbody
@@ -936,19 +946,19 @@ function render() {
     const key = tab + '::' + r.moldId;
     const tds = cols.map(c => {
       let v = r[c.k] ?? '';
-      if (c.k === 'factory' || c.k === '_tab') return `<td>${factoryBadge(v||r.factory)}</td>`;
-      if (c.k === 'moldId')     return `<td><span class="c-id">${v||'—'}</span></td>`;
-      if (c.k === 'notes')      return `<td>${notesCell(v)}</td>`;
-      if (c.k === 'procStatus') return `<td>${procBadge(v)}</td>`;
-      if (c.k === 'scrapped' && v) return `<td><span class="badge b-sc">${v}</span></td>`;
-      return `<td class="${c.cls||''}">${v||'—'}</td>`;
+      if (c.k === 'factory' || c.k === '_tab') return `<td data-col="${c.k}">${factoryBadge(v||r.factory)}</td>`;
+      if (c.k === 'moldId')     return `<td data-col="moldId"><span class="c-id">${v||'—'}</span></td>`;
+      if (c.k === 'notes')      return `<td data-col="notes">${notesCell(v)}</td>`;
+      if (c.k === 'procStatus') return `<td data-col="procStatus">${procBadge(v)}</td>`;
+      if (c.k === 'scrapped' && v) return `<td data-col="scrapped"><span class="badge b-sc">${v}</span></td>`;
+      return `<td class="${c.cls||''}" data-col="${c.k}">${v||'—'}</td>`;
     }).join('');
     const isScrapTab = curTab === '報廢';
     const dCount = docCount(r.moldId);
     const docBadge = dCount > 0 ? `<span style="font-size:10px;background:#6d28d9;color:white;border-radius:999px;padding:1px 5px;margin-left:2px;">${dCount}</span>` : '';
     return `<tr>
       ${tds}
-      <td><div class="acts">
+      <td data-col="actions"><div class="acts">
         <button class="btn btn-sm btn-edit" onclick="openModal('${key}')">✏️</button>
         <button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd;" onclick="openDocModal('${r.moldId}','${r.productName||''}')">📁${docBadge}</button>
       </div></td>
