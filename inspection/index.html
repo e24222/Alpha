@@ -291,7 +291,12 @@
     padding: 16px 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     text-align: center;
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.15s;
+    user-select: none;
   }
+  .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.15); transform: translateY(-2px); }
+  .stat-card.active { box-shadow: 0 0 0 2px #2980b9, 0 4px 16px rgba(0,0,0,0.1); }
   .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #1a5276; line-height: 1; }
   .stat-card .label { font-size: 0.82rem; color: #888; margin-top: 4px; }
 
@@ -777,10 +782,10 @@
 
     <!-- Stats -->
     <div class="stats-bar" id="stats-bar">
-      <div class="stat-card"><div class="value" id="stat-total">3</div><div class="label">總記錄數</div></div>
-      <div class="stat-card"><div class="value" id="stat-ok" style="color:#27ae60;">2</div><div class="label">全部通過</div></div>
-      <div class="stat-card"><div class="value" id="stat-ng" style="color:#e74c3c;">1</div><div class="label">有不合格項</div></div>
-      <div class="stat-card"><div class="value" id="stat-vendors">2</div><div class="label">廠商數</div></div>
+      <div class="stat-card" id="scard-all" onclick="filterByStatCard('all')"><div class="value" id="stat-total">3</div><div class="label">總記錄數</div></div>
+      <div class="stat-card" id="scard-ok" onclick="filterByStatCard('ok')"><div class="value" id="stat-ok" style="color:#27ae60;">2</div><div class="label">全部通過</div></div>
+      <div class="stat-card" id="scard-ng" onclick="filterByStatCard('ng')"><div class="value" id="stat-ng" style="color:#e74c3c;">1</div><div class="label">有不合格項</div></div>
+      <div class="stat-card" id="scard-vendors"><div class="value" id="stat-vendors">2</div><div class="label">廠商數</div></div>
     </div>
 
     <!-- Filters -->
@@ -1128,6 +1133,7 @@ function closePwModal() {
 
 // ============ PHOTO UPLOAD ============
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyBTjRcdVwq0XWC6B6aUf3_dAYuK_EkZy_l-xvSZVXMn7Rwia2bzWgpyJtOiTTxGXU5/exec';
+let statFilter = null; // 'ok' | 'ng' | 'all' | null
 let selectedPhotos = []; // [{file, previewUrl, status:'pending'|'uploading'|'done'|'error', driveUrl}]
 
 function handlePhotoSelect(files) {
@@ -1380,11 +1386,14 @@ function getOverallBadge(r) {
 }
 
 function renderRecords() {
+  let displayRecords = allRecords;
+  if (statFilter === 'ok') displayRecords = allRecords.filter(r => !hasNG(r));
+  else if (statFilter === 'ng') displayRecords = allRecords.filter(r => hasNG(r));
   const start = (currentPage - 1) * PAGE_SIZE;
-  const pageData = allRecords.slice(start, start + PAGE_SIZE);
-  const totalPages = Math.ceil(allRecords.length / PAGE_SIZE);
+  const pageData = displayRecords.slice(start, start + PAGE_SIZE);
+  const totalPages = Math.ceil(displayRecords.length / PAGE_SIZE);
 
-  if (allRecords.length === 0) {
+  if (displayRecords.length === 0) {
     document.getElementById('records-container').innerHTML =
       '<div class="empty-state"><div class="icon">📭</div><p>查無符合條件的記錄</p></div>';
     return;
@@ -1436,9 +1445,29 @@ function goPage(p) {
   document.querySelector('.card:last-child').scrollIntoView({ behavior: 'smooth' });
 }
 
+function filterByStatCard(type) {
+  // 切換：再點同一張就取消
+  statFilter = (statFilter === type) ? null : type;
+  // 更新 active 樣式
+  ['all','ok','ng'].forEach(t => {
+    const el = document.getElementById('scard-' + t);
+    if (el) el.classList.toggle('active', statFilter === t);
+  });
+  currentPage = 1;
+  renderRecords();
+  // 捲動到列表
+  const listCard = document.getElementById('records-container');
+  if (listCard) listCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function clearFilters() {
   ['f-vendor','f-product','f-date-from','f-date-to'].forEach(id => {
     document.getElementById(id).value = '';
+  });
+  statFilter = null;
+  ['all','ok','ng'].forEach(t => {
+    const el = document.getElementById('scard-' + t);
+    if (el) el.classList.remove('active');
   });
   loadRecords();
 }
