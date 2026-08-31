@@ -1051,12 +1051,11 @@ window.showEntryDetail = function showEntryDetail(id, source) {
   var recallBtn = document.getElementById('detailRecallBtn');
   if (source === 'summary' && e.spCleared) {
     recallBtn.style.display = '';
-    recallBtn.onclick = function() {
+    recallBtn.onclick = async function() {
       var list = loadQueue();
       var entry = list.find(function(x){ return x.id === id; });
       if (entry) { entry.spCleared = false; entry.printed = false; }
-      setQueue(list);
-      saveQueueToGist();
+      await saveQueue(list);
       hideEntryDetail();
       switchTab('send');
     };
