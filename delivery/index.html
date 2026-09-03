@@ -1400,10 +1400,8 @@
 
 
   async function syncCustomers() {
-    if (!getToken()) { showTokenUI(); return; }
     try {
       const res = await fetch(`${GIST_RAW}/customers.json?t=${Date.now()}`);
-      if (res.status===401) { showTokenUI(); return; }
       if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
