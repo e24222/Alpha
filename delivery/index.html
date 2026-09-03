@@ -2472,11 +2472,68 @@
     return sel ? sel.value : 'auto';
   }
 
-  function removeStop(id) {
+  async function removeStop(id) {
     selected.delete(id);
     priority.delete(id);
     if (selected.size === 0) { backToSelect(); return; }
-    showRoute(true, true); // isEdit=true, reSort=true
+
+    // 從 lastSorted 移除該站，不重新排序
+    lastSorted = lastSorted.filter(c => c.id !== id);
+    lastSegments = buildSegments(lastSorted);
+
+    // 計算回程距離
+    const last = lastSorted[lastSorted.length - 1];
+    const lastCoord = last ? getCoordFromAddress(last.address) : null;
+    const returnDist = lastCoord
+      ? await getRoadDistance(lastCoord[0], lastCoord[1], DEPOT_LAT, DEPOT_LNG)
+      : null;
+
+    const notSelected = customers.filter(c => !selected.has(c.id))
+      .sort((a,b) => a.code.localeCompare(b.code,'zh-TW',{numeric:true}));
+    const addArea = notSelected.length > 0 ? `
+      <div class="add-stop-area">
+        <select id="addStopSelect">
+          <option value="">＋ 新增客戶到路線...</option>
+          ${notSelected.map(c=>`<option value="${c.id}">${c.code} ${c.name}</option>`).join('')}
+        </select>
+        <button onclick="addStop()">加入</button>
+      </div>` : '';
+
+    const list = document.getElementById('addressList');
+    list.innerHTML =
+      `<div class="address-item" style="animation-delay:0s">
+        <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">出發</div>
+        <div class="addr-info"><div class="addr-name">【出發點】龍台貿易有限公司</div><div class="addr-text">📍 ${DEPOT}</div></div>
+      </div>` +
+      lastSorted.map((c,i) => `
+        <div class="address-item draggable" draggable="true" data-id="${c.id}" style="animation-delay:${(i+1)*0.05}s">
+          <div class="drag-handle" title="拖曳排序">⠿</div>
+          <div class="addr-num" ${priority.has(c.id)?'style="background:var(--accent2)"':''}>${i+1}</div>
+          <div class="addr-info">
+            <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
+            <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
+          </div>
+          <button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+        </div>`).join('') +
+      `<div class="address-item" style="opacity:0.7">
+        <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">回程</div>
+        <div class="addr-info"><div class="addr-name">【回公司】龍台貿易有限公司</div><div class="addr-text">📍 ${DEPOT}${returnDist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 ${returnDist.toFixed(1)} km</span>` : ''}</div></div>
+      </div>`;
+
+    initDragSort(list, lastSorted);
+    document.getElementById('mapBtns').innerHTML =
+      addArea +
+      lastSegments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
+
+    // 更新歷史紀錄（如果是編輯模式）
+    if (editingHistoryId) {
+      const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
+      if (idx !== -1) {
+        routeHistory[idx].stops = lastSorted.map(c=>({code:c.code,name:c.name,address:c.address}));
+        routeHistory[idx].segments = lastSegments;
+        saveHist();
+      }
+    }
   }
 
   async function addStop() {
