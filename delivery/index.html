@@ -182,6 +182,22 @@
 })();
 </script>
 
+
+<div id="tokenOverlay" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;padding:24px">
+  <div style="background:#1a1d27;border:1px solid #2e3147;border-radius:16px;padding:24px;width:100%;max-width:340px">
+    <div style="font-size:16px;font-weight:700;margin-bottom:8px;color:#eef0f8">🔑 GitHub Token 設定</div>
+    <div style="font-size:13px;color:#7b7f9a;margin-bottom:16px;line-height:1.6">輸入有 <code style="background:#232637;padding:1px 5px;border-radius:4px">gist</code> 權限的 GitHub Token，資料才能同步到雲端。</div>
+    <input id="tokenInput" type="password" placeholder="ghp_xxxxxxxxxxxx"
+      style="width:100%;background:#232637;border:1px solid #2e3147;color:#eef0f8;border-radius:8px;font-size:15px;padding:10px 12px;font-family:inherit;margin-bottom:10px;box-sizing:border-box">
+    <div id="tokenTestResult" style="font-size:13px;min-height:18px;margin-bottom:10px;text-align:center"></div>
+    <div style="display:flex;gap:10px;margin-bottom:10px">
+      <button onclick="applyToken()" style="flex:1;background:#f5a623;border:none;border-radius:10px;color:#000;font-size:15px;font-weight:700;padding:11px;cursor:pointer;font-family:inherit">儲存</button>
+      <button onclick="hideTokenUI()" style="flex:1;background:#232637;border:none;border-radius:10px;color:#eef0f8;font-size:15px;padding:11px;cursor:pointer;font-family:inherit">取消</button>
+    </div>
+    <button onclick="testToken()" style="width:100%;background:none;border:1px solid #2e3147;border-radius:10px;color:#7b7f9a;font-size:14px;padding:10px;cursor:pointer;font-family:inherit">🔍 測試連線</button>
+  </div>
+</div>
+
 <div id="syncToast" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1d27;border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.4)"></div>
 
 <div class="header">
@@ -1320,7 +1336,7 @@
   let selected = new Set();
   let editingId = null;
 
-  const GH_TOKEN = ['ghp_oKSjUvBtqrdWNWQ50Hy', 'MeQdh4osDED0nlGvT'].join('');
+  function getToken(){ return localStorage.getItem('delivery_gh_token') || ''; }
   const GIST_ID = '765ce05838644fdff70da5340187a67f';
   const GIST_API = `https://api.github.com/gists/${GIST_ID}`;
   const GIST_RAW = `https://gist.githubusercontent.com/e24222/${GIST_ID}/raw`;
@@ -1335,6 +1351,36 @@
     try { routeHistory = JSON.parse(localStorage.getItem('route_history_v2') || '[]'); } catch(e) { routeHistory = []; }
   }
 
+
+
+  function saveToken(t){ localStorage.setItem('delivery_gh_token', t.trim()); }
+  function showTokenUI(){
+    document.getElementById('tokenOverlay').style.display='flex';
+    const inp=document.getElementById('tokenInput');
+    if(inp) inp.value=getToken();
+    const res=document.getElementById('tokenTestResult');
+    if(res) res.textContent='';
+  }
+  function hideTokenUI(){ document.getElementById('tokenOverlay').style.display='none'; }
+  async function testToken(){
+    const t=document.getElementById('tokenInput').value.trim()||getToken();
+    const res=document.getElementById('tokenTestResult');
+    if(!t){res.style.color='#7b7f9a';res.textContent='尚未輸入 Token';return;}
+    res.style.color='#7b7f9a';res.textContent='測試中…';
+    try{
+      const r=await fetch('https://api.github.com/gists/765ce05838644fdff70da5340187a67f',{headers:{'Authorization':'token '+t}});
+      if(r.ok){res.style.color='#2ecc71';res.textContent='✅ 連線正常';}
+      else if(r.status===401){res.style.color='#f87171';res.textContent='❌ Token 無效或已失效';}
+      else{res.style.color='#f87171';res.textContent='❌ 錯誤：'+r.status;}
+    }catch(e){res.style.color='#f87171';res.textContent='❌ 網路錯誤';}
+  }
+  function applyToken(){
+    const t=document.getElementById('tokenInput').value.trim();
+    if(!t)return;
+    saveToken(t);
+    hideTokenUI();
+    syncFromGitHub();
+  }
 
   function showToast(msg, color) {
     const t = document.getElementById('syncToast');
@@ -1352,8 +1398,10 @@
 
 
   async function syncCustomers() {
+    if (!getToken()) { showTokenUI(); return; }
     try {
       const res = await fetch(`${GIST_RAW}/customers.json?t=${Date.now()}`);
+      if (res.status===401) { showTokenUI(); return; }
       if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -1387,11 +1435,11 @@
     try {
       const r = await fetch(GIST_API, {
         method: 'PATCH',
-        headers: {'Authorization': `token ${GH_TOKEN}`, 'Content-Type': 'application/json'},
+        headers: {'Authorization': `token ${getToken()}`, 'Content-Type': 'application/json'},
         body: JSON.stringify({files: {'history.json': {content: JSON.stringify(routeHistory.slice(0,60),null,2)}}})
       });
       if (r.ok) { btn.textContent = '✅ 同步完成'; }
-      else { btn.textContent = '❌ 失敗'; }
+      else { btn.textContent = '❌ 失敗'; const s=await r.json().catch(()=>({})); if(r.status===401) showTokenUI(); }
     } catch(e) { btn.textContent = '❌ 失敗'; }
     setTimeout(() => { btn.textContent = '☁️ 同步到雲端'; btn.disabled=false; }, 3000);
   }
@@ -1401,11 +1449,12 @@
     clearTimeout(ghPushTimer);
     ghPushTimer = setTimeout(async () => {
       try {
-        await fetch(GIST_API, {
+        const _hr=await fetch(GIST_API, {
           method: 'PATCH',
-          headers: {'Authorization': `token ${GH_TOKEN}`, 'Content-Type': 'application/json'},
+          headers: {'Authorization': `token ${getToken()}`, 'Content-Type': 'application/json'},
           body: JSON.stringify({files: {'history.json': {content: JSON.stringify(routeHistory.slice(0,60),null,2)}}})
         });
+        if(_hr.status===401) showTokenUI();
       } catch(e) { console.warn('歷史回寫失敗', e); }
     }, 2000);
   }
@@ -1415,11 +1464,12 @@
     clearTimeout(custPushTimer);
     custPushTimer = setTimeout(async () => {
       try {
-        await fetch(GIST_API, {
+        const _cr=await fetch(GIST_API, {
           method: 'PATCH',
-          headers: {'Authorization': `token ${GH_TOKEN}`, 'Content-Type': 'application/json'},
+          headers: {'Authorization': `token ${getToken()}`, 'Content-Type': 'application/json'},
           body: JSON.stringify({files: {'customers.json': {content: JSON.stringify(customers,null,2)}}})
         });
+        if(_cr.status===401) showTokenUI();
       } catch(e) { console.warn('客戶回寫失敗', e); }
     }, 2000);
   }
