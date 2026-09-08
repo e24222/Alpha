@@ -1984,6 +1984,25 @@
     return addr.substring(0,6);
   }
 
+  async function shortenUrl(url) {
+    try {
+      const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
+      if (res.ok) {
+        const short = (await res.text()).trim();
+        if (short.startsWith('http')) return short;
+      }
+    } catch(e) {}
+    return url;
+  }
+
+  async function shortenMapButtons() {
+    const btns = document.querySelectorAll('a.map-btn, a.hmap-btn');
+    await Promise.all([...btns].map(async btn => {
+      const short = await shortenUrl(btn.href);
+      btn.href = short;
+    }));
+  }
+
   function buildMapUrl(origin, stops) {
     const dest = encodeURIComponent(stops[stops.length-1]);
     const wp = stops.slice(0,-1).map(a=>encodeURIComponent(a)).join('|');
@@ -2343,6 +2362,7 @@
     document.getElementById('mapBtns').innerHTML =
       addArea +
       segments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
+    shortenMapButtons();
 
     // 計算總里程（同區域 < 0.1km 不計入，加回程）— 使用已取得的 OSRM 距離
     const calcTotalKm = (sortedArr) => {
@@ -2449,6 +2469,7 @@
     document.getElementById('mapBtns').innerHTML =
       addArea +
       segments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
+    shortenMapButtons();
 
     // 更新歷史紀錄
     if (editingHistoryId) {
@@ -2522,6 +2543,7 @@
     document.getElementById('mapBtns').innerHTML =
       addArea +
       lastSegments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
+    shortenMapButtons();
 
     // 更新歷史紀錄（如果是編輯模式）
     if (editingHistoryId) {
@@ -2601,6 +2623,7 @@
     document.getElementById('mapBtns').innerHTML =
       addArea +
       lastSegments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
+    shortenMapButtons();
   }
 
   function backToSelect() {
