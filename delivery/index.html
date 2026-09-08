@@ -201,6 +201,12 @@
   </div>
 </div>
 
+
+<!-- 懸浮排列按鈕 -->
+<div id="floatRouteBtn" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;">
+  <button onclick="showRoute()" style="background:linear-gradient(135deg,#f5a623,#e8821a);border:none;border-radius:50px;color:#000;font-size:15px;font-weight:800;padding:14px 32px;cursor:pointer;box-shadow:0 4px 20px rgba(245,166,35,0.5);white-space:nowrap;font-family:inherit;">🗺️ 排列今日路線</button>
+</div>
+
 <div id="syncToast" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1d27;border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.4)"></div>
 
 <div class="header">
@@ -1482,6 +1488,15 @@
     if (tab==='today') renderList();
     if (tab==='history') renderHistory();
     if (tab==='analytics') renderAnalytics();
+    updateFloatBtn();
+  }
+
+  function updateFloatBtn() {
+    const fb = document.getElementById('floatRouteBtn');
+    if (!fb) return;
+    const onToday = document.getElementById('page-today').classList.contains('active');
+    const hasRoute = document.getElementById('resultSection').classList.contains('show');
+    fb.style.display = (onToday && !hasRoute && selected.size > 0) ? 'block' : 'none';
   }
 
   function parseRecordDate(r) {
@@ -1973,7 +1988,7 @@
     }
   }
 
-  function toggleSelect(id) { if(selected.has(id)) selected.delete(id); else selected.add(id); renderList(); }
+  function toggleSelect(id) { if(selected.has(id)) selected.delete(id); else selected.add(id); renderList(); updateFloatBtn(); }
   function clearSelected() { selected.clear(); priority.clear(); renderList(); }
 
   function extractDistrict(addr) {
@@ -2647,6 +2662,7 @@
     document.getElementById('boxCount').value = '';
     document.getElementById('selectSection').style.display='block';
     document.getElementById('resultSection').classList.remove('show');
+    updateFloatBtn();
   }
 
   function backToHistory() {
