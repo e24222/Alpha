@@ -1996,10 +1996,21 @@
   }
 
   async function shortenMapButtons() {
-    const btns = document.querySelectorAll('a.map-btn, a.hmap-btn');
+    const btns = document.querySelectorAll('a.map-btn');
     await Promise.all([...btns].map(async btn => {
       const short = await shortenUrl(btn.href);
       btn.href = short;
+      // 在按鈕下方顯示短網址，方便複製
+      let el = btn.nextElementSibling;
+      if (!el || !el.classList.contains('map-short-url')) {
+        el = document.createElement('div');
+        el.className = 'map-short-url';
+        el.style.cssText = 'font-size:12px;color:var(--muted);margin:-6px 0 8px 0;word-break:break-all;cursor:pointer;text-align:center;';
+        el.title = '點擊複製';
+        btn.insertAdjacentElement('afterend', el);
+      }
+      el.textContent = short;
+      el.onclick = () => { navigator.clipboard.writeText(short).then(() => { el.textContent = '✅ 已複製！'; setTimeout(() => { el.textContent = short; }, 1500); }); };
     }));
   }
 
