@@ -1984,12 +1984,17 @@
     return addr.substring(0,6);
   }
 
+  const REURL_KEY = ['4070ff49d794e432115e3b663c974755', 'ecd4b733939e04df8a38b58d65165567c4f5d6'].join('');
   async function shortenUrl(url) {
     try {
-      const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
+      const res = await fetch('https://api.reurl.cc/shorten', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'reurl-api-key': REURL_KEY},
+        body: JSON.stringify({url})
+      });
       if (res.ok) {
-        const short = (await res.text()).trim();
-        if (short.startsWith('http')) return short;
+        const d = await res.json();
+        if (d.res === 'success' && d.short_url) return d.short_url;
       }
     } catch(e) {}
     return url;
