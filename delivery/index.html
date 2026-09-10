@@ -2000,19 +2000,36 @@
   }
 
   const REURL_KEY = ['4070ff49d794e432115e3b663c974755', 'ecd4b733939e04df8a38b58d65165567c4f5d6'].join('');
+  async function shortenViaReurl(url) {
+    const res = await fetch('https://api.reurl.cc/shorten', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'reurl-api-key': REURL_KEY},
+      body: JSON.stringify({url})
+    });
+    if (!res.ok) throw new Error('reurl.cc HTTP ' + res.status);
+    const d = await res.json();
+    if (d.res === 'success' && d.short_url) return d.short_url;
+    throw new Error('reurl.cc 回應失敗: ' + JSON.stringify(d));
+  }
+  async function shortenViaTinyurl(url) {
+    const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
+    if (!res.ok) throw new Error('tinyurl HTTP ' + res.status);
+    const txt = (await res.text()).trim();
+    if (txt.startsWith('http')) return txt;
+    throw new Error('tinyurl 回應失敗: ' + txt);
+  }
   async function shortenUrl(url) {
     try {
-      const res = await fetch('https://api.reurl.cc/shorten', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'reurl-api-key': REURL_KEY},
-        body: JSON.stringify({url})
-      });
-      if (res.ok) {
-        const d = await res.json();
-        if (d.res === 'success' && d.short_url) return d.short_url;
+      return await shortenViaReurl(url);
+    } catch (e1) {
+      console.warn('[shortenUrl] reurl.cc 失敗，改用 tinyurl 備援：', e1.message);
+      try {
+        return await shortenViaTinyurl(url);
+      } catch (e2) {
+        console.warn('[shortenUrl] tinyurl 也失敗，改用原始網址：', e2.message);
+        return url;
       }
-    } catch(e) {}
-    return url;
+    }
   }
 
   async function shortenMapButtons() {
@@ -2956,12 +2973,37 @@
       </div>
       <script>
         const urls = ${JSON.stringify(segUrls)};
+        const REURL_KEY = ${JSON.stringify(REURL_KEY)};
+        async function shortenViaReurl(url) {
+          const res = await fetch('https://api.reurl.cc/shorten', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'reurl-api-key': REURL_KEY},
+            body: JSON.stringify({url})
+          });
+          if (!res.ok) throw new Error('reurl.cc HTTP ' + res.status);
+          const d = await res.json();
+          if (d.res === 'success' && d.short_url) return d.short_url;
+          throw new Error('reurl.cc 回應失敗: ' + JSON.stringify(d));
+        }
+        async function shortenViaTinyurl(url) {
+          const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
+          if (!res.ok) throw new Error('tinyurl HTTP ' + res.status);
+          const txt = (await res.text()).trim();
+          if (txt.startsWith('http')) return txt;
+          throw new Error('tinyurl 回應失敗: ' + txt);
+        }
         async function shortenUrl(url) {
           try {
-            const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
-            if (res.ok) { const txt = await res.text(); if (txt.startsWith('http')) return txt.trim(); }
-          } catch(e) {}
-          return url; // fallback 原始 URL
+            return await shortenViaTinyurl(url);
+          } catch (e1) {
+            console.warn('[shortenUrl] tinyurl 失敗，改用 reurl.cc 備援：', e1.message);
+            try {
+              return await shortenViaReurl(url);
+            } catch (e2) {
+              console.warn('[shortenUrl] reurl.cc 也失敗，改用原始網址：', e2.message);
+              return url; // fallback 原始 URL
+            }
+          }
         }
         async function init() {
           for (let i = 0; i < urls.length; i++) {
