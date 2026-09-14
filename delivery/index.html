@@ -8,7 +8,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#232637;--accent:#f5a623;--accent2:#e8543a;--text:#eef0f8;--muted:#7b7f9a;--border:#2e3147;--green:#2ecc71;}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -221,9 +220,9 @@
 
 <div class="tabs">
   <div class="tab" onclick="switchTab(&#39;today&#39;)">📋 今日送貨</div>
-  <div class="tab" onclick="switchTab(&#39;history&#39;)">🕘 歷史紀錄</div>
+  <div class="tab active" onclick="switchTab(&#39;history&#39;)">🕘 歷史紀錄</div>
   <div class="tab" onclick="switchTab(&#39;analytics&#39;)">📊 數據分析</div>
-  <div class="tab active" onclick="switchTab(&#39;manage&#39;)">👥 客戶管理</div>
+  <div class="tab" onclick="switchTab(&#39;manage&#39;)">👥 客戶管理</div>
   <button type="button" onclick="showTokenUI()" title="同步設定" style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 12px;">⚙️</button>
 </div>
 
@@ -343,9 +342,6 @@
             style="width:60px;background:transparent;border:none;outline:none;color:var(--fg);font-size:15px;font-weight:700;font-family:inherit;text-align:center;"
             oninput="updateBoxCount(this.value)">
         </div>
-      </div>
-      <div style="margin-bottom:10px;">
-        <button class="action-btn" id="lineBroadcastBtn" style="width:100%" onclick="sendLineBroadcast()">📢 發送LINE群發</button>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <select id="sortDirection" style="flex:1;background:var(--surface);border:1px solid var(--accent);color:var(--accent);border-radius:10px;padding:11px 12px;font-size:13px;font-weight:700;font-family:&#39;Noto Sans TC&#39;,sans-serif;outline:none;cursor:pointer;">
@@ -687,7 +683,7 @@
   </div>
 
   <!-- 歷史紀錄 -->
-  <div class="page" id="page-history">
+  <div class="page active" id="page-history">
     <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
       <button class="tool-btn" onclick="exportHistory()">📋 匯出歷史紀錄</button>
       <button class="tool-btn" id="syncBtn" onclick="forceSyncHistory()" style="border-color:var(--green);color:var(--green)">☁️ 同步到雲端</button>
@@ -1081,7 +1077,7 @@
   </div>
 
   <!-- 客戶管理 -->
-  <div class="page active" id="page-manage">
+  <div class="page" id="page-manage">
     <div class="mgmt-toolbar">
       <button class="add-cust-btn" onclick="openModal()">＋ 新增客戶</button>
       <button class="tool-btn" onclick="openImport()">📥 匯入</button>
@@ -2004,41 +2000,29 @@
   }
 
   const REURL_KEY = ['4070ff49d794e432115e3b663c974755', 'ecd4b733939e04df8a38b58d65165567c4f5d6'].join('');
-  async function shortenViaReurl(url) {
-    const res = await fetch('https://api.reurl.cc/shorten', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'reurl-api-key': REURL_KEY},
-      body: JSON.stringify({url})
-    });
-    if (!res.ok) throw new Error('reurl.cc HTTP ' + res.status);
-    const d = await res.json();
-    if (d.res === 'success' && d.short_url) return d.short_url;
-    throw new Error('reurl.cc 回應失敗: ' + JSON.stringify(d));
-  }
-  async function shortenViaTinyurl(url) {
-    const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
-    if (!res.ok) throw new Error('tinyurl HTTP ' + res.status);
-    const txt = (await res.text()).trim();
-    if (txt.startsWith('http')) return txt;
-    throw new Error('tinyurl 回應失敗: ' + txt);
-  }
-  async function shortenUrl(url) {
-    try {
-      return await shortenViaReurl(url);
-    } catch (e1) {
-      console.warn('[shortenUrl] reurl.cc 失敗，改用 tinyurl 備援：', e1.message);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function shortenUrl(url, retries = 2) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        return await shortenViaTinyurl(url);
-      } catch (e2) {
-        console.warn('[shortenUrl] tinyurl 也失敗，改用原始網址：', e2.message);
-        return url;
-      }
+        const res = await fetch('https://api.reurl.cc/shorten', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json', 'reurl-api-key': REURL_KEY},
+          body: JSON.stringify({url})
+        });
+        if (res.ok) {
+          const d = await res.json();
+          if (d.res === 'success' && d.short_url) return d.short_url;
+        }
+      } catch(e) {}
+      if (attempt < retries) await sleep(400); // 失敗稍等再試，避免併發撞到 API 速率限制
     }
+    return url;
   }
 
   async function shortenMapButtons() {
-    const btns = document.querySelectorAll('a.map-btn');
-    await Promise.all([...btns].map(async btn => {
+    const btns = [...document.querySelectorAll('a.map-btn')];
+    // 依序（非併發）呼叫縮網址 API，避免同時多筆請求觸發 reurl.cc 的速率限制導致後面幾段失敗
+    for (const btn of btns) {
       const short = await shortenUrl(btn.href);
       btn.href = short;
       // 在按鈕下方顯示短網址，方便複製
@@ -2052,7 +2036,7 @@
       }
       el.textContent = short;
       el.onclick = () => { navigator.clipboard.writeText(short).then(() => { el.textContent = '✅ 已複製！'; setTimeout(() => { el.textContent = short; }, 1500); }); };
-    }));
+    }
   }
 
   function buildMapUrl(origin, stops) {
@@ -2894,120 +2878,6 @@
     return v;
   }
 
-  // ── LINE 群發（含路線截圖 + 縮網址）──
-  function buildHistoryCardHtml(r) {
-    return `
-      <div class="history-item" style="max-width:480px">
-        <div class="history-header" style="cursor:default">
-          <div style="min-width:0;flex:1">
-            <div class="history-date">📅 ${r.label || r.date}</div>
-            <div class="history-names">${r.stops.map(s=>s.name).join('、')}</div>
-          </div>
-          <div class="history-meta">
-            <div class="history-count">
-              <span class="hc-stops">${r.stops.length} 站</span>
-              ${r.boxes ? `<span class="hc-boxes">📦 ${r.boxes} 箱</span>` : ''}
-              ${r.totalKm ? `<span style="color:#7ec8f7;font-size:12px;">🛣 ${r.totalKm} km</span>` : ''}
-            </div>
-          </div>
-        </div>
-        <div class="history-detail show">
-          ${r.stops.map((s,i)=>`
-            <div class="hstop">
-              <div class="hstop-num">${i+1}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-weight:700;font-size:13px">${s.name}</div>
-                <div style="font-size:11px;color:var(--muted)">${s.address}</div>
-              </div>
-              <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0">${s.code}</div>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  }
-
-  async function captureRouteCardImage(record) {
-    const holder = document.createElement('div');
-    holder.style.position = 'fixed';
-    holder.style.left = '-9999px';
-    holder.style.top = '0';
-    holder.style.background = 'var(--bg)';
-    holder.style.padding = '16px';
-    holder.innerHTML = buildHistoryCardHtml(record);
-    document.body.appendChild(holder);
-
-    try {
-      const canvas = await html2canvas(holder, {
-        backgroundColor: '#0f1117',
-        scale: 2,
-      });
-      return canvas.toDataURL('image/png');
-    } finally {
-      document.body.removeChild(holder);
-    }
-  }
-
-  async function callBroadcastApi(body) {
-    const res = await fetch('https://yentool-line-broadcast.netlify.app/line-broadcast', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-broadcast-secret': '02488b1f1aeb55818778a7e8d2d2527d4da69ea0ddf5d322',
-      },
-      body: JSON.stringify(body),
-    });
-    return res.json();
-  }
-
-  async function sendLineBroadcast() {
-    if (!lastSorted.length) { alert('請先排列今日路線'); return; }
-
-    const record = routeHistory.find(r => r.id === editingHistoryId) || routeHistory[0];
-    if (!record) { alert('找不到這筆路線紀錄，請重新排列一次路線'); return; }
-
-    const btn = document.getElementById('lineBroadcastBtn');
-    const originalText = btn.textContent;
-    btn.disabled = true;
-
-    try {
-      // 1) 截圖路線卡片 → 上傳
-      btn.textContent = '截圖中...';
-      const dataUrl = await captureRouteCardImage(record);
-      const uploadRes = await callBroadcastApi({ action: 'upload-image', base64Image: dataUrl });
-      if (!uploadRes.ok) { alert('截圖上傳失敗：' + (uploadRes.error || '未知錯誤')); return; }
-
-      // 2) 縮短每一段 Google Maps 導航連結
-      btn.textContent = '縮網址中...';
-      const segments = record.segments || [];
-      const shortLinks = [];
-      for (const seg of segments) {
-        const r = await callBroadcastApi({ action: 'shorten', url: seg.url });
-        shortLinks.push(r.ok ? `${seg.label}：${r.shortUrl}` : `${seg.label}：${seg.url}`);
-      }
-
-      // 3) 組訊息文字 + 發送群發（圖片＋文字一起送）
-      btn.textContent = '發送中...';
-      const date = record.label || record.date;
-      const lines = [
-        `📦 今日送貨路線已排好（${date}，共 ${record.stops.length} 站${record.boxes ? `，${record.boxes} 箱` : ''}）`,
-        ...shortLinks,
-      ];
-      const text = lines.join('\n');
-
-      const sendRes = await callBroadcastApi({ action: 'broadcast', text, imageUrl: uploadRes.imageUrl });
-      if (sendRes.ok) {
-        alert('LINE 群發已送出！');
-      } else {
-        alert('發送失敗：' + (sendRes.error || '未知錯誤'));
-      }
-    } catch (e) {
-      alert('發送失敗：' + e.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
-  }
-
-
   // ── 列印 ──
   let lastSorted = [];
   let lastSegments = [];
@@ -3091,37 +2961,12 @@
       </div>
       <script>
         const urls = ${JSON.stringify(segUrls)};
-        const REURL_KEY = ${JSON.stringify(REURL_KEY)};
-        async function shortenViaReurl(url) {
-          const res = await fetch('https://api.reurl.cc/shorten', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', 'reurl-api-key': REURL_KEY},
-            body: JSON.stringify({url})
-          });
-          if (!res.ok) throw new Error('reurl.cc HTTP ' + res.status);
-          const d = await res.json();
-          if (d.res === 'success' && d.short_url) return d.short_url;
-          throw new Error('reurl.cc 回應失敗: ' + JSON.stringify(d));
-        }
-        async function shortenViaTinyurl(url) {
-          const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
-          if (!res.ok) throw new Error('tinyurl HTTP ' + res.status);
-          const txt = (await res.text()).trim();
-          if (txt.startsWith('http')) return txt;
-          throw new Error('tinyurl 回應失敗: ' + txt);
-        }
         async function shortenUrl(url) {
           try {
-            return await shortenViaTinyurl(url);
-          } catch (e1) {
-            console.warn('[shortenUrl] tinyurl 失敗，改用 reurl.cc 備援：', e1.message);
-            try {
-              return await shortenViaReurl(url);
-            } catch (e2) {
-              console.warn('[shortenUrl] reurl.cc 也失敗，改用原始網址：', e2.message);
-              return url; // fallback 原始 URL
-            }
-          }
+            const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(url));
+            if (res.ok) { const txt = await res.text(); if (txt.startsWith('http')) return txt.trim(); }
+          } catch(e) {}
+          return url; // fallback 原始 URL
         }
         async function init() {
           for (let i = 0; i < urls.length; i++) {
@@ -3151,6 +2996,7 @@
   }
 
   load(); renderList();
+  switchTab('history'); // 首頁預設顯示「歷史紀錄」，而非客戶管理
   syncFromGitHub();
 </script>
 
