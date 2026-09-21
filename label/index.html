@@ -245,6 +245,7 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
   #print-area .pfill { position:absolute; background:#eaf2fb; }
 }
 </style>
+<script src="../shared/fbsync.js"></script>
 </head>
 <body>
 
@@ -253,27 +254,7 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
   <button type="button" class="tab-btn" id="tabbtn-summary" onclick="switchTab('summary')">📋 整合頁面</button>
   <button type="button" class="tab-btn" id="tabbtn-print" onclick="switchTab('print')">🖨️ 標籤列印（原始格）</button>
   <button type="button" class="tab-btn" id="tabbtn-customers" onclick="switchTab('customers')">👥 客戶管理</button>
-  <button type="button" class="tab-btn" style="margin-left:auto;" onclick="showTokenUI()" title="同步設定">⚙️ 同步設定</button>
-</div>
-
-<!-- Token 設定小視窗（僅存這台瀏覽器的 localStorage，不會寫進網頁原始碼） -->
-<div id="tokenOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:12px;padding:22px 24px;width:380px;max-width:92vw;font-family:sans-serif;box-shadow:0 6px 30px rgba(0,0,0,0.3);">
-    <div style="font-size:17px;font-weight:bold;color:#1a3c6e;margin-bottom:8px;">⚙️ 雲端同步設定</div>
-    <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:12px;">
-      輸入一組只有 <code style="background:#f0f2f6;padding:1px 5px;border-radius:4px;">gist</code> 權限的 GitHub Token，
-      寄件清單就會同步到雲端 Gist，這樣不同人／不同裝置都能看到同一份清單。
-      這組 Token 只會存在您這個瀏覽器裡，不會寫進網頁程式碼。
-    </div>
-    <input id="tokenInput" type="password" placeholder="ghp_..." autocomplete="off"
-      style="width:100%;padding:10px 12px;font-size:14px;border:2px solid #cdd9ea;border-radius:8px;outline:none;font-family:monospace;margin-bottom:8px;">
-    <div id="tokenTestResult" style="font-size:13px;min-height:18px;margin-bottom:10px;text-align:center;"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-      <button type="button" onclick="testGistToken()" style="padding:8px 14px;font-size:13px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer;">測試連線</button>
-      <button type="button" onclick="hideTokenUI()" style="padding:8px 14px;font-size:13px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer;">取消</button>
-      <button type="button" onclick="applyGistToken()" style="padding:8px 14px;font-size:13px;border-radius:6px;border:none;background:#1a5fa8;color:#fff;font-weight:bold;cursor:pointer;">儲存</button>
-    </div>
-  </div>
+  <span id="syncStatus" style="margin-left:auto;align-self:center;font-size:13px;color:#888;padding-right:8px;"></span>
 </div>
 
 <!-- ════════════ 分頁 1：寄件區（主要操作頁）════════════ -->
@@ -362,6 +343,10 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
     <button type="button" id="btnWipeAll" style="padding:6px 16px;font-size:13px;font-weight:bold;border-radius:6px;border:1px solid #ff9b9b;background:#c00;color:#fff;cursor:pointer;">🗑️ 清空全部紀錄</button>
   </div>
   <div class="queue-wrap" id="summaryWrap"></div>
+  <div style="text-align:center;margin:14px 0 6px;">
+    <div id="olderInfo" style="font-size:12px;color:#888;margin-bottom:6px;"></div>
+    <button type="button" onclick="loadOlderQueue()" style="padding:7px 16px;font-size:13px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer;">載入更早的紀錄（再往前 30 天）</button>
+  </div>
 </div>
 
 <!-- 寄件明細 詳情視窗 -->
@@ -740,7 +725,7 @@ window.switchTab = function switchTab(tab) {
   document.getElementById('page-'+tab).classList.add('active');
   document.getElementById('tabbtn-'+tab).classList.add('active');
   if (tab === 'summary' || tab === 'send') {
-    fetchQueueFromGist().then(function(){ renderQueue(); renderSummary(); });
+    pullQueue().then(function(){ renderQueue(); renderSummary(); });
   }
   if (tab === 'customers') renderCustTable();
 }
@@ -798,95 +783,61 @@ document.getElementById('btnSpClear').addEventListener('click', function() {
   autoGrow(document.getElementById('sp-recvAddr'));
 });
 
-// ════════════ 寄件清單（雲端共用，存在 GitHub Gist，所有人／裝置共用同一份）════════════
-// 注意：這裡完全不寫死 token！Token 只存在使用者自己瀏覽器的 localStorage，
-// 不會出現在原始碼／git 記錄裡，所以不會被 GitHub 的 secret scanning 擋下或自動吊銷。
-var GIST_ID   = '601d4b50d0916cc84c021b26a97c170a';
-var GIST_FILE = 'shipment_queue.json';
-var TOKEN_KEY = 'a4label_gist_token';
-
+// ════════════ 寄件清單（雲端共用：Firebase Firestore，每筆一份文件；匿名登入，員工不用輸入任何東西）════════════
+// 只即時監聽「最近 N 天」的資料以節省讀取量；更早的按「載入更早的紀錄」才讀。
+var QUEUE_CACHE_KEY = 'a4label_queue_cache';
+var queueWindowDays = 30;
 var queueCache = [];   // 目前記憶體中的清單快照
-var queueSyncing = false;
+try { queueCache = JSON.parse(localStorage.getItem(QUEUE_CACHE_KEY) || '[]') || []; } catch (e) { queueCache = []; }
 
-function getGistToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
-function saveGistToken(t) { localStorage.setItem(TOKEN_KEY, t.trim()); }
-
-function gistHeaders(extra, withAuth) {
-  var h = Object.assign({ 'Accept': 'application/vnd.github+json' }, extra || {});
-  var token = getGistToken();
-  if (withAuth && token) h['Authorization'] = 'token ' + token;
-  return h;
+function queueTs(e) { return parseInt(e.id, 10) || 0; }
+function normalizeEntry(e) {
+  if (typeof e.printed === 'undefined') e.printed = true;     // 舊資料（改版前）視為已處理
+  if (typeof e.spCleared === 'undefined') e.spCleared = true; // 舊資料視為已從寄件區清空過，避免全部灌進待列印清單
+  return e;
+}
+function cacheQueueLocal() {
+  try { localStorage.setItem(QUEUE_CACHE_KEY, JSON.stringify(queueCache)); } catch (e) { /* ignore */ }
 }
 
-// 讀取用不用 token 都可以（secret gist 只要知道 ID 就能讀），所有人都能看到整合頁面／清單
-async function fetchQueueFromGist() {
-  try {
-    var res = await fetch('https://api.github.com/gists/' + GIST_ID, { headers: gistHeaders(null, true) });
-    if (!res.ok) throw new Error('gist fetch failed: ' + res.status);
-    var data = await res.json();
-    var content = data.files && data.files[GIST_FILE] ? data.files[GIST_FILE].content : '[]';
-    queueCache = JSON.parse(content || '[]').map(function(e){
-      if (typeof e.printed === 'undefined') e.printed = true; // 舊資料（改版前）視為已處理
-      if (typeof e.spCleared === 'undefined') e.spCleared = true; // 舊資料視為已從寄件區清空過，避免全部灌進待列印清單
-      return e;
-    });
-  } catch (e) {
-    console.error('讀取雲端清單失敗，暫時使用本機快取', e);
-  }
+var queueSync = Fb.map('label_queue', {
+  read: function () { var m = {}; queueCache.forEach(function (e) { m[e.id] = e; }); return m; },
+  write: function (m) {
+    queueCache = Object.keys(m).map(function (k) { return normalizeEntry(m[k]); })
+      .sort(function (a, b) { return queueTs(a) - queueTs(b); });
+    cacheQueueLocal();
+  },
+  onChange: function () { renderQueue(); renderSummary(); updateOlderInfo(); },
+  where: function () { return [['ts', '>=', Date.now() - queueWindowDays * 86400000]]; },
+  extra: function (k) { return { ts: parseInt(k, 10) || 0 }; }
+});
+Fb.onStatus(function (st) {
+  var el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.textContent = { syncing: '☁️ 同步中', ok: '✓ 已同步', err: '⚠️ 同步失敗', off: '' }[st] || '';
+  el.style.color = st === 'err' ? '#c00' : st === 'ok' ? '#1a8f4a' : '#888';
+  el.title = st === 'err' ? '同步失敗，請確認網路；恢復後會自動補傳' : '';
+});
+
+// 雲端有即時監聽，清單永遠是最新的；這裡只是確保「第一次與雲端對過」之後才繼續
+async function pullQueue() {
+  if (Fb.status() === 'err') return;
+  await Promise.race([queueSync.synced, new Promise(function (r) { setTimeout(r, 5000); })]);
+}
+// 上傳有變動的那幾筆；回傳 true/false
+async function pushQueue() {
+  cacheQueueLocal();
+  return await queueSync.pushNow();
 }
 
-// 寫入（加入清單／刪除／清空）一定要 token，沒有的話跳出設定視窗
-async function pushQueueToGist() {
-  var token = getGistToken();
-  if (!token) { showTokenUI(); return false; }
-  queueSyncing = true;
-  try {
-    var filesPayload = {};
-    filesPayload[GIST_FILE] = { content: JSON.stringify(queueCache) };
-    var res = await fetch('https://api.github.com/gists/' + GIST_ID, {
-      method: 'PATCH',
-      headers: gistHeaders({ 'Content-Type': 'application/json' }, true),
-      body: JSON.stringify({ files: filesPayload })
-    });
-    if (res.status === 401) { showTokenUI(); throw new Error('token 無效'); }
-    if (!res.ok) throw new Error('gist patch failed: ' + res.status);
-    return true;
-  } catch (e) {
-    console.error('同步清單到雲端失敗', e);
-    return false;
-  } finally {
-    queueSyncing = false;
-  }
+function updateOlderInfo() {
+  var el = document.getElementById('olderInfo');
+  if (el) el.textContent = '目前顯示最近 ' + queueWindowDays + ' 天的紀錄';
 }
-
-// ── Token 設定小視窗（僅存在這台瀏覽器，不會寫進網頁原始碼）──
-window.showTokenUI = function showTokenUI() {
-  document.getElementById('tokenOverlay').style.display = 'flex';
-  document.getElementById('tokenInput').value = getGistToken();
-  document.getElementById('tokenTestResult').textContent = '';
-};
-window.hideTokenUI = function hideTokenUI() {
-  document.getElementById('tokenOverlay').style.display = 'none';
-};
-window.testGistToken = async function testGistToken() {
-  var t = document.getElementById('tokenInput').value.trim() || getGistToken();
-  var res = document.getElementById('tokenTestResult');
-  if (!t) { res.style.color = '#999'; res.textContent = '尚未輸入 Token'; return; }
-  try {
-    var r = await fetch('https://api.github.com/gists/' + GIST_ID, { headers: { 'Authorization': 'token ' + t } });
-    if (r.ok) { res.style.color = '#1a8a3a'; res.textContent = '✅ 連線正常，可以同步'; }
-    else if (r.status === 401) { res.style.color = '#c00'; res.textContent = '❌ Token 無效或已失效'; }
-    else { res.style.color = '#c00'; res.textContent = '❌ 連線失敗（' + r.status + '）'; }
-  } catch (e) { res.style.color = '#c00'; res.textContent = '❌ 連線失敗'; }
-};
-window.applyGistToken = async function applyGistToken() {
-  var t = document.getElementById('tokenInput').value.trim();
-  if (!t) return;
-  saveGistToken(t);
-  hideTokenUI();
-  await fetchQueueFromGist();
-  renderQueue();
-  renderSummary();
+window.loadOlderQueue = function loadOlderQueue() {
+  queueWindowDays += 30;
+  updateOlderInfo();
+  queueSync.resubscribe();
 };
 
 function loadQueue() { return queueCache; }
@@ -894,7 +845,7 @@ async function saveQueue(list) {
   queueCache = list;
   renderQueue();
   renderSummary();
-  return await pushQueueToGist();
+  return await pushQueue();
 }
 
 document.getElementById('btnSpAdd').addEventListener('click', async function() {
@@ -927,7 +878,7 @@ document.getElementById('btnSpAdd').addEventListener('click', async function() {
   msg.style.color = '#1a5fa8';
   msg.textContent = '同步中...';
 
-  await fetchQueueFromGist();       // 先拉最新的，避免蓋掉別人剛加的資料
+  await pullQueue();       // 先拉最新的，避免蓋掉別人剛加的資料
   var list = loadQueue();
   list.push(entry);
   var ok = await saveQueue(list);
@@ -946,13 +897,13 @@ document.getElementById('btnSpAdd').addEventListener('click', async function() {
     document.getElementById('sp-custid').focus();
   } else {
     msg.style.color = '#c00';
-    msg.textContent = '⚠️ 尚未設定同步 Token，請點右上角 ⚙️ 設定後再試一次';
+    msg.textContent = '⚠️ 同步失敗，請確認網路後再試一次（資料已暫存在這台電腦，恢復連線後會自動補傳）';
   }
 });
 
 document.getElementById('btnQueueClear').addEventListener('click', async function() {
   if (!confirm('確定要清空寄件區目前顯示的清單嗎？（整合頁面的歷史紀錄不會被刪除，仍會保留）')) return;
-  await fetchQueueFromGist();
+  await pullQueue();
   var list = loadQueue().map(function(e){
     if (!e.spCleared) e.spCleared = true; // 只是從寄件區隱藏，不刪除資料，整合頁面仍看得到
     return e;
@@ -976,8 +927,14 @@ async function confirmWipeAll() {
   var msg = document.getElementById('wipePwMsg');
   if (pw !== WIPE_PASSWORD) { msg.textContent = '密碼錯誤'; return; }
   document.getElementById('wipeOverlay').style.display = 'none';
-  var ok = await saveQueue([]);
-  if (!ok) alert('尚未設定同步 Token，請先到右上角「⚙️ 同步設定」輸入 token 再試一次');
+  var ok = true;
+  try { await queueSync.wipeAll(); } catch (e) { ok = false; }
+  queueCache = [];
+  cacheQueueLocal();
+  renderQueue();
+  renderSummary();
+  queueSync.push(0);
+  if (!ok) alert('清空雲端資料失敗，請確認網路後再試一次');
 }
 document.getElementById('btnWipeConfirm').addEventListener('click', confirmWipeAll);
 document.getElementById('wipePwInput').addEventListener('keydown', function(e) {
@@ -985,7 +942,7 @@ document.getElementById('wipePwInput').addEventListener('keydown', function(e) {
 });
 
 document.getElementById('btnQueuePrint').addEventListener('click', async function() {
-  await fetchQueueFromGist();
+  await pullQueue();
   var pending = loadQueue().filter(function(e){ return !e.spCleared; });
   if (!pending.length) { alert('清單是空的，請先在上方加入寄件資料'); return; }
   buildQueuePrintArea(pending);
@@ -1005,7 +962,7 @@ document.getElementById('btnQueuePrint').addEventListener('click', async functio
 });
 
 async function removeQueueEntry(id, hardDelete) {
-  await fetchQueueFromGist();
+  await pullQueue();
   if (hardDelete) {
     // 整合頁面：真正永久刪除，需要密碼
     var pw = prompt('這是整合頁面的歷史紀錄，刪除需要密碼：');
@@ -1461,12 +1418,14 @@ btnToggle.addEventListener('click', function() {
   btnToggle.textContent = (previewOpen?'▼':'▶') + ' 版面校正';
 });
 
-// 初始載入客戶資料與寄件清單（雲端 Gist）
+// 初始載入客戶資料與寄件清單（雲端 Firebase）
 autoGrow(document.getElementById('sp-sender'));
 document.getElementById('cbtn-co-AL').classList.add('active');
 fetchAllCustomers().then(function(){ renderCustTable(); });
 document.getElementById('queueTotal').textContent = '讀取雲端清單中...';
-fetchQueueFromGist().then(function(){ renderQueue(); renderSummary(); });
+renderQueue(); renderSummary(); updateOlderInfo();   // 先用本機暫存畫面
+queueSync.start();
+pullQueue().then(function(){ renderQueue(); renderSummary(); });
 </script>
 </body>
 </html>
