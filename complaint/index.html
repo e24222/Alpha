@@ -190,7 +190,7 @@ code{font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 4px;bor
 </div></div>
 <script>
 (function(){
-  var PW='22505047',KEY='sysauth_complaint',TTL=7*24*60*60*1000;
+  var PW='22505047',KEY='sysauth_complaint',TTL=30*24*60*60*1000;
   function ok(){var t=localStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
   if(ok()){document.getElementById('_pwo').style.display='none';return;}
   window._cpw=function(){
@@ -202,22 +202,6 @@ code{font-family:monospace;font-size:11px;background:#f1f5f9;padding:1px 4px;bor
 })();
 </script>
 
-
-<!-- ══ PASSWORD GATE ══ -->
-<div class="gate" id="gateScreen" style="display:none">
-  <div class="gate-box">
-    <div class="gate-icon">🔒</div>
-    <div class="gate-title">客訴管理系統</div>
-    <div class="gate-sub">龍冶管理系統 · 請輸入密碼</div>
-    <input class="gate-input" type="password" id="pwIn" placeholder="輸入密碼"
-      onkeydown="if(event.key==='Enter')checkPw()">
-    <div class="gate-err" id="pwErr">密碼錯誤，請重試</div>
-    <button class="gate-btn" onclick="checkPw()">進入系統</button>
-    <div style="margin-top:12px">
-      <a href="../" style="color:rgba(255,255,255,.4);font-size:.85rem;text-decoration:none">← 返回主選單</a>
-    </div>
-  </div>
-</div>
 
 <!-- ══ SUPABASE SETUP ══ -->
 <div class="gate" id="setupScreen" style="display:none">
@@ -664,7 +648,6 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyBTjRcdVwq0XWC6B6aUf3_
 // ══════════════════════════════════
 // CONFIG & STATE
 // ══════════════════════════════════
-const PW = '22505047';
 const SB_URL = 'https://achrezfjtyjjgoyaaowr.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
 let SB = null;   // Supabase client
@@ -684,19 +667,6 @@ function saveCfg() { localStorage.setItem('cmp_cfg', JSON.stringify(cfg)); }
 // ══════════════════════════════════
 // AUTH / BOOT
 // ══════════════════════════════════
-function checkPw() {
-  const v = document.getElementById('pwIn').value;
-  if (v === PW || (function(){var t=localStorage.getItem('complaint_auth_t');return t&&(Date.now()-parseInt(t))<7*24*60*60*1000;})()) {
-    localStorage.setItem('complaint_auth_t', String(Date.now()));
-    document.getElementById('gateScreen').style.display = 'none';
-    boot();
-  } else {
-    document.getElementById('pwErr').style.display = 'block';
-    document.getElementById('pwIn').value = '';
-    document.getElementById('pwIn').focus();
-  }
-}
-
 function boot() {
   loadCfg();
   initSupabase(SB_URL, SB_KEY);
@@ -757,7 +727,7 @@ function showApp() {
 }
 
 function logout() {
-  localStorage.removeItem('complaint_auth_t');
+  localStorage.removeItem('sysauth_complaint');
   location.reload();
 }
 
@@ -1686,15 +1656,7 @@ function printComplaintReport(id){
 // BOOT
 // ══════════════════════════════════
 window.addEventListener('DOMContentLoaded', ()=>{
-  loadCfg();
-  const urlOk = new URLSearchParams(location.search).get('a') === '1';
-  if(urlOk) sessionStorage.setItem('complaint_auth','1');
-  if(sessionStorage.getItem('complaint_auth')==='1'){
-    boot();
-  } else {
-    document.getElementById('gateScreen').style.display='flex';
-    setTimeout(()=>document.getElementById('pwIn').focus(),300);
-  }
+  boot();
 });
 </script>
 </body>
