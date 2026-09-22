@@ -30,6 +30,11 @@
   var BASE = 'https://www.gstatic.com/firebasejs/11.10.0/';
 
   var ctx = null;             // { db, fs, au, user }
+  var pendingChecks = [];      // 各個 map()/自訂流程 註冊的「還有沒送出的修改嗎」檢查函式
+  window.addEventListener('beforeunload', function (e) {
+    var dirty = pendingChecks.some(function (fn) { try { return fn(); } catch (_e) { return false; } });
+    if (dirty) { e.preventDefault(); e.returnValue = ''; }
+  });
   var initPromise = null;
   var readyResolve;
   var ready = new Promise(function (r) { readyResolve = r; });
@@ -230,6 +235,16 @@
       return Promise.race([h.synced.then(flush), delay(8000, false)]);
     };
     // where 條件（例如時間範圍）改變後，重新監聽
+    h.hasPending = function () {
+      if (!started) return false;
+      var local = cur();
+      var dirty = Object.keys(local).some(function (k) { return js(local[k]) !== st.SYNCED[k]; });
+      var dels = Object.keys(st.SYNCED).some(function (k) { return !(k in local); });
+      return dirty || dels || !!timer;
+    };
+    pendingChecks.push(h.hasPending);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flush(); });
+    window.addEventListener('pagehide', function () { flush(); });
     h.resubscribe = function () { if (ctx && ctx.user && started) subscribe(); };
     // 清空整個集合（含 where 範圍以外的舊資料）
     h.wipeAll = async function () {
@@ -247,6 +262,11 @@
     ready: ready,
     ctx: function () { return ctx; },
     status: function () { return status; },
+    registerPending: function (fn) { pendingChecks.push(fn); },
+    flushOnHide: function (fn) {
+      document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') fn(); });
+      window.addEventListener('pagehide', fn);
+    },
     setStatus: setStatus,
     onStatus: function (f) { statusCbs.push(f); f(status); }
   };

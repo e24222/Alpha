@@ -1400,6 +1400,7 @@
   // 只上傳有變動的行程
   async function flushHistory() {
     clearTimeout(histTimer);
+    histTimer = null;
     const ok = await Fb.ready, c = Fb.ctx();
     if (!ok || !c) return false;
     const dirty = routeHistory.filter(function(r){ return JSON.stringify(r) !== histSynced[r.id]; });
@@ -1493,6 +1494,12 @@
 
   function histGo(d) { loadHistPage(histPage + d); }
   function histReload() { loadHistPage(histPage); }
+
+  function histDirty() {
+    return routeHistory.some(function(r){ return JSON.stringify(r) !== histSynced[r.id]; }) || !!histTimer;
+  }
+  Fb.registerPending(histDirty);
+  Fb.flushOnHide(flushHistory);
 
   function renderHistPager() {
     const el = document.getElementById('histPager');
