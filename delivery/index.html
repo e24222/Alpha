@@ -2693,6 +2693,16 @@
       addArea +
       lastSegments.map(s=>`<a class="map-btn" href="${s.url}" target="_blank">${s.label}</a>`).join('');
     shortenMapButtons();
+
+    // 更新歷史紀錄（如果是編輯模式）—— 原本這段漏寫，加站不會存回歷史，跟移除站點的行為不一致
+    if (editingHistoryId) {
+      const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
+      if (idx !== -1) {
+        routeHistory[idx].stops = lastSorted.map(c=>({code:c.code,name:c.name,address:c.address}));
+        routeHistory[idx].segments = lastSegments;
+        saveHist();
+      }
+    }
   }
 
   function backToSelect() {
