@@ -112,6 +112,8 @@
     }
 
     async function flush() {
+      clearTimeout(timer);
+      timer = null;
       if (!started) return false;
       var local = cur();
       stamp(local);
