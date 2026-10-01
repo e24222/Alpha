@@ -115,8 +115,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe;border-color:v
   <div class="remind">
     <div class="line">
       <label style="display:flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" class="ck" id="fRm" style="width:18px"> 需要 Email 提醒</label>
-      <span id="fRmBox" style="display:none">貼文後
-        <select id="fDays"></select> 天，早上 9:00 寄出
+      <span id="fRmBox" style="display:none">寄出時間
+        <select id="fDays"></select>
       </span>
     </div>
     <div class="hint" id="fRmHint">不勾選就不會寄信。</div>
@@ -211,7 +211,8 @@ $('tabD').onclick=function(){setTab('d');};
 $('q').oninput=render;
 
 // ───────── 新增 / 編輯表單 ─────────
-for(var i=1;i<=60;i++){var op=document.createElement('option');op.value=i;op.textContent=i;$('fDays').appendChild(op);}
+(function(){var o=document.createElement('option');o.value=0;o.textContent='立即（儲存後馬上寄）';$('fDays').appendChild(o);
+for(var i=1;i<=60;i++){o=document.createElement('option');o.value=i;o.textContent='貼文後 '+i+' 天，早上 9:00';$('fDays').appendChild(o);}})();
 function itemRow(it){
   it=it||{};
   var tr=document.createElement('tr');
@@ -245,11 +246,25 @@ function syncRemind(){
   var on=$('fRm').checked;
   $('fRmBox').style.display=on?'':'none';
   var base=editing?editing.created_at:new Date();
-  $('fRmHint').textContent=on?('將於 '+ymd(addDays(base,+$('fDays').value)).replace(/-/g,'/')+' 早上 9:00 寄給所有提醒收件人；勾選「已處理」後就不會再寄。'):'不勾選就不會寄信。';
+  var d=+$('fDays').value;
+  $('fRmHint').textContent=!on?'不勾選就不會寄信。':d===0?'按儲存後，會立刻寄給所有提醒收件人（只寄這一次）。':
+    '將於 '+ymd(addDays(base,d)).replace(/-/g,'/')+' 早上 9:00 寄給所有提醒收件人；勾選「已處理」後就不會再寄。';
 }
 $('fRm').onchange=syncRemind;$('fDays').onchange=syncRemind;
 $('btnNew').onclick=function(){openForm(null);};
 $('fCancel').onclick=function(){$('mForm').classList.remove('on');};
+
+// 立即寄出：呼叫 Supabase Edge Function（金鑰存在 Supabase，不在網頁裡）
+async function sendNow(id){
+  try{
+    var r=await fetch(SUPA+'/functions/v1/send-order-note',{method:'POST',headers:{apikey:KEY_,Authorization:'Bearer '+KEY_,'Content-Type':'application/json'},body:JSON.stringify({id:id})});
+    var d=await r.json().catch(function(){return {};});
+    if(r.ok)return '已儲存，提醒信已寄給 '+d.sent+' 位收件人';
+    if(d.error==='no recipients')return '已儲存，但尚未設定提醒收件人，沒有寄信';
+    if(d.error==='RESEND_API_KEY not set')return '已儲存，但寄信功能尚未設定完成';
+    return '已儲存，但寄信失敗：'+(d.error||r.status);
+  }catch(e){return '已儲存，但寄信失敗（網路問題）';}
+}
 
 // 客編 → 公司名稱（只查單筆，不下載整張客戶表）
 function normId(s){s=s.trim().toUpperCase();if(/^\d+$/.test(s))s=s.padStart(3,'0');return s;}
@@ -273,17 +288,23 @@ $('fSave').onclick=async function(){
   }).filter(function(i){return i.part||i.name||i.qty;});
   if(!cid){toast('請輸入客編');return;}
   if(!items.length&&!$('fNote').value.trim()){toast('請至少填一個品項或狀況說明');return;}
-  var rm=$('fRm').checked,days=+$('fDays').value;
+  var rm=$('fRm').checked,days=+$('fDays').value,now=rm&&days===0,sched=rm&&days>0;
   var base=editing?editing.created_at:new Date();
   var body={company:$('fCo').value,cust_id:cid,cust_name:$('fCnm').value.trim(),poster:$('fPoster').value.trim(),
     note:$('fNote').value.trim(),items:items,
-    remind_days:rm?days:null,remind_on:rm?ymd(addDays(base,days)):null};
+    remind_days:sched?days:null,remind_on:sched?ymd(addDays(base,days)):null};
   if(editing&&(editing.remind_on||null)!==body.remind_on)body.reminded_at=null;
   localStorage.setItem('oa_poster',body.poster);
   $('fSave').disabled=true;
-  var r=editing?await api('order_notes?id=eq.'+editing.id,{method:'PATCH',body:body}):await api('order_notes',{method:'POST',body:body});
+  var r=editing?await api('order_notes?id=eq.'+editing.id,{method:'PATCH',body:body}):await api('order_notes',{method:'POST',body:body,prefer:'return=representation'});
+  if(!r.ok){$('fSave').disabled=false;toast('儲存失敗（'+r.status+'）');return;}
+  var msg='已儲存';
+  if(now){
+    var nid=editing?editing.id:(await r.json())[0].id;
+    msg=await sendNow(nid);
+  }
   $('fSave').disabled=false;
-  if(r.ok){$('mForm').classList.remove('on');toast('已儲存');load();}else toast('儲存失敗（'+r.status+'）');
+  $('mForm').classList.remove('on');toast(msg);load();
 };
 
 // ───────── 提醒收件人 ─────────
