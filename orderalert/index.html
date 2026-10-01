@@ -261,7 +261,7 @@ async function sendNow(id){
     var d=await r.json().catch(function(){return {};});
     if(r.ok)return '已儲存，提醒信已寄給 '+d.sent+' 位收件人';
     if(d.error==='no recipients')return '已儲存，但尚未設定提醒收件人，沒有寄信';
-    if(d.error==='RESEND_API_KEY not set')return '已儲存，但寄信功能尚未設定完成';
+    if(d.error==='mail not configured')return '已儲存，但寄信功能尚未設定完成';
     return '已儲存，但寄信失敗：'+(d.error||r.status);
   }catch(e){return '已儲存，但寄信失敗（網路問題）';}
 }
