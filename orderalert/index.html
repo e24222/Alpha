@@ -29,9 +29,12 @@ button{font-family:inherit;cursor:pointer}
 .panel{background:var(--card);border:1px solid var(--bdr);border-radius:0 10px 10px 10px;overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.9rem}
 th{background:#f1f5f9;text-align:left;padding:9px 10px;border-bottom:2px solid var(--bdr);white-space:nowrap;font-weight:700}
-td{padding:8px 10px;border-bottom:1px solid #e2e8f0;vertical-align:top}
-tr.head td{background:#f8fafc;border-top:2px solid var(--bdr);font-weight:600}
+td{padding:10px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+tr.head td{background:#f8fafc;border-top:2px solid var(--bdr);font-weight:600;font-size:1rem}
 tr.head .meta{font-weight:400;color:var(--mu);font-size:.8rem;margin-left:8px}
+.c-part{font-size:1.05rem;font-weight:700;color:#1d4ed8;white-space:nowrap}
+.c-name{font-size:1.1rem;font-weight:700}
+.c-qty{font-size:1.05rem;font-weight:700;white-space:nowrap}
 .note{white-space:pre-wrap;color:#92400e;background:#fffbeb;border-radius:6px;padding:6px 10px;font-size:.88rem}
 .bell{color:var(--warn);font-size:.8rem;margin-left:8px;font-weight:400}
 .empty{padding:40px;text-align:center;color:var(--mu)}
@@ -197,19 +200,19 @@ function render(){
     return s.indexOf(q)>=0;
   });
   if(!list.length){$('list').innerHTML='<div class="empty">'+(tab==='p'?'目前沒有待處理的通報':'沒有已處理的紀錄')+'</div>';return;}
-  var h='<table><thead><tr><th style="width:40px">已處理</th><th>客編</th><th>貨號</th><th>品名</th><th>數量</th><th></th></tr></thead><tbody>';
+  var h='<table><thead><tr><th style="width:40px">已處理</th><th>貨號</th><th>品名</th><th>數量</th><th></th></tr></thead><tbody>';
   list.forEach(function(o){
     var items=o.items&&o.items.length?o.items:[{}];
     var bell=o.remind_on?('<span class="bell">🔔 '+(o.reminded_at?'已寄出':o.remind_on.replace(/-/g,'/')+' 09:00 提醒')+'</span>'):'';
     var d=new Date(o.created_at);
-    h+='<tr class="head"><td colspan="6">'+esc((o.company?o.company+' ':'')+o.cust_id)+'　'+esc(o.cust_name)+
+    h+='<tr class="head"><td colspan="5">'+esc((o.company?o.company+' ':'')+o.cust_id)+'　'+esc(o.cust_name)+
        '<span class="meta">'+(d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes())+(o.poster?' · '+esc(o.poster):'')+'</span>'+bell+'</td></tr>';
     items.forEach(function(it,i){
       h+='<tr>'+(i===0?'<td rowspan="'+(items.length+(o.note?1:0))+'"><input type="checkbox" class="ck" data-done="'+o.id+'"'+(o.done?' checked':'')+'></td>':'')+
-         '<td>'+(i===0?esc(o.cust_id):'')+'</td><td>'+esc(it.part)+'</td><td>'+esc(it.name)+'</td><td>'+esc(it.qty)+'</td>'+
+         '<td class="c-part">'+esc(it.part)+'</td><td class="c-name">'+esc(it.name)+'</td><td class="c-qty">'+esc(it.qty)+'</td>'+
          (i===0?'<td class="act" rowspan="'+(items.length+(o.note?1:0))+'"><button class="btn sec sm" data-edit="'+o.id+'">編輯</button> <button class="btn del sm" data-del="'+o.id+'">刪除</button></td>':'')+'</tr>';
     });
-    if(o.note)h+='<tr><td colspan="4"><div class="note">'+esc(o.note)+'</div></td></tr>';
+    if(o.note)h+='<tr><td colspan="3"><div class="note">'+esc(o.note)+'</div></td></tr>';
   });
   $('list').innerHTML=h+'</tbody></table>';
 }
