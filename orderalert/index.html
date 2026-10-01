@@ -68,23 +68,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe;border-color:v
 .chip{background:#e0e7ff;border-radius:99px;padding:4px 6px 4px 12px;font-size:.85rem;display:flex;align-items:center;gap:4px}
 .chip button{border:none;background:none;color:var(--err);font-size:1rem}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:8px;display:none;z-index:99}
-/* gate */
-#gate{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;align-items:center;justify-content:center;z-index:200}
-#gate div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:32px;text-align:center;color:#fff;min-width:280px}
-#gate input{text-align:center;letter-spacing:4px;margin:14px 0 8px;background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.25)}
-#gate .e{color:#f87171;font-size:.85rem;display:none}
 @media(max-width:640px){.wrap{padding:10px}.tabs input[type=search]{width:100%}}
 </style>
 </head>
 <body>
-
-<div id="gate"><div>
-  <h2>🔒 系統登入</h2>
-  <p style="opacity:.6;font-size:.85rem">請輸入密碼以繼續</p>
-  <input id="gpw" type="password" placeholder="••••" autofocus>
-  <button class="btn" style="width:100%" id="gbtn">進入</button>
-  <div class="e" id="gerr">密碼錯誤，請重試</div>
-</div></div>
 
 <div class="top">
   <h1>📝 訂單狀況通報</h1>
@@ -153,19 +140,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe;border-color:v
 <div class="toast" id="toast"></div>
 
 <script>
-(function(){
-var PW='22505047',KEY='sysauth_orderalert',TTL=30*24*60*60*1000;
-var gate=document.getElementById('gate');
-function authed(){var t=localStorage.getItem(KEY);return t&&(Date.now()-parseInt(t))<TTL;}
-function tryPw(){
-  if(document.getElementById('gpw').value===PW){localStorage.setItem(KEY,String(Date.now()));gate.style.display='none';}
-  else{document.getElementById('gerr').style.display='block';document.getElementById('gpw').value='';}
-}
-if(authed())gate.style.display='none';
-document.getElementById('gbtn').onclick=tryPw;
-document.getElementById('gpw').onkeydown=function(e){if(e.key==='Enter')tryPw();};
-})();
-
 var SUPA='https://achrezfjtyjjgoyaaowr.supabase.co';
 var KEY_='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ';
 function api(path,opt){
