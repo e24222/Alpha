@@ -116,7 +116,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe;border-color:v
   </div>
 
   <table class="items"><thead><tr>
-    <th style="width:150px">預交日期</th><th style="width:150px">貨號</th><th>品名</th><th style="width:100px">數量</th><th style="width:30px"></th>
+    <th style="width:170px">貨號</th><th>品名</th><th style="width:100px">數量</th><th style="width:30px"></th>
   </tr></thead><tbody id="fItems"></tbody></table>
   <button class="btn sec sm" id="fAdd">＋ 新增品項</button>
 
@@ -197,19 +197,19 @@ function render(){
     return s.indexOf(q)>=0;
   });
   if(!list.length){$('list').innerHTML='<div class="empty">'+(tab==='p'?'目前沒有待處理的通報':'沒有已處理的紀錄')+'</div>';return;}
-  var h='<table><thead><tr><th style="width:40px">已處理</th><th>預交日期</th><th>客編</th><th>貨號</th><th>品名</th><th>數量</th><th></th></tr></thead><tbody>';
+  var h='<table><thead><tr><th style="width:40px">已處理</th><th>客編</th><th>貨號</th><th>品名</th><th>數量</th><th></th></tr></thead><tbody>';
   list.forEach(function(o){
     var items=o.items&&o.items.length?o.items:[{}];
     var bell=o.remind_on?('<span class="bell">🔔 '+(o.reminded_at?'已寄出':o.remind_on.replace(/-/g,'/')+' 09:00 提醒')+'</span>'):'';
     var d=new Date(o.created_at);
-    h+='<tr class="head"><td colspan="7">'+esc((o.company?o.company+' ':'')+o.cust_id)+'　'+esc(o.cust_name)+
+    h+='<tr class="head"><td colspan="6">'+esc((o.company?o.company+' ':'')+o.cust_id)+'　'+esc(o.cust_name)+
        '<span class="meta">'+(d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes())+(o.poster?' · '+esc(o.poster):'')+'</span>'+bell+'</td></tr>';
     items.forEach(function(it,i){
       h+='<tr>'+(i===0?'<td rowspan="'+(items.length+(o.note?1:0))+'"><input type="checkbox" class="ck" data-done="'+o.id+'"'+(o.done?' checked':'')+'></td>':'')+
-         '<td>'+esc(it.due||'').replace(/-/g,'/')+'</td><td>'+(i===0?esc(o.cust_id):'')+'</td><td>'+esc(it.part)+'</td><td>'+esc(it.name)+'</td><td>'+esc(it.qty)+'</td>'+
+         '<td>'+(i===0?esc(o.cust_id):'')+'</td><td>'+esc(it.part)+'</td><td>'+esc(it.name)+'</td><td>'+esc(it.qty)+'</td>'+
          (i===0?'<td class="act" rowspan="'+(items.length+(o.note?1:0))+'"><button class="btn sec sm" data-edit="'+o.id+'">編輯</button> <button class="btn del sm" data-del="'+o.id+'">刪除</button></td>':'')+'</tr>';
     });
-    if(o.note)h+='<tr><td colspan="5"><div class="note">'+esc(o.note)+'</div></td></tr>';
+    if(o.note)h+='<tr><td colspan="4"><div class="note">'+esc(o.note)+'</div></td></tr>';
   });
   $('list').innerHTML=h+'</tbody></table>';
 }
@@ -238,13 +238,12 @@ for(var i=1;i<=60;i++){var op=document.createElement('option');op.value=i;op.tex
 function itemRow(it){
   it=it||{};
   var tr=document.createElement('tr');
-  tr.innerHTML='<td><input type="date" class="i-due" value="'+esc(it.due||'')+'"></td>'+
-    '<td><input class="i-part" value="'+esc(it.part||'')+'"></td>'+
+  tr.innerHTML='<td><input class="i-part" value="'+esc(it.part||'')+'"></td>'+
     '<td><input class="i-name" value="'+esc(it.name||'')+'"></td>'+
     '<td><input class="i-qty" inputmode="numeric" value="'+esc(it.qty||'')+'"></td>'+
     '<td><button class="x" type="button" title="刪除此列">✕</button></td>';
   tr.querySelector('.x').onclick=function(){if($('fItems').children.length>1)tr.remove();else tr.querySelectorAll('input').forEach(function(i){i.value='';});};
-  tr.querySelector('.i-qty').onkeydown=function(e){if(e.key==='Enter'&&tr===$('fItems').lastElementChild){$('fItems').appendChild(itemRow());$('fItems').lastElementChild.querySelector('.i-due').focus();}};
+  tr.querySelector('.i-qty').onkeydown=function(e){if(e.key==='Enter'&&tr===$('fItems').lastElementChild){$('fItems').appendChild(itemRow());$('fItems').lastElementChild.querySelector('.i-part').focus();}};
   return tr;
 }
 $('fAdd').onclick=function(){$('fItems').appendChild(itemRow());};
@@ -292,9 +291,9 @@ $('fCo').onchange=lookup;
 $('fSave').onclick=async function(){
   var cid=normId($('fCid').value);
   var items=[].map.call($('fItems').children,function(tr){return {
-    due:tr.querySelector('.i-due').value,part:tr.querySelector('.i-part').value.trim(),
+    part:tr.querySelector('.i-part').value.trim(),
     name:tr.querySelector('.i-name').value.trim(),qty:tr.querySelector('.i-qty').value.trim()};
-  }).filter(function(i){return i.due||i.part||i.name||i.qty;});
+  }).filter(function(i){return i.part||i.name||i.qty;});
   if(!cid){toast('請輸入客編');return;}
   if(!items.length&&!$('fNote').value.trim()){toast('請至少填一個品項或狀況說明');return;}
   var rm=$('fRm').checked,days=+$('fDays').value;
@@ -335,10 +334,10 @@ $('btnCsv').onclick=async function(){
   var r=await api('order_notes?order=created_at.desc&limit=5000',{prefer:'return=representation'});
   if(!r.ok){toast('匯出失敗');return;}
   var d=await r.json();
-  var out=[['通報時間','狀態','公司別','客編','公司名稱','通報人','預交日期','貨號','品名','數量','狀況說明','提醒日']];
+  var out=[['通報時間','狀態','公司別','客編','公司名稱','通報人','貨號','品名','數量','狀況說明','提醒日']];
   d.forEach(function(o){
     var its=o.items&&o.items.length?o.items:[{}];
-    its.forEach(function(i,k){out.push([new Date(o.created_at).toLocaleString('zh-TW',{hour12:false}),o.done?'已處理':'待處理',o.company,o.cust_id,o.cust_name,o.poster,i.due,i.part,i.name,i.qty,k===0?o.note:'',o.remind_on||'']);});
+    its.forEach(function(i,k){out.push([new Date(o.created_at).toLocaleString('zh-TW',{hour12:false}),o.done?'已處理':'待處理',o.company,o.cust_id,o.cust_name,o.poster,i.part,i.name,i.qty,k===0?o.note:'',o.remind_on||'']);});
   });
   var csv='﻿'+out.map(function(r){return r.map(function(c){c=c==null?'':String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',');}).join('\r\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));

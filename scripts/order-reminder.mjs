@@ -18,10 +18,10 @@ if (!rcpt.length) { console.log('沒有設定收件人，略過'); process.exit(
 if (!RESEND) { console.log('未設定 RESEND_API_KEY，略過寄信'); process.exit(0); }
 
 const body = due.map(o => {
-  const rows = (o.items || []).map(i => `<tr><td>${esc(i.due)}</td><td>${esc(i.part)}</td><td>${esc(i.name)}</td><td>${esc(i.qty)}</td></tr>`).join('');
+  const rows = (o.items || []).map(i => `<tr><td>${esc(i.part)}</td><td>${esc(i.name)}</td><td>${esc(i.qty)}</td></tr>`).join('');
   return `<div style="margin-bottom:20px"><b>${esc(o.company)} ${esc(o.cust_id)}　${esc(o.cust_name)}</b>
     <span style="color:#64748b">（${esc(o.poster)} 於 ${o.created_at.slice(0, 10)} 通報）</span>
-    <table border="1" cellpadding="5" style="border-collapse:collapse;margin:6px 0"><tr><th>預交日期</th><th>貨號</th><th>品名</th><th>數量</th></tr>${rows}</table>
+    <table border="1" cellpadding="5" style="border-collapse:collapse;margin:6px 0"><tr><th>貨號</th><th>品名</th><th>數量</th></tr>${rows}</table>
     <div style="background:#fffbeb;padding:6px 10px;white-space:pre-wrap">${esc(o.note)}</div></div>`;
 }).join('');
 
