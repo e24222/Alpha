@@ -25,7 +25,7 @@ h1 { font-size: 1.8rem; font-weight: 800; }
 p  { font-size: 0.9rem; opacity: 0.6; margin-top: 4px; }
 .header { text-align: center; margin-bottom: 8px; }
 
-.row { display: flex; gap: 16px; justify-content: center; width: 100%; }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; width: 100%; max-width: 520px; }
 
 .card {
   background: rgba(255,255,255,0.08);
@@ -37,10 +37,10 @@ p  { font-size: 0.9rem; opacity: 0.6; margin-top: 4px; }
   color: white;
   transition: all 0.2s;
   cursor: pointer;
-  width: 160px;
+  width: 100%;
   min-width: 0;
 }
-@media (min-width: 500px) { .card { width: 220px; padding: 24px 32px; } }
+@media (min-width: 500px) { .card { padding: 24px 20px; } }
 .card:hover {
   background: rgba(255,255,255,0.18);
   transform: translateY(-3px);
@@ -96,17 +96,12 @@ p  { font-size: 0.9rem; opacity: 0.6; margin-top: 4px; }
     <p>請選擇要使用的系統</p>
   </div>
 
-  <!-- 第一排：模具 -->
-  <div class="row">
+  <div class="grid">
     <div class="card" onclick="openSystem('模具清冊管理', 'mold/index.html')">
       <div class="icon">🔧</div>
       <div class="name">模具清冊管理</div>
       <div class="desc">模具資料管理與追蹤</div>
     </div>
-  </div>
-
-  <!-- 第二排：標籤 + 送貨 -->
-  <div class="row">
     <div class="card" onclick="openSystem('新航快遞標籤列印', 'label/index.html')">
       <div class="icon">🏷️</div>
       <div class="name">新航快遞標籤列印</div>
@@ -117,10 +112,6 @@ p  { font-size: 0.9rem; opacity: 0.6; margin-top: 4px; }
       <div class="name">送貨路線規劃</div>
       <div class="desc">路線規劃與導航列印</div>
     </div>
-  </div>
-
-  <!-- 第三排：客訴 + 首件 -->
-  <div class="row">
     <div class="card" onclick="openSystem('客訴管理系統', 'complaint/index.html')">
       <div class="icon">📋</div>
       <div class="name">客訴管理系統</div>
@@ -131,10 +122,6 @@ p  { font-size: 0.9rem; opacity: 0.6; margin-top: 4px; }
       <div class="name">首件檢驗記錄</div>
       <div class="desc">首件檢驗紀錄與查詢</div>
     </a>
-  </div>
-
-  <!-- 第四排：訂單狀況通報 -->
-  <div class="row">
     <div class="card" onclick="openSystem('訂單狀況通報', 'orderalert/index.html')">
       <div class="icon">📝</div>
       <div class="name">訂單狀況通報</div>
