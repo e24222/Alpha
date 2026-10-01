@@ -1,0 +1,42 @@
+name: Supabase keepalive
+
+# 每 3 天對 Supabase 發一次讀取請求，避免免費專案閒置 7 天被暫停。
+# GitHub 對「60 天沒有任何 commit」的 repo 會停用排程，
+# 所以最後一步在 repo 久未更新時自動補一個空 commit。
+on:
+  schedule:
+    - cron: '17 1 */3 * *'   # UTC 01:17 = 台灣 09:17
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Ping Supabase
+        env:
+          SUPA_URL: https://achrezfjtyjjgoyaaowr.supabase.co
+          SUPA_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "$SUPA_URL/rest/v1/customers?select=id&limit=1" \
+            -H "apikey: $SUPA_KEY" -H "Authorization: Bearer $SUPA_KEY")
+          echo "HTTP $code"
+          test "$code" = "200"
+
+      - name: Keep schedule alive (empty commit if repo idle > 45 days)
+        run: |
+          last=$(git log -1 --format=%ct)
+          now=$(date +%s)
+          if [ $(( (now - last) / 86400 )) -gt 45 ]; then
+            git config user.name  "keepalive-bot"
+            git config user.email "keepalive-bot@users.noreply.github.com"
+            git commit --allow-empty -m "chore: keepalive"
+            git push
+          fi
