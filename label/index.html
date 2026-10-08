@@ -822,7 +822,7 @@ Fb.onStatus(function (st) {
 // 雲端有即時監聽，清單永遠是最新的；這裡只是確保「第一次與雲端對過」之後才繼續
 async function pullQueue() {
   if (Fb.status() === 'err') return;
-  await Promise.race([queueSync.synced, new Promise(function (r) { setTimeout(r, 15000); })]);
+  await Promise.race([queueSync.synced, new Promise(function (r) { setTimeout(r, 4000); })]);
 }
 // 上傳有變動的那幾筆；回傳 true/false
 async function pushQueue() {

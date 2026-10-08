@@ -163,6 +163,8 @@
     }
 
     function onSnap(snap) {
+      // 之前只有「這台電腦第一次」才會發出 synced 訊號，之後每次開頁面 pushNow/pullQueue 都會乾等到逾時
+      if (!snap.metadata.fromCache || st.init) syncedResolve(true);
       var local = cur();
       if (!st.init) {
         if (snap.empty) {
@@ -237,7 +239,7 @@
     };
     h.pushNow = function () {
       clearTimeout(timer);
-      return Promise.race([h.synced.then(flush), delay(25000, false)]);
+      return Promise.race([h.synced.then(flush), delay(10000, false)]);
     };
     // where 條件（例如時間範圍）改變後，重新監聽
     h.hasPending = function () {
