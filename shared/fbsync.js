@@ -63,7 +63,10 @@
         ]);
         var app = m[0].initializeApp(CONFIG);
         var au = m[1].getAuth(app);
-        ctx = { db: m[2].getFirestore(app), fs: m[2], au: au, user: null };
+        var db;
+        try { db = m[2].initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
+        catch (e0) { db = m[2].getFirestore(app); }
+        ctx = { db: db, fs: m[2], au: au, user: null };
         await new Promise(function (res, rej) {
           var un;
           un = m[1].onAuthStateChanged(au, function (u) {
@@ -234,7 +237,7 @@
     };
     h.pushNow = function () {
       clearTimeout(timer);
-      return Promise.race([h.synced.then(flush), delay(8000, false)]);
+      return Promise.race([h.synced.then(flush), delay(25000, false)]);
     };
     // where 條件（例如時間範圍）改變後，重新監聽
     h.hasPending = function () {
