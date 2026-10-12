@@ -250,6 +250,8 @@
       return dirty || dels || !!timer;
     };
     pendingChecks.push(h.hasPending);
+    // 保險：就算某次上傳沒被觸發，有未上傳的修改也會每 5 秒補送一次
+    setInterval(function () { if (started && ctx && ctx.user && st.init && h.hasPending()) flush(); }, 5000);
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flush(); });
     window.addEventListener('pagehide', function () { flush(); });
     h.resubscribe = function () { if (ctx && ctx.user && started) subscribe(); };
