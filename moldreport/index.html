@@ -123,28 +123,12 @@
     <div class="stats" id="stats"></div>
     <div class="card">
       <div class="filters">
-        <div class="fg" id="f-vendor-wrap"><label>廠商</label><input id="f-vendor" placeholder="搜尋廠商" oninput="renderList()"></div>
+        <div class="fg"><label>廠商</label><input id="f-vendor" placeholder="搜尋廠商" oninput="renderList()"></div>
         <div class="fg"><label>模具</label><input id="f-mold" placeholder="搜尋模具" oninput="renderList()"></div>
         <div class="fg"><label>送修日期（起）</label><input type="date" id="f-from" onchange="renderList()"></div>
         <div class="fg"><label>送修日期（迄）</label><input type="date" id="f-to" onchange="renderList()"></div>
       </div>
       <div id="list-container"></div>
-    </div>
-  </div>
-</div>
-
-<!-- 密碼 -->
-<div class="modal-overlay" id="pw-modal">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-header"><h3>🔒 通報與進度</h3></div>
-    <div class="modal-body" style="text-align:center;padding:30px 26px">
-      <p style="color:#555;margin-bottom:18px">請輸入密碼</p>
-      <input type="password" id="pw-input" placeholder="輸入密碼" style="text-align:center;letter-spacing:4px" onkeydown="if(event.key==='Enter')checkPw()">
-      <div id="pw-error" style="color:#e74c3c;font-size:.85rem;margin-top:10px;display:none">密碼錯誤，請重試</div>
-      <div style="display:flex;gap:10px;margin-top:18px;justify-content:center">
-        <button class="btn btn-secondary btn-sm" onclick="closePw()">取消</button>
-        <button class="btn btn-primary btn-sm" id="pw-ok" onclick="checkPw()">確認</button>
-      </div>
     </div>
   </div>
 </div>
@@ -163,8 +147,6 @@ const db = supabase.createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ');
 
 const STATUSES = ['待處理', '維修中', '已完成'];
-let unlocked = false;          // 已登入
-let vendorFilter = null;       // null = 管理員（看全部）；陣列 = 廠商
 let reports = [];
 let statFilter = null;
 let currentId = null;
@@ -194,55 +176,12 @@ function showAlert(id, type, msg) {
   if (type === 'success') setTimeout(() => el.classList.remove('show'), 5000);
 }
 
-// ---------- 分頁 / 登入 ----------
+// ---------- 分頁 ----------
 function showTab(tab) {
-  if (tab === 'list' && !unlocked) {
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-error').style.display = 'none';
-    document.getElementById('pw-modal').classList.add('show');
-    setTimeout(() => document.getElementById('pw-input').focus(), 100);
-    return;
-  }
   document.getElementById('tab-form').style.display = tab === 'form' ? '' : 'none';
   document.getElementById('tab-list').style.display = tab === 'list' ? '' : 'none';
   document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0) === (tab === 'form')));
   if (tab === 'list') loadReports();
-}
-function closePw() { document.getElementById('pw-modal').classList.remove('show'); }
-
-async function checkPw() {
-  const val = document.getElementById('pw-input').value.trim();
-  const btn = document.getElementById('pw-ok');
-  btn.disabled = true;
-  let ok = false;
-  if (val === '0000') { vendorFilter = null; ok = true; }
-  else if (val) {
-    try {
-      const { data, error } = await db.from('vendor_passwords').select('vendor_name').eq('password', val);
-      if (!error && data && data.length) { vendorFilter = data.map(d => d.vendor_name); ok = true; }
-    } catch (e) {}
-  }
-  btn.disabled = false;
-  if (!ok) {
-    document.getElementById('pw-error').style.display = 'block';
-    document.getElementById('pw-input').value = '';
-    return;
-  }
-  unlocked = true;
-  closePw();
-  renderUserBadge();
-  showTab('list');
-}
-
-function renderUserBadge() {
-  document.getElementById('user-badge')?.remove();
-  document.getElementById('f-vendor-wrap').style.display = vendorFilter ? 'none' : '';
-  if (!unlocked) return;
-  const b = document.createElement('div');
-  b.id = 'user-badge'; b.className = 'badge-user'; b.title = '點擊登出';
-  b.textContent = vendorFilter ? '👤 ' + vendorFilter.join(' / ') : '🔑 管理員';
-  b.onclick = () => { if (confirm('要登出嗎？')) { unlocked = false; vendorFilter = null; renderUserBadge(); showTab('form'); } };
-  document.querySelector('.header-inner').appendChild(b);
 }
 
 // ---------- 送出通報 ----------
@@ -269,7 +208,6 @@ async function loadReports() {
   document.getElementById('list-container').innerHTML = '<div class="empty">載入中...</div>';
   try {
     let q = db.from('mold_reports').select('*').order('repair_date', { ascending: false }).order('created_at', { ascending: false });
-    if (vendorFilter) q = q.in('vendor', vendorFilter);
     const { data, error } = await q;
     if (error) throw error;
     reports = data || [];
@@ -318,7 +256,6 @@ async function openDetail(id) {
   } catch (err) {
     document.getElementById('modal-body').innerHTML = `<div class="empty">❌ ${esc(err.message)}</div>`; return;
   }
-  const admin = !vendorFilter;
   document.getElementById('modal-body').innerHTML = `
     <div class="detail-grid">
       <div class="di"><div class="dl">廠商</div><div class="dv">${esc(r.vendor)}</div></div>
@@ -338,25 +275,31 @@ async function openDetail(id) {
         <div class="fg"><label>日期</label><input type="date" id="p-date" value="${today()}"></div>
         <div class="fg"><label>狀態</label><select id="p-status">${STATUSES.map(s => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
       </div>
+      <div class="fg" style="margin-bottom:10px"><label>填寫人（廠商或龍冶）</label><input id="p-author" list="vendor-list" value="${esc(savedAuthor())}" placeholder="例如：○○模具廠 / 龍冶"></div>
       <div class="fg" style="margin-bottom:10px"><label>追加進度</label><textarea id="p-note" style="min-height:70px" placeholder="例如：已拆模、預計 11/20 完成"></textarea></div>
       <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" id="p-btn" onclick="addProgress()">＋ 新增進度</button>
-        ${admin ? `<button class="btn btn-danger btn-sm" onclick="deleteReport()">🗑️ 刪除此通報</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteReport()">🗑️ 刪除此通報</button>
       </div>
     </div>`;
 }
 function closeModal() { document.getElementById('modal').classList.remove('show'); }
 
+function savedAuthor() { try { return localStorage.getItem('mold_author') || ''; } catch (e) { return ''; } }
+
 async function addProgress() {
   const note = document.getElementById('p-note').value.trim();
   if (!note) { alert('請輸入進度內容'); return; }
+  const author = document.getElementById('p-author').value.trim();
+  if (!author) { alert('請輸入填寫人'); return; }
+  try { localStorage.setItem('mold_author', author); } catch (e) {}
   const status = document.getElementById('p-status').value;
   const btn = document.getElementById('p-btn'); btn.disabled = true;
   try {
     const { error } = await db.from('mold_progress').insert([{
       report_id: currentId, note, status,
       progress_date: document.getElementById('p-date').value || today(),
-      author: vendorFilter ? vendorFilter[0] : '龍冶'
+      author
     }]);
     if (error) throw error;
     const { error: e2 } = await db.from('mold_reports').update({ status, updated_at: new Date().toISOString() }).eq('id', currentId);
@@ -368,6 +311,7 @@ async function addProgress() {
 }
 
 async function deleteReport() {
+  if (prompt('刪除需要管理密碼') !== '0000') { alert('密碼錯誤或已取消'); return; }
   const r = reports.find(x => x.id === currentId);
   if (!confirm(`確定刪除這筆通報？\n\n廠商：${r.vendor}\n模具：${r.mold}\n\n進度紀錄也會一併刪除，無法復原。`)) return;
   const { error } = await db.from('mold_reports').delete().eq('id', currentId);
