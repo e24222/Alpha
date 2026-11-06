@@ -169,8 +169,8 @@ let optionsUnlocked = false;
 function moldRank(n) {
   let m;
   if (/瓶蓋|外蓋|16\*100/.test(n)) return [2, 0];
-  if (/\d+\s*孔|培養盤/.test(n)) {
-    m = n.match(/(\d+)\s*孔/);
+  if (/\d+\s*(孔|培養)|培養盤/.test(n)) {
+    m = n.match(/(\d+)\s*(?:孔|培養)/);
     return [1, m ? parseInt(m[1], 10) : 9999];
   }
   m = n.match(/(\d+(?:\.\d+)?)(?:\*\d+(?:\.\d+)?)?\s*(cm|mm)/i);
