@@ -74,6 +74,9 @@
   .add-box { background: #f8fbfd; border: 1px solid #d6eaf8; border-radius: 8px; padding: 14px; }
   .add-box .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
   .badge-user { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4); border-radius: 20px; padding: 4px 14px; font-size: .85rem; font-weight: 700; cursor: pointer; }
+  .opt-row { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; flex-wrap: wrap; }
+  .opt-row input { flex: 1 1 260px; }
+  .opt-row.hidden-opt input { opacity: .55; background: #f0f0f0; }
   @media (max-width: 768px) {
     .header-inner { padding: 12px 14px; } .header h1 { font-size: 1.1rem; }
     .tabs { padding: 0 8px; } .main { padding: 14px 10px; } .card { padding: 18px 16px; }
@@ -89,8 +92,9 @@
   <div><h1>🛠️ 龍冶模具通報管理</h1><div class="sub">Mold Repair Report</div></div>
 </div></div>
 <div class="tabs-wrap"><div class="tabs">
-  <button class="tab-btn active" onclick="showTab('form')">📝 模具通報</button>
-  <button class="tab-btn" onclick="showTab('list')">📋 通報與進度</button>
+  <button class="tab-btn active" data-tab="form" onclick="showTab('form')">📝 模具通報</button>
+  <button class="tab-btn" data-tab="list" onclick="showTab('list')">📋 通報與進度</button>
+  <button class="tab-btn" data-tab="options" onclick="showTab('options')">⚙️ 選項管理</button>
 </div></div>
 
 <div class="main">
@@ -127,6 +131,20 @@
       <div id="list-container"></div>
     </div>
   </div>
+
+<!-- 選項管理 -->
+<div id="tab-options" style="display:none">
+  <div id="alert-options" class="alert"></div>
+  <div class="card">
+    <div class="card-title">模具選項管理</div>
+    <p style="color:#777;font-size:.88rem;margin-bottom:14px">這裡的清單就是「模具通報」裡的選項。可以新增、改名或隱藏。隱藏的選項不會出現在通報選單；已送出的舊通報不受影響。</p>
+    <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <input id="opt-new" style="flex:1 1 260px" placeholder="新增選項，例如：90*15mm 培養皿　M16001-9" onkeydown="if(event.key==='Enter')addOption()">
+      <button class="btn btn-primary btn-sm" onclick="addOption()">＋ 新增</button>
+    </div>
+    <div id="options-container"></div>
+  </div>
+</div>
 </div>
 
 <!-- 詳細 -->
@@ -144,21 +162,16 @@ const db = supabase.createClient(
 
 const VENDOR = '駿翰';
 
-// 模具清單：讀取「模具清冊」頁面存在 Firebase 的駿翰資料（唯讀）
-const FB_CONFIG = {
-  apiKey: 'AIzaSyA_Z9EBIaiFfatRv98MOK9AWXs4pgtWUNM',
-  authDomain: 'alpha-f914f.firebaseapp.com',
-  projectId: 'alpha-f914f',
-  appId: '1:474296722006:web:b5d470c6826227443591f7'
-};
+// ---------- 模具選項（自有清單，可在「選項管理」編輯） ----------
+let moldOptions = [];
+let optionsUnlocked = false;
+
 // 排序：培養皿（直徑由小到大）→ 培養盤／孔盤（孔數由小到大）→ 其他
-function moldRank(r) {
-  const n = r.productName || '';
+function moldRank(n) {
   let m;
   if (/培養皿|熱膠道/.test(n)) {
     m = n.match(/(\d+(?:\.\d+)?)(?:\*\d+(?:\.\d+)?)?\s*(cm|mm)/i);
-    const size = m ? parseFloat(m[1]) * (m[2].toLowerCase() === 'cm' ? 10 : 1) : 9999;
-    return [0, size];
+    return [0, m ? parseFloat(m[1]) * (m[2].toLowerCase() === 'cm' ? 10 : 1) : 9999];
   }
   if (/培養盤|孔盤/.test(n)) {
     m = n.match(/(\d+)\s*孔/);
@@ -167,30 +180,63 @@ function moldRank(r) {
   return [2, 0];
 }
 function moldCompare(a, b) {
-  const x = moldRank(a), y = moldRank(b);
-  return x[0] - y[0] || x[1] - y[1] || String(a.moldId).localeCompare(String(b.moldId), 'zh-Hant', { numeric: true });
+  const x = moldRank(a.label), y = moldRank(b.label);
+  return x[0] - y[0] || x[1] - y[1] || a.label.localeCompare(b.label, 'zh-Hant', { numeric: true });
 }
 
 async function loadMolds() {
-  const slot = document.getElementById('mold-slot');
   try {
-    const B = 'https://www.gstatic.com/firebasejs/11.10.0/';
-    const [A, Au, F] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
-    const app = A.initializeApp(FB_CONFIG, 'moldlist');
-    const au = Au.getAuth(app);
-    await Au.signInAnonymously(au);
-    const fs = F.initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
-    const snap = await F.getDoc(F.doc(fs, 'mold', VENDOR));
-    const list = JSON.parse(snap.data().data).filter(r => r.moldId).sort(moldCompare);
-    if (!list.length) throw new Error('empty');
-    document.getElementById('mold-options').innerHTML = list.map(r =>
-      `<option value="${esc((r.productName ? r.productName + '　' : '') + r.moldId)}">`).join('');
+    const { data, error } = await db.from('mold_options').select('*');
+    if (error) throw error;
+    moldOptions = (data || []).sort(moldCompare);
   } catch (e) {
-    console.error('模具清單載入失敗', e);
-    slot.innerHTML = '<input name="mold" placeholder="清單載入失敗，請手動輸入" required autocomplete="off">';
+    console.error('模具選項載入失敗', e);
+    moldOptions = [];
   }
+  document.getElementById('mold-options').innerHTML =
+    moldOptions.filter(o => !o.hidden).map(o => `<option value="${esc(o.label)}">`).join('');
+  if (document.getElementById('tab-options').style.display !== 'none') renderOptions();
 }
-loadMolds();
+
+function renderOptions() {
+  const box = document.getElementById('options-container');
+  if (!moldOptions.length) { box.innerHTML = '<div class="empty">目前沒有選項，請從上方新增</div>'; return; }
+  box.innerHTML = moldOptions.map(o => `
+    <div class="opt-row ${o.hidden ? 'hidden-opt' : ''}">
+      <input id="opt-${o.id}" value="${esc(o.label)}">
+      <button class="btn btn-primary btn-sm" onclick="saveOption('${o.id}')">儲存</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleOption('${o.id}')">${o.hidden ? '👁️ 顯示' : '🙈 隱藏'}</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteOption('${o.id}')">刪除</button>
+    </div>`).join('');
+}
+
+async function optionOp(promise, okMsg) {
+  const { error } = await promise;
+  if (error) { showAlert('options', 'error', '❌ 失敗：' + error.message); return; }
+  showAlert('options', 'success', okMsg);
+  await loadMolds();
+}
+function addOption() {
+  const label = document.getElementById('opt-new').value.trim();
+  if (!label) return;
+  document.getElementById('opt-new').value = '';
+  optionOp(db.from('mold_options').insert([{ label }]), '✅ 已新增');
+}
+function saveOption(id) {
+  const label = document.getElementById('opt-' + id).value.trim();
+  if (!label) { alert('名稱不可空白'); return; }
+  optionOp(db.from('mold_options').update({ label }).eq('id', id), '✅ 已儲存');
+}
+function toggleOption(id) {
+  const o = moldOptions.find(x => x.id === id);
+  optionOp(db.from('mold_options').update({ hidden: !o.hidden }).eq('id', id), o.hidden ? '✅ 已顯示' : '✅ 已隱藏');
+}
+function deleteOption(id) {
+  const o = moldOptions.find(x => x.id === id);
+  if (!confirm(`確定刪除這個選項？\n\n${o.label}\n\n（若只是不想讓它出現，建議用「隱藏」）`)) return;
+  optionOp(db.from('mold_options').delete().eq('id', id), '✅ 已刪除');
+}
+
 const STATUSES = ['待處理', '維修中', '已完成'];
 let reports = [];
 let statFilter = null;
@@ -205,6 +251,7 @@ function resetDates() {
   document.querySelector('[name=repair_date]').value = today();
 }
 resetDates();
+loadMolds();
 
 function showAlert(id, type, msg) {
   const el = document.getElementById('alert-' + id);
@@ -214,10 +261,14 @@ function showAlert(id, type, msg) {
 
 // ---------- 分頁 ----------
 function showTab(tab) {
-  document.getElementById('tab-form').style.display = tab === 'form' ? '' : 'none';
-  document.getElementById('tab-list').style.display = tab === 'list' ? '' : 'none';
-  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0) === (tab === 'form')));
+  if (tab === 'options' && !optionsUnlocked) {
+    if (prompt('選項管理需要管理密碼') !== '0000') { alert('密碼錯誤或已取消'); return; }
+    optionsUnlocked = true;
+  }
+  ['form', 'list', 'options'].forEach(t => document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   if (tab === 'list') loadReports();
+  if (tab === 'options') renderOptions();
 }
 
 // ---------- 送出通報 ----------
