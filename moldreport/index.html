@@ -151,6 +151,26 @@ const FB_CONFIG = {
   projectId: 'alpha-f914f',
   appId: '1:474296722006:web:b5d470c6826227443591f7'
 };
+// 排序：培養皿（直徑由小到大）→ 培養盤／孔盤（孔數由小到大）→ 其他
+function moldRank(r) {
+  const n = r.productName || '';
+  let m;
+  if (/培養皿|熱膠道/.test(n)) {
+    m = n.match(/(\d+(?:\.\d+)?)(?:\*\d+(?:\.\d+)?)?\s*(cm|mm)/i);
+    const size = m ? parseFloat(m[1]) * (m[2].toLowerCase() === 'cm' ? 10 : 1) : 9999;
+    return [0, size];
+  }
+  if (/培養盤|孔盤/.test(n)) {
+    m = n.match(/(\d+)\s*孔/);
+    return [1, m ? parseInt(m[1], 10) : 9999];
+  }
+  return [2, 0];
+}
+function moldCompare(a, b) {
+  const x = moldRank(a), y = moldRank(b);
+  return x[0] - y[0] || x[1] - y[1] || String(a.moldId).localeCompare(String(b.moldId), 'zh-Hant', { numeric: true });
+}
+
 async function loadMolds() {
   const slot = document.getElementById('mold-slot');
   try {
@@ -161,7 +181,7 @@ async function loadMolds() {
     await Au.signInAnonymously(au);
     const fs = F.initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
     const snap = await F.getDoc(F.doc(fs, 'mold', VENDOR));
-    const list = JSON.parse(snap.data().data).filter(r => r.moldId);
+    const list = JSON.parse(snap.data().data).filter(r => r.moldId).sort(moldCompare);
     if (!list.length) throw new Error('empty');
     const sel = document.getElementById('mold-select');
     sel.innerHTML = '<option value="">請選擇模具</option>' + list.map(r => {
