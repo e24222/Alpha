@@ -101,9 +101,6 @@
     <form class="card" onsubmit="submitReport(event)">
       <div class="card-title">模具送修通報</div>
       <div class="form-grid">
-        <div class="fg"><label>廠商 <span class="req">*</span></label>
-          <input name="vendor" list="vendor-list" placeholder="廠商名稱" required autocomplete="off">
-          <datalist id="vendor-list"></datalist></div>
         <div class="fg"><label>日期 <span class="req">*</span></label>
           <input type="date" name="report_date" required></div>
         <div class="fg"><label>模具 <span class="req">*</span></label>
@@ -123,7 +120,6 @@
     <div class="stats" id="stats"></div>
     <div class="card">
       <div class="filters">
-        <div class="fg"><label>廠商</label><input id="f-vendor" placeholder="搜尋廠商" oninput="renderList()"></div>
         <div class="fg"><label>模具</label><input id="f-mold" placeholder="搜尋模具" oninput="renderList()"></div>
         <div class="fg"><label>送修日期（起）</label><input type="date" id="f-from" onchange="renderList()"></div>
         <div class="fg"><label>送修日期（迄）</label><input type="date" id="f-to" onchange="renderList()"></div>
@@ -146,6 +142,7 @@ const db = supabase.createClient(
   'https://achrezfjtyjjgoyaaowr.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ');
 
+const VENDOR = '駿翰';
 const STATUSES = ['待處理', '維修中', '已完成'];
 let reports = [];
 let statFilter = null;
@@ -160,15 +157,6 @@ function resetDates() {
   document.querySelector('[name=repair_date]').value = today();
 }
 resetDates();
-loadVendors();
-
-async function loadVendors() {
-  try {
-    const { data } = await db.from('vendor_passwords').select('vendor_name');
-    const names = [...new Set((data || []).map(d => d.vendor_name))];
-    document.getElementById('vendor-list').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
-  } catch (e) {}
-}
 
 function showAlert(id, type, msg) {
   const el = document.getElementById('alert-' + id);
@@ -189,7 +177,7 @@ async function submitReport(e) {
   e.preventDefault();
   const form = e.target, btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = '⏳ 送出中...';
-  const data = {};
+  const data = { vendor: VENDOR };
   for (const [k, v] of new FormData(form).entries()) data[k] = v.trim();
   try {
     const { error } = await db.from('mold_reports').insert([data]);
@@ -218,11 +206,10 @@ async function loadReports() {
 }
 
 function renderList() {
-  const v = document.getElementById('f-vendor').value.trim().toLowerCase();
   const m = document.getElementById('f-mold').value.trim().toLowerCase();
   const from = document.getElementById('f-from').value, to = document.getElementById('f-to').value;
   let rows = reports.filter(r =>
-    (!v || r.vendor.toLowerCase().includes(v)) && (!m || r.mold.toLowerCase().includes(m)) &&
+    (!m || r.mold.toLowerCase().includes(m)) &&
     (!from || r.repair_date >= from) && (!to || r.repair_date <= to));
 
   const cnt = s => rows.filter(r => r.status === s).length;
@@ -233,8 +220,8 @@ function renderList() {
   if (statFilter && statFilter !== 'all') rows = rows.filter(r => r.status === statFilter);
   if (!rows.length) { document.getElementById('list-container').innerHTML = '<div class="empty">📭 沒有資料</div>'; return; }
   document.getElementById('list-container').innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>送修日期</th><th>廠商</th><th>模具</th><th>原因</th><th>狀態</th></tr></thead><tbody>` +
-    rows.map(r => `<tr class="row" onclick="openDetail('${r.id}')"><td>${esc(r.repair_date)}</td><td>${esc(r.vendor)}</td><td>${esc(r.mold)}</td>
+    <thead><tr><th>送修日期</th><th>模具</th><th>原因</th><th>狀態</th></tr></thead><tbody>` +
+    rows.map(r => `<tr class="row" onclick="openDetail('${r.id}')"><td>${esc(r.repair_date)}</td><td>${esc(r.mold)}</td>
       <td>${esc((r.reason || '').slice(0, 30))}${(r.reason || '').length > 30 ? '…' : ''}</td><td>${badge(r.status)}</td></tr>`).join('') +
     '</tbody></table></div>';
 }
@@ -258,7 +245,6 @@ async function openDetail(id) {
   }
   document.getElementById('modal-body').innerHTML = `
     <div class="detail-grid">
-      <div class="di"><div class="dl">廠商</div><div class="dv">${esc(r.vendor)}</div></div>
       <div class="di"><div class="dl">狀態</div><div class="dv">${badge(r.status)}</div></div>
       <div class="di"><div class="dl">模具</div><div class="dv">${esc(r.mold)}</div></div>
       <div class="di"><div class="dl">通報日期</div><div class="dv">${esc(r.report_date)}</div></div>
@@ -275,7 +261,7 @@ async function openDetail(id) {
         <div class="fg"><label>日期</label><input type="date" id="p-date" value="${today()}"></div>
         <div class="fg"><label>狀態</label><select id="p-status">${STATUSES.map(s => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
       </div>
-      <div class="fg" style="margin-bottom:10px"><label>填寫人（廠商或龍冶）</label><input id="p-author" list="vendor-list" value="${esc(savedAuthor())}" placeholder="例如：○○模具廠 / 龍冶"></div>
+      <div class="fg" style="margin-bottom:10px"><label>填寫人</label><select id="p-author">${['駿翰', '龍冶'].map(a => `<option ${a === savedAuthor() ? 'selected' : ''}>${a}</option>`).join('')}</select></div>
       <div class="fg" style="margin-bottom:10px"><label>追加進度</label><textarea id="p-note" style="min-height:70px" placeholder="例如：已拆模、預計 11/20 完成"></textarea></div>
       <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" id="p-btn" onclick="addProgress()">＋ 新增進度</button>
@@ -291,7 +277,6 @@ async function addProgress() {
   const note = document.getElementById('p-note').value.trim();
   if (!note) { alert('請輸入進度內容'); return; }
   const author = document.getElementById('p-author').value.trim();
-  if (!author) { alert('請輸入填寫人'); return; }
   try { localStorage.setItem('mold_author', author); } catch (e) {}
   const status = document.getElementById('p-status').value;
   const btn = document.getElementById('p-btn'); btn.disabled = true;
@@ -313,7 +298,7 @@ async function addProgress() {
 async function deleteReport() {
   if (prompt('刪除需要管理密碼') !== '0000') { alert('密碼錯誤或已取消'); return; }
   const r = reports.find(x => x.id === currentId);
-  if (!confirm(`確定刪除這筆通報？\n\n廠商：${r.vendor}\n模具：${r.mold}\n\n進度紀錄也會一併刪除，無法復原。`)) return;
+  if (!confirm(`確定刪除這筆通報？\n\n模具：${r.mold}\n\n進度紀錄也會一併刪除，無法復原。`)) return;
   const { error } = await db.from('mold_reports').delete().eq('id', currentId);
   if (error) { alert('刪除失敗：' + error.message); return; }
   closeModal(); loadReports();
