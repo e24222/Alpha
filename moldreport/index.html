@@ -104,7 +104,7 @@
         <div class="fg"><label>日期 <span class="req">*</span></label>
           <input type="date" name="report_date" required></div>
         <div class="fg"><label>模具 <span class="req">*</span></label>
-          <span id="mold-slot"><select name="mold" id="mold-select" required><option value="">載入模具清單中...</option></select></span></div>
+          <span id="mold-slot"><input name="mold" id="mold-input" list="mold-options" placeholder="點一下選擇，或直接輸入" required autocomplete="off"><datalist id="mold-options"></datalist></span></div>
         <div class="fg"><label>送修日期 <span class="req">*</span></label>
           <input type="date" name="repair_date" required></div>
         <div class="fg full"><label>原因 <span class="req">*</span></label>
@@ -183,14 +183,11 @@ async function loadMolds() {
     const snap = await F.getDoc(F.doc(fs, 'mold', VENDOR));
     const list = JSON.parse(snap.data().data).filter(r => r.moldId).sort(moldCompare);
     if (!list.length) throw new Error('empty');
-    const sel = document.getElementById('mold-select');
-    sel.innerHTML = '<option value="">請選擇模具</option>' + list.map(r => {
-      const label = r.moldId + (r.productName ? '　' + r.productName : '');
-      return `<option value="${esc(r.moldId)}">${esc(label)}</option>`;
-    }).join('');
+    document.getElementById('mold-options').innerHTML = list.map(r =>
+      `<option value="${esc((r.productName ? r.productName + '　' : '') + r.moldId)}">`).join('');
   } catch (e) {
     console.error('模具清單載入失敗', e);
-    slot.innerHTML = '<input name="mold" placeholder="模具編號（清單載入失敗，請手動輸入）" required>';
+    slot.innerHTML = '<input name="mold" placeholder="清單載入失敗，請手動輸入" required autocomplete="off">';
   }
 }
 loadMolds();
