@@ -165,18 +165,16 @@ const VENDOR = '駿翰';
 let moldOptions = [];
 let optionsUnlocked = false;
 
-// 排序：培養皿（直徑由小到大）→ 培養盤／孔盤（孔數由小到大）→ 其他
+// 排序：培養皿類（直徑由小到大）→ 孔盤類（孔數由小到大）→ 外蓋／瓶蓋放最後
 function moldRank(n) {
   let m;
-  if (/培養皿|熱膠道/.test(n)) {
-    m = n.match(/(\d+(?:\.\d+)?)(?:\*\d+(?:\.\d+)?)?\s*(cm|mm)/i);
-    return [0, m ? parseFloat(m[1]) * (m[2].toLowerCase() === 'cm' ? 10 : 1) : 9999];
-  }
-  if (/培養盤|孔盤/.test(n)) {
+  if (/瓶蓋|外蓋|16\*100/.test(n)) return [2, 0];
+  if (/\d+\s*孔|培養盤/.test(n)) {
     m = n.match(/(\d+)\s*孔/);
     return [1, m ? parseInt(m[1], 10) : 9999];
   }
-  return [2, 0];
+  m = n.match(/(\d+(?:\.\d+)?)(?:\*\d+(?:\.\d+)?)?\s*(cm|mm)/i);
+  return [0, m ? parseFloat(m[1]) * (m[2].toLowerCase() === 'cm' ? 10 : 1) : 9999];
 }
 function moldCompare(a, b) {
   const x = moldRank(a.label), y = moldRank(b.label);
