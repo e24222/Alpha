@@ -76,7 +76,6 @@
   .badge-user { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4); border-radius: 20px; padding: 4px 14px; font-size: .85rem; font-weight: 700; cursor: pointer; }
   .opt-row { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; flex-wrap: wrap; }
   .opt-row input { flex: 1 1 260px; }
-  .opt-row.hidden-opt input { opacity: .55; background: #f0f0f0; }
   @media (max-width: 768px) {
     .header-inner { padding: 12px 14px; } .header h1 { font-size: 1.1rem; }
     .tabs { padding: 0 8px; } .main { padding: 14px 10px; } .card { padding: 18px 16px; }
@@ -137,7 +136,7 @@
   <div id="alert-options" class="alert"></div>
   <div class="card">
     <div class="card-title">模具選項管理</div>
-    <p style="color:#777;font-size:.88rem;margin-bottom:14px">這裡的清單就是「模具通報」裡的選項。可以新增、改名或隱藏。隱藏的選項不會出現在通報選單；已送出的舊通報不受影響。</p>
+    <p style="color:#777;font-size:.88rem;margin-bottom:14px">這裡的清單就是「模具通報」裡的選項。可以新增、改名或刪除；已送出的舊通報不受影響。</p>
     <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
       <input id="opt-new" style="flex:1 1 260px" placeholder="新增選項，例如：90*15mm 培養皿　M16001-9" onkeydown="if(event.key==='Enter')addOption()">
       <button class="btn btn-primary btn-sm" onclick="addOption()">＋ 新增</button>
@@ -194,7 +193,7 @@ async function loadMolds() {
     moldOptions = [];
   }
   document.getElementById('mold-options').innerHTML =
-    moldOptions.filter(o => !o.hidden).map(o => `<option value="${esc(o.label)}">`).join('');
+    moldOptions.map(o => `<option value="${esc(o.label)}">`).join('');
   if (document.getElementById('tab-options').style.display !== 'none') renderOptions();
 }
 
@@ -202,10 +201,9 @@ function renderOptions() {
   const box = document.getElementById('options-container');
   if (!moldOptions.length) { box.innerHTML = '<div class="empty">目前沒有選項，請從上方新增</div>'; return; }
   box.innerHTML = moldOptions.map(o => `
-    <div class="opt-row ${o.hidden ? 'hidden-opt' : ''}">
+    <div class="opt-row">
       <input id="opt-${o.id}" value="${esc(o.label)}">
       <button class="btn btn-primary btn-sm" onclick="saveOption('${o.id}')">儲存</button>
-      <button class="btn btn-secondary btn-sm" onclick="toggleOption('${o.id}')">${o.hidden ? '👁️ 顯示' : '🙈 隱藏'}</button>
       <button class="btn btn-danger btn-sm" onclick="deleteOption('${o.id}')">刪除</button>
     </div>`).join('');
 }
@@ -227,13 +225,9 @@ function saveOption(id) {
   if (!label) { alert('名稱不可空白'); return; }
   optionOp(db.from('mold_options').update({ label }).eq('id', id), '✅ 已儲存');
 }
-function toggleOption(id) {
-  const o = moldOptions.find(x => x.id === id);
-  optionOp(db.from('mold_options').update({ hidden: !o.hidden }).eq('id', id), o.hidden ? '✅ 已顯示' : '✅ 已隱藏');
-}
 function deleteOption(id) {
   const o = moldOptions.find(x => x.id === id);
-  if (!confirm(`確定刪除這個選項？\n\n${o.label}\n\n（若只是不想讓它出現，建議用「隱藏」）`)) return;
+  if (!confirm(`確定刪除這個選項？\n\n${o.label}`)) return;
   optionOp(db.from('mold_options').delete().eq('id', id), '✅ 已刪除');
 }
 
