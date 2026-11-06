@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龍冶模具通報管理</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif; background: #f0f2f5; color: #333; }
+  .header { background: linear-gradient(135deg, #1a5276, #2e86c1); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+  .header-inner { max-width: 1100px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .header h1 { font-size: 1.4rem; letter-spacing: 1px; }
+  .header .sub { font-size: .8rem; opacity: .8; margin-top: 2px; }
+  .tabs { background: #1a5276; display: flex; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  .tabs-wrap { background: #1a5276; }
+  .tab-btn { padding: 12px 26px; border: none; background: transparent; color: rgba(255,255,255,.65); font-size: .95rem; cursor: pointer; font-family: inherit; border-bottom: 3px solid transparent; font-weight: 500; }
+  .tab-btn:hover { color: #fff; }
+  .tab-btn.active { color: #fff; border-bottom-color: #f0b429; }
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 26px 30px; margin-bottom: 20px; }
+  .card-title { font-size: 1.05rem; font-weight: 700; color: #1a5276; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #e8f4f8; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
+  .fg { display: flex; flex-direction: column; gap: 6px; }
+  .fg.full { grid-column: 1 / -1; }
+  .fg label { font-size: .85rem; font-weight: 600; color: #555; }
+  .req { color: #e74c3c; margin-left: 2px; }
+  input, select, textarea { padding: 10px 12px; border: 1px solid #d0d7de; border-radius: 6px; font-size: 1rem; font-family: inherit; background: #fafbfc; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #2e86c1; box-shadow: 0 0 0 3px rgba(46,134,193,.1); background: #fff; }
+  textarea { resize: vertical; min-height: 90px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 32px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .btn-primary { background: linear-gradient(135deg, #2e86c1, #1a5276); color: #fff; }
+  .btn-secondary { background: #f0f2f5; color: #555; border: 1px solid #dde; }
+  .btn-danger { background: #fadbd8; color: #c0392b; border: 1px solid #f1948a; }
+  .btn-sm { padding: 6px 14px; font-size: .85rem; }
+  .actions { display: flex; justify-content: center; margin-top: 22px; }
+  .alert { padding: 14px 18px; border-radius: 8px; margin-bottom: 18px; display: none; font-weight: 500; }
+  .alert.show { display: block; }
+  .alert-success { background: #d4efdf; color: #1e8449; border: 1px solid #a9dfbf; }
+  .alert-error { background: #fadbd8; color: #c0392b; border: 1px solid #f1948a; }
+  .filters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat { background: #fff; border-radius: 10px; padding: 14px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.07); cursor: pointer; user-select: none; }
+  .stat.active { box-shadow: 0 0 0 2px #2980b9; }
+  .stat .v { font-size: 1.7rem; font-weight: 700; color: #1a5276; line-height: 1; }
+  .stat .l { font-size: .82rem; color: #888; margin-top: 4px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th { background: #1a5276; color: #fff; padding: 10px 12px; text-align: left; white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  tr.row { cursor: pointer; }
+  tr.row:hover td { background: #f0f8ff; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: .8rem; font-weight: 700; white-space: nowrap; }
+  .b-wait { background: #fdebd0; color: #d35400; }
+  .b-doing { background: #d6eaf8; color: #1a5276; }
+  .b-done { background: #d4efdf; color: #1e8449; }
+  .empty { text-align: center; padding: 44px 20px; color: #aaa; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 12px; max-width: 720px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .modal-header { background: linear-gradient(135deg, #1a5276, #2e86c1); color: #fff; padding: 16px 22px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; }
+  .modal-close { background: rgba(255,255,255,.2); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; }
+  .modal-body { padding: 22px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 20px; margin-bottom: 16px; }
+  .di .dl { font-size: .8rem; color: #888; }
+  .di .dv { font-weight: 600; word-break: break-word; }
+  .di.full { grid-column: 1 / -1; }
+  .timeline { border-left: 3px solid #d6eaf8; margin: 8px 0 18px 8px; padding-left: 16px; }
+  .tl-item { position: relative; margin-bottom: 14px; }
+  .tl-item::before { content: ''; position: absolute; left: -23px; top: 5px; width: 11px; height: 11px; border-radius: 50%; background: #2e86c1; }
+  .tl-meta { font-size: .8rem; color: #888; }
+  .tl-note { white-space: pre-wrap; word-break: break-word; }
+  .add-box { background: #f8fbfd; border: 1px solid #d6eaf8; border-radius: 8px; padding: 14px; }
+  .add-box .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .badge-user { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4); border-radius: 20px; padding: 4px 14px; font-size: .85rem; font-weight: 700; cursor: pointer; }
+  @media (max-width: 768px) {
+    .header-inner { padding: 12px 14px; } .header h1 { font-size: 1.1rem; }
+    .tabs { padding: 0 8px; } .main { padding: 14px 10px; } .card { padding: 18px 16px; }
+    .form-grid { grid-template-columns: 1fr; } .filters, .stats { grid-template-columns: 1fr 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .btn-lg { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header"><div class="header-inner">
+  <div><h1>🛠️ 龍冶模具通報管理</h1><div class="sub">Mold Repair Report</div></div>
+</div></div>
+<div class="tabs-wrap"><div class="tabs">
+  <button class="tab-btn active" onclick="showTab('form')">📝 模具通報</button>
+  <button class="tab-btn" onclick="showTab('list')">📋 通報與進度</button>
+</div></div>
+
+<div class="main">
+
+  <!-- 通報表單 -->
+  <div id="tab-form">
+    <div id="alert-form" class="alert"></div>
+    <form class="card" onsubmit="submitReport(event)">
+      <div class="card-title">模具送修通報</div>
+      <div class="form-grid">
+        <div class="fg"><label>廠商 <span class="req">*</span></label>
+          <input name="vendor" list="vendor-list" placeholder="廠商名稱" required autocomplete="off">
+          <datalist id="vendor-list"></datalist></div>
+        <div class="fg"><label>日期 <span class="req">*</span></label>
+          <input type="date" name="report_date" required></div>
+        <div class="fg"><label>模具 <span class="req">*</span></label>
+          <input name="mold" placeholder="模具名稱或編號" required></div>
+        <div class="fg"><label>送修日期 <span class="req">*</span></label>
+          <input type="date" name="repair_date" required></div>
+        <div class="fg full"><label>原因 <span class="req">*</span></label>
+          <textarea name="reason" placeholder="簡單說明即可" required></textarea></div>
+      </div>
+      <div class="actions"><button class="btn btn-primary btn-lg" id="submit-btn" type="submit">✅ 送出</button></div>
+    </form>
+  </div>
+
+  <!-- 清單 -->
+  <div id="tab-list" style="display:none">
+    <div id="alert-list" class="alert"></div>
+    <div class="stats" id="stats"></div>
+    <div class="card">
+      <div class="filters">
+        <div class="fg" id="f-vendor-wrap"><label>廠商</label><input id="f-vendor" placeholder="搜尋廠商" oninput="renderList()"></div>
+        <div class="fg"><label>模具</label><input id="f-mold" placeholder="搜尋模具" oninput="renderList()"></div>
+        <div class="fg"><label>送修日期（起）</label><input type="date" id="f-from" onchange="renderList()"></div>
+        <div class="fg"><label>送修日期（迄）</label><input type="date" id="f-to" onchange="renderList()"></div>
+      </div>
+      <div id="list-container"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 密碼 -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header"><h3>🔒 通報與進度</h3></div>
+    <div class="modal-body" style="text-align:center;padding:30px 26px">
+      <p style="color:#555;margin-bottom:18px">請輸入密碼</p>
+      <input type="password" id="pw-input" placeholder="輸入密碼" style="text-align:center;letter-spacing:4px" onkeydown="if(event.key==='Enter')checkPw()">
+      <div id="pw-error" style="color:#e74c3c;font-size:.85rem;margin-top:10px;display:none">密碼錯誤，請重試</div>
+      <div style="display:flex;gap:10px;margin-top:18px;justify-content:center">
+        <button class="btn btn-secondary btn-sm" onclick="closePw()">取消</button>
+        <button class="btn btn-primary btn-sm" id="pw-ok" onclick="checkPw()">確認</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 詳細 -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header"><h3>🛠️ 通報詳細與進度</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const db = supabase.createClient(
+  'https://achrezfjtyjjgoyaaowr.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaHJlemZqdHlqamdveWFhb3dyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzgwMTgsImV4cCI6MjA5MjQ1NDAxOH0.pZtQzdp02UduK8R0Tm_PykA9hTsbCb7Z0Bmslg_rsrQ');
+
+const STATUSES = ['待處理', '維修中', '已完成'];
+let unlocked = false;          // 已登入
+let vendorFilter = null;       // null = 管理員（看全部）；陣列 = 廠商
+let reports = [];
+let statFilter = null;
+let currentId = null;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+const badge = s => `<span class="badge ${s==='已完成'?'b-done':s==='維修中'?'b-doing':'b-wait'}">${esc(s)}</span>`;
+
+function resetDates() {
+  document.querySelector('[name=report_date]').value = today();
+  document.querySelector('[name=repair_date]').value = today();
+}
+resetDates();
+loadVendors();
+
+async function loadVendors() {
+  try {
+    const { data } = await db.from('vendor_passwords').select('vendor_name');
+    const names = [...new Set((data || []).map(d => d.vendor_name))];
+    document.getElementById('vendor-list').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
+  } catch (e) {}
+}
+
+function showAlert(id, type, msg) {
+  const el = document.getElementById('alert-' + id);
+  el.className = 'alert show alert-' + type; el.textContent = msg;
+  if (type === 'success') setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+// ---------- 分頁 / 登入 ----------
+function showTab(tab) {
+  if (tab === 'list' && !unlocked) {
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-error').style.display = 'none';
+    document.getElementById('pw-modal').classList.add('show');
+    setTimeout(() => document.getElementById('pw-input').focus(), 100);
+    return;
+  }
+  document.getElementById('tab-form').style.display = tab === 'form' ? '' : 'none';
+  document.getElementById('tab-list').style.display = tab === 'list' ? '' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0) === (tab === 'form')));
+  if (tab === 'list') loadReports();
+}
+function closePw() { document.getElementById('pw-modal').classList.remove('show'); }
+
+async function checkPw() {
+  const val = document.getElementById('pw-input').value.trim();
+  const btn = document.getElementById('pw-ok');
+  btn.disabled = true;
+  let ok = false;
+  if (val === '0000') { vendorFilter = null; ok = true; }
+  else if (val) {
+    try {
+      const { data, error } = await db.from('vendor_passwords').select('vendor_name').eq('password', val);
+      if (!error && data && data.length) { vendorFilter = data.map(d => d.vendor_name); ok = true; }
+    } catch (e) {}
+  }
+  btn.disabled = false;
+  if (!ok) {
+    document.getElementById('pw-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    return;
+  }
+  unlocked = true;
+  closePw();
+  renderUserBadge();
+  showTab('list');
+}
+
+function renderUserBadge() {
+  document.getElementById('user-badge')?.remove();
+  document.getElementById('f-vendor-wrap').style.display = vendorFilter ? 'none' : '';
+  if (!unlocked) return;
+  const b = document.createElement('div');
+  b.id = 'user-badge'; b.className = 'badge-user'; b.title = '點擊登出';
+  b.textContent = vendorFilter ? '👤 ' + vendorFilter.join(' / ') : '🔑 管理員';
+  b.onclick = () => { if (confirm('要登出嗎？')) { unlocked = false; vendorFilter = null; renderUserBadge(); showTab('form'); } };
+  document.querySelector('.header-inner').appendChild(b);
+}
+
+// ---------- 送出通報 ----------
+async function submitReport(e) {
+  e.preventDefault();
+  const form = e.target, btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = '⏳ 送出中...';
+  const data = {};
+  for (const [k, v] of new FormData(form).entries()) data[k] = v.trim();
+  try {
+    const { error } = await db.from('mold_reports').insert([data]);
+    if (error) throw error;
+    showAlert('form', 'success', '✅ 已送出，謝謝！');
+    form.reset(); resetDates();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    showAlert('form', 'error', '❌ 送出失敗：' + (err.message || '請稍後再試'));
+  }
+  btn.disabled = false; btn.textContent = '✅ 送出';
+}
+
+// ---------- 清單 ----------
+async function loadReports() {
+  document.getElementById('list-container').innerHTML = '<div class="empty">載入中...</div>';
+  try {
+    let q = db.from('mold_reports').select('*').order('repair_date', { ascending: false }).order('created_at', { ascending: false });
+    if (vendorFilter) q = q.in('vendor', vendorFilter);
+    const { data, error } = await q;
+    if (error) throw error;
+    reports = data || [];
+    renderList();
+  } catch (err) {
+    document.getElementById('list-container').innerHTML = `<div class="empty">❌ 載入失敗：${esc(err.message)}</div>`;
+  }
+}
+
+function renderList() {
+  const v = document.getElementById('f-vendor').value.trim().toLowerCase();
+  const m = document.getElementById('f-mold').value.trim().toLowerCase();
+  const from = document.getElementById('f-from').value, to = document.getElementById('f-to').value;
+  let rows = reports.filter(r =>
+    (!v || r.vendor.toLowerCase().includes(v)) && (!m || r.mold.toLowerCase().includes(m)) &&
+    (!from || r.repair_date >= from) && (!to || r.repair_date <= to));
+
+  const cnt = s => rows.filter(r => r.status === s).length;
+  document.getElementById('stats').innerHTML =
+    [['all', rows.length, '全部'], ...STATUSES.map(s => [s, cnt(s), s])].map(([k, n, l]) =>
+      `<div class="stat ${statFilter === k || (!statFilter && k === 'all') ? 'active' : ''}" onclick="setStat('${k}')"><div class="v">${n}</div><div class="l">${l}</div></div>`).join('');
+
+  if (statFilter && statFilter !== 'all') rows = rows.filter(r => r.status === statFilter);
+  if (!rows.length) { document.getElementById('list-container').innerHTML = '<div class="empty">📭 沒有資料</div>'; return; }
+  document.getElementById('list-container').innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>送修日期</th><th>廠商</th><th>模具</th><th>原因</th><th>狀態</th></tr></thead><tbody>` +
+    rows.map(r => `<tr class="row" onclick="openDetail('${r.id}')"><td>${esc(r.repair_date)}</td><td>${esc(r.vendor)}</td><td>${esc(r.mold)}</td>
+      <td>${esc((r.reason || '').slice(0, 30))}${(r.reason || '').length > 30 ? '…' : ''}</td><td>${badge(r.status)}</td></tr>`).join('') +
+    '</tbody></table></div>';
+}
+function setStat(k) { statFilter = (statFilter === k || k === 'all') ? null : k; renderList(); }
+
+// ---------- 詳細 / 追加進度 ----------
+async function openDetail(id) {
+  currentId = id;
+  const r = reports.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('modal').classList.add('show');
+  document.getElementById('modal-body').innerHTML = '<div class="empty">載入中...</div>';
+  let prog = [];
+  try {
+    const { data, error } = await db.from('mold_progress').select('*').eq('report_id', id)
+      .order('progress_date', { ascending: true }).order('created_at', { ascending: true });
+    if (error) throw error;
+    prog = data || [];
+  } catch (err) {
+    document.getElementById('modal-body').innerHTML = `<div class="empty">❌ ${esc(err.message)}</div>`; return;
+  }
+  const admin = !vendorFilter;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-grid">
+      <div class="di"><div class="dl">廠商</div><div class="dv">${esc(r.vendor)}</div></div>
+      <div class="di"><div class="dl">狀態</div><div class="dv">${badge(r.status)}</div></div>
+      <div class="di"><div class="dl">模具</div><div class="dv">${esc(r.mold)}</div></div>
+      <div class="di"><div class="dl">通報日期</div><div class="dv">${esc(r.report_date)}</div></div>
+      <div class="di"><div class="dl">送修日期</div><div class="dv">${esc(r.repair_date)}</div></div>
+      <div class="di full"><div class="dl">原因</div><div class="dv" style="white-space:pre-wrap">${esc(r.reason)}</div></div>
+    </div>
+    <h4 style="color:#1a5276;margin-bottom:8px">維修進度</h4>
+    ${prog.length ? `<div class="timeline">${prog.map(p => `<div class="tl-item">
+      <div class="tl-meta">${esc(p.progress_date)} · ${esc(p.author)} ${p.status ? '· ' + badge(p.status) : ''}</div>
+      <div class="tl-note">${esc(p.note)}</div></div>`).join('')}</div>`
+      : '<p style="color:#aaa;margin:8px 0 18px">尚無進度紀錄</p>'}
+    <div class="add-box">
+      <div class="row2">
+        <div class="fg"><label>日期</label><input type="date" id="p-date" value="${today()}"></div>
+        <div class="fg"><label>狀態</label><select id="p-status">${STATUSES.map(s => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      </div>
+      <div class="fg" style="margin-bottom:10px"><label>追加進度</label><textarea id="p-note" style="min-height:70px" placeholder="例如：已拆模、預計 11/20 完成"></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" id="p-btn" onclick="addProgress()">＋ 新增進度</button>
+        ${admin ? `<button class="btn btn-danger btn-sm" onclick="deleteReport()">🗑️ 刪除此通報</button>` : ''}
+      </div>
+    </div>`;
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+async function addProgress() {
+  const note = document.getElementById('p-note').value.trim();
+  if (!note) { alert('請輸入進度內容'); return; }
+  const status = document.getElementById('p-status').value;
+  const btn = document.getElementById('p-btn'); btn.disabled = true;
+  try {
+    const { error } = await db.from('mold_progress').insert([{
+      report_id: currentId, note, status,
+      progress_date: document.getElementById('p-date').value || today(),
+      author: vendorFilter ? vendorFilter[0] : '龍冶'
+    }]);
+    if (error) throw error;
+    const { error: e2 } = await db.from('mold_reports').update({ status, updated_at: new Date().toISOString() }).eq('id', currentId);
+    if (e2) throw e2;
+    reports.find(x => x.id === currentId).status = status;
+    renderList();
+    await openDetail(currentId);
+  } catch (err) { alert('儲存失敗：' + err.message); btn.disabled = false; }
+}
+
+async function deleteReport() {
+  const r = reports.find(x => x.id === currentId);
+  if (!confirm(`確定刪除這筆通報？\n\n廠商：${r.vendor}\n模具：${r.mold}\n\n進度紀錄也會一併刪除，無法復原。`)) return;
+  const { error } = await db.from('mold_reports').delete().eq('id', currentId);
+  if (error) { alert('刪除失敗：' + error.message); return; }
+  closeModal(); loadReports();
+}
+</script>
+</body>
+</html>
