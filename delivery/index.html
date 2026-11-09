@@ -52,6 +52,8 @@
   .remove-stop-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
   .stop-box{display:flex;align-items:center;gap:3px;flex-shrink:0;align-self:center;font-size:12px;color:var(--muted);}
   .stop-box input{width:48px;padding:5px 4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:14px;font-weight:700;font-family:inherit;text-align:center;outline:none;}
+  .stop-box input,#boxCount{-moz-appearance:textfield;appearance:textfield;}
+  .stop-box input::-webkit-outer-spin-button,.stop-box input::-webkit-inner-spin-button,#boxCount::-webkit-outer-spin-button,#boxCount::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
   .stop-box input:focus{border-color:var(--accent);}
   .remove-stop-btn:hover{border-color:var(--accent2);color:var(--accent2);}
   .add-stop-area{display:flex;gap:8px;margin-bottom:10px;}
