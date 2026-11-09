@@ -1344,7 +1344,7 @@
 
   function stopRec(c){ return {code:c.code,name:c.name,address:c.address,box:stopBoxes[c.id]||''}; }
   function boxInput(id){
-    return `<label class="stop-box" onclick="event.stopPropagation()">📦<input type="number" min="0" inputmode="numeric" placeholder="箱" value="${stopBoxes[id]||''}" oninput="setStopBox('${id}',this.value)" draggable="true" ondragstart="event.preventDefault();event.stopPropagation()"></label>`;
+    return `<label class="stop-box" onclick="event.stopPropagation()">📦<input type="number" min="0" inputmode="numeric" placeholder="箱" value="${stopBoxes[id]||''}" oninput="setStopBox('${id}',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();var n=document.querySelectorAll('.stop-box input'),i=Array.prototype.indexOf.call(n,this);(n[i+1]||this).focus();}" draggable="true" ondragstart="event.preventDefault();event.stopPropagation()"></label>`;
   }
   function sumBoxes(){
     return lastSorted.reduce((a,c)=>a+(parseInt(stopBoxes[c.id])||0),0);
@@ -2429,7 +2429,7 @@
             <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
             <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
           </div>
-          ${boxInput(c.id)}<button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+          ${boxInput(c.id)}<button class="remove-stop-btn" tabindex="-1" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
         </div>`).join('') +
       (() => {
         const distLabel = returnDistOSRM != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 ${returnDistOSRM.toFixed(1)} km</span>` : '';
@@ -2630,7 +2630,7 @@
             <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
             <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
           </div>
-          ${boxInput(c.id)}<button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+          ${boxInput(c.id)}<button class="remove-stop-btn" tabindex="-1" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
         </div>`).join('') +
       `<div class="address-item" style="opacity:0.7">
         <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">回程</div>
@@ -2700,7 +2700,7 @@
             <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
             <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
           </div>
-          ${boxInput(c.id)}<button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+          ${boxInput(c.id)}<button class="remove-stop-btn" tabindex="-1" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
         </div>`).join('') +
       `<div class="address-item" style="opacity:0.7">
         <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">回程</div>
