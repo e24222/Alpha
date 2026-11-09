@@ -55,6 +55,13 @@
   .b-wait { background: #fdebd0; color: #d35400; }
   .b-doing { background: #d6eaf8; color: #1a5276; }
   .b-done { background: #d4efdf; color: #1e8449; }
+  tr.row.has-new td { background: #fff8d6; }
+  tr.row.has-new td:first-child { box-shadow: inset 4px 0 0 #f0b429; }
+  tr.row.has-new:hover td { background: #fff1b3; }
+  .b-new { display: inline-block; background: #e74c3c; color: #fff; border-radius: 10px; padding: 1px 8px; font-size: .72rem; font-weight: 700; margin-right: 6px; animation: pulse 1.6s infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  .prog-date { font-size: .8rem; color: #888; margin-top: 2px; }
+  .has-new .prog-date { color: #b9770e; font-weight: 700; }
   .empty { text-align: center; padding: 44px 20px; color: #aaa; }
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
   .modal-overlay.show { display: flex; }
@@ -290,10 +297,39 @@ async function loadReports() {
     const { data, error } = await q;
     if (error) throw error;
     reports = data || [];
+    // 取得每筆通報的最新進度（日期、新增時間）
+    const { data: pg, error: e2 } = await db.from('mold_progress').select('report_id, progress_date, created_at, author').order('created_at', { ascending: true });
+    if (e2) throw e2;
+    const last = {};
+    (pg || []).forEach(p => { last[p.report_id] = p; });
+    reports.forEach(r => { r.lastProg = last[r.id] || null; });
+    initSeen();
     renderList();
   } catch (err) {
     document.getElementById('list-container').innerHTML = `<div class="empty">❌ 載入失敗：${esc(err.message)}</div>`;
   }
+}
+
+// ---------- 新進度提示（以此瀏覽器上次查看時間為準） ----------
+function getSeen() { try { return JSON.parse(localStorage.getItem('mold_seen') || 'null'); } catch (e) { return null; } }
+function setSeen(map) { try { localStorage.setItem('mold_seen', JSON.stringify(map)); } catch (e) {} }
+function initSeen() {
+  if (getSeen()) return;            // 第一次使用：現有進度視為已讀，避免全部亮起
+  const m = {};
+  reports.forEach(r => { if (r.lastProg) m[r.id] = r.lastProg.created_at; });
+  setSeen(m);
+}
+function isNew(r) {
+  if (!r.lastProg) return false;
+  const seen = (getSeen() || {})[r.id];
+  return !seen || r.lastProg.created_at > seen;
+}
+function markSeen(id) {
+  const r = reports.find(x => x.id === id);
+  if (!r || !r.lastProg) return;
+  const m = getSeen() || {};
+  m[id] = r.lastProg.created_at;
+  setSeen(m);
 }
 
 function renderList() {
@@ -311,9 +347,10 @@ function renderList() {
   if (statFilter && statFilter !== 'all') rows = rows.filter(r => r.status === statFilter);
   if (!rows.length) { document.getElementById('list-container').innerHTML = '<div class="empty">📭 沒有資料</div>'; return; }
   document.getElementById('list-container').innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>送修日期</th><th>模具</th><th>原因</th><th>狀態</th></tr></thead><tbody>` +
-    rows.map(r => `<tr class="row" onclick="openDetail('${r.id}')"><td>${esc(r.repair_date)}</td><td>${esc(r.mold)}</td>
-      <td>${esc((r.reason || '').slice(0, 30))}${(r.reason || '').length > 30 ? '…' : ''}</td><td>${badge(r.status)}</td></tr>`).join('') +
+    <thead><tr><th>送修日期</th><th>模具</th><th>原因</th><th>狀態</th><th>最新進度</th></tr></thead><tbody>` +
+    rows.map(r => { const n = isNew(r); return `<tr class="row ${n ? 'has-new' : ''}" onclick="openDetail('${r.id}')"><td>${esc(r.repair_date)}</td><td>${esc(r.mold)}</td>
+      <td>${esc((r.reason || '').slice(0, 30))}${(r.reason || '').length > 30 ? '…' : ''}</td><td>${badge(r.status)}</td>
+      <td>${r.lastProg ? `${n ? '<span class="b-new">NEW</span>' : ''}<span class="prog-date">${esc(r.lastProg.progress_date)}${r.lastProg.author ? ' · ' + esc(r.lastProg.author) : ''}</span>` : '<span class="prog-date">—</span>'}</td></tr>`; }).join('') +
     '</tbody></table></div>';
 }
 function setStat(k) { statFilter = (statFilter === k || k === 'all') ? null : k; renderList(); }
@@ -334,6 +371,7 @@ async function openDetail(id) {
   } catch (err) {
     document.getElementById('modal-body').innerHTML = `<div class="empty">❌ ${esc(err.message)}</div>`; return;
   }
+  if (prog.length) { r.lastProg = prog.reduce((a, b) => (b.created_at > a.created_at ? b : a)); markSeen(id); renderList(); }
   document.getElementById('modal-body').innerHTML = `
     <div class="detail-grid">
       <div class="di"><div class="dl">狀態</div><div class="dv">${badge(r.status)}</div></div>
