@@ -50,6 +50,9 @@
   .draggable.dragging{opacity:0.4;background:var(--surface2);}
   .draggable.drag-over{border-top:2px solid var(--accent);}
   .remove-stop-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .stop-box{display:flex;align-items:center;gap:3px;flex-shrink:0;align-self:center;font-size:12px;color:var(--muted);}
+  .stop-box input{width:48px;padding:5px 4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:14px;font-weight:700;font-family:inherit;text-align:center;outline:none;}
+  .stop-box input:focus{border-color:var(--accent);}
   .remove-stop-btn:hover{border-color:var(--accent2);color:var(--accent2);}
   .add-stop-area{display:flex;gap:8px;margin-bottom:10px;}
   .add-stop-area select{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Noto Sans TC',sans-serif;outline:none;}
@@ -1335,6 +1338,28 @@
   let routeHistory = [];
   let selected = new Set();
   let editingId = null;
+  let stopBoxes = {}; // customer id -> 該站箱數
+
+  function stopRec(c){ return {code:c.code,name:c.name,address:c.address,box:stopBoxes[c.id]||''}; }
+  function boxInput(id){
+    return `<label class="stop-box" onclick="event.stopPropagation()">📦<input type="number" min="0" inputmode="numeric" placeholder="箱" value="${stopBoxes[id]||''}" oninput="setStopBox('${id}',this.value)" draggable="true" ondragstart="event.preventDefault();event.stopPropagation()"></label>`;
+  }
+  function sumBoxes(){
+    return lastSorted.reduce((a,c)=>a+(parseInt(stopBoxes[c.id])||0),0);
+  }
+  function setStopBox(id,v){
+    stopBoxes[id] = v;
+    const total = sumBoxes();
+    document.getElementById('boxCount').value = total || '';
+    if (editingHistoryId) {
+      const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
+      if (idx !== -1) {
+        routeHistory[idx].stops = lastSorted.map(c=>stopRec(c));
+        routeHistory[idx].boxes = total || '';
+        saveHist();
+      }
+    }
+  }
 
   // ════════════════════════════════════════════════════════
   //  雲端同步：Firebase Firestore（匿名登入，員工不用輸入任何東西）
@@ -2402,7 +2427,7 @@
             <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
             <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
           </div>
-          <button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+          ${boxInput(c.id)}<button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
         </div>`).join('') +
       (() => {
         const distLabel = returnDistOSRM != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">距上站 ${returnDistOSRM.toFixed(1)} km</span>` : '';
@@ -2448,7 +2473,7 @@
         date: dateStr,
         boxes: document.getElementById('boxCount').value || '',
         totalKm: calcTotalKm(sorted),
-        stops: sorted.map(c=>({code:c.code,name:c.name,address:c.address})),
+        stops: sorted.map(c=>stopRec(c)),
         segments
       };
       if (histPage !== 0) { routeHistory = readHistCache(); histPage = 0; histCursors = []; }
@@ -2459,7 +2484,7 @@
       // 編輯中 → 更新既有那筆歷史
       const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
       if (idx !== -1) {
-        routeHistory[idx].stops = sorted.map(c=>({code:c.code,name:c.name,address:c.address}));
+        routeHistory[idx].stops = sorted.map(c=>stopRec(c));
         routeHistory[idx].segments = segments;
         routeHistory[idx].totalKm = calcTotalKm(sorted);
         saveHist();
@@ -2544,7 +2569,7 @@
     if (editingHistoryId) {
       const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
       if (idx !== -1) {
-        routeHistory[idx].stops = lastSorted.map(c=>({code:c.code,name:c.name,address:c.address}));
+        routeHistory[idx].stops = lastSorted.map(c=>stopRec(c));
         routeHistory[idx].segments = segments;
         saveHist();
       }
@@ -2563,11 +2588,13 @@
   async function removeStop(id) {
     selected.delete(id);
     priority.delete(id);
+    delete stopBoxes[id];
     if (selected.size === 0) { backToSelect(); return; }
 
     // 從 lastSorted 移除該站，不重新排序
     lastSorted = lastSorted.filter(c => c.id !== id);
     lastSegments = buildSegments(lastSorted);
+    if (Object.values(stopBoxes).some(v=>v)) document.getElementById('boxCount').value = sumBoxes() || '';
 
     // 計算回程距離
     const last = lastSorted[lastSorted.length - 1];
@@ -2601,7 +2628,7 @@
             <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
             <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
           </div>
-          <button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+          ${boxInput(c.id)}<button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
         </div>`).join('') +
       `<div class="address-item" style="opacity:0.7">
         <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">回程</div>
@@ -2618,7 +2645,7 @@
     if (editingHistoryId) {
       const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
       if (idx !== -1) {
-        routeHistory[idx].stops = lastSorted.map(c=>({code:c.code,name:c.name,address:c.address}));
+        routeHistory[idx].stops = lastSorted.map(c=>stopRec(c));
         routeHistory[idx].segments = lastSegments;
         saveHist();
       }
@@ -2671,7 +2698,7 @@
             <div class="addr-name">${priority.has(c.id)?'⭐ ':''}${c.name}</div>
             <div class="addr-text">📍 ${c.address}${c.dist != null ? `<span style="color:var(--accent);margin-left:6px;font-size:11px">${c.dist < 0.1 ? '(同區域)' : `距上站 ${c.dist.toFixed(1)} km`}</span>` : ''}</div>
           </div>
-          <button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
+          ${boxInput(c.id)}<button class="remove-stop-btn" onclick="removeStop('${c.id}')" title="從路線移除">✕</button>
         </div>`).join('') +
       `<div class="address-item" style="opacity:0.7">
         <div class="addr-num" style="background:var(--green);font-size:10px;color:#000">回程</div>
@@ -2698,7 +2725,7 @@
     if (editingHistoryId) {
       const idx = routeHistory.findIndex(r=>r.id===editingHistoryId);
       if (idx !== -1) {
-        routeHistory[idx].stops = lastSorted.map(c=>({code:c.code,name:c.name,address:c.address}));
+        routeHistory[idx].stops = lastSorted.map(c=>stopRec(c));
         routeHistory[idx].segments = lastSegments;
         saveHist();
       }
@@ -2707,6 +2734,7 @@
 
   function backToSelect() {
     editingHistoryId = null;
+    stopBoxes = {};
     document.getElementById('boxCount').value = '';
     document.getElementById('selectSection').style.display='block';
     document.getElementById('resultSection').classList.remove('show');
@@ -2715,6 +2743,7 @@
 
   function backToHistory() {
     editingHistoryId = null;
+    stopBoxes = {};
     document.getElementById('boxCount').value = '';
     document.getElementById('resultSection').classList.remove('show');
     document.getElementById('selectSection').style.display='block';
@@ -2784,9 +2813,10 @@
     if (!r) return;
     selected.clear(); priority.clear();
     historyStopOrder = [];
+    stopBoxes = {};
     r.stops.forEach(s => {
       const c = customers.find(x=>x.code===s.code && x.name===s.name);
-      if (c) { selected.add(c.id); historyStopOrder.push(c.id); }
+      if (c) { selected.add(c.id); historyStopOrder.push(c.id); if (s.box) stopBoxes[c.id] = s.box; }
     });
     if (selected.size === 0) { alert('找不到對應的客戶資料，可能已被刪除。'); return; }
     editingHistoryId = id;
@@ -3066,12 +3096,14 @@
         <td style="font-weight:bold">${c.name}</td>
         <td style="color:#666">${c.address}</td>
         <td style="text-align:center;color:#999;font-family:monospace">${c.code}</td>
+        <td style="text-align:center;font-weight:bold">${stopBoxes[c.id]||''}</td>
         <td></td>
       </tr>`).join('') + `
       <tr style="background:#fff8ee;">
         <td style="text-align:center;font-weight:bold;font-size:13px;color:#f5a623">回</td>
         <td style="font-weight:bold;color:#f5a623">【回公司】龍台貿易有限公司</td>
         <td style="color:#999">桃園市龍潭區工五路250號</td>
+        <td></td>
         <td></td>
         <td></td>
       </tr>`;
@@ -3120,6 +3152,7 @@
           <th style="width:160px">公司名稱</th>
           <th>送貨地址</th>
           <th style="width:50px">編號</th>
+          <th style="width:44px">箱數</th>
           <th style="width:50px">備註</th>
         </tr>
         ${rows}
