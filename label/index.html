@@ -117,6 +117,8 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
 .qrow { cursor:pointer; }
 .summary-group tr.qrow:hover td { background:#f4f8fd; }
 .queue-table td.qcount { text-align:center; font-weight:bold; color:#c00; font-size:16px; }
+.queue-table th:first-child, .queue-table td.qsel { width:34px; text-align:center; }
+.queue-table td.qsel input, .queue-table th:first-child input { width:17px; height:17px; cursor:pointer; }
 .queue-table td.qdel button {
   padding:4px 10px; font-size:12px; cursor:pointer; border-radius:5px;
   border:1px solid #c00; color:#c00; background:#fff;
@@ -327,6 +329,7 @@ h1 { text-align:center; font-family:sans-serif; font-size:20px; color:#1a3c6e; p
       <div class="qb-total" id="queueTotal">目前清單：0 位客戶、共 <b>0</b> 件</div>
       <div class="qb-actions">
         <button type="button" class="qb-clear" id="btnQueueClear">清空清單</button>
+        <button type="button" class="qb-print" id="btnQueuePrintChecked" style="background:#fff;color:#1a5fa8;border:1.5px solid #1a5fa8;">🖨️ 列印已勾選（0 張）</button>
         <button type="button" class="qb-print" id="btnQueuePrint">🖨️ 列印全部標籤（0 張）</button>
       </div>
     </div>
@@ -941,10 +944,8 @@ document.getElementById('wipePwInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') confirmWipeAll();
 });
 
-document.getElementById('btnQueuePrint').addEventListener('click', async function() {
-  await pullQueue();
-  var pending = loadQueue().filter(function(e){ return !e.spCleared; });
-  if (!pending.length) { alert('清單是空的，請先在上方加入寄件資料'); return; }
+async function printQueueEntries(pending) {
+  if (!pending.length) { alert('沒有要列印的項目'); return; }
   buildQueuePrintArea(pending);
   setTimeout(function() {
     window.print();
@@ -959,6 +960,20 @@ document.getElementById('btnQueuePrint').addEventListener('click', async functio
       await saveQueue(latest);
     }, 500);
   }, 100);
+}
+
+document.getElementById('btnQueuePrint').addEventListener('click', async function() {
+  await pullQueue();
+  var pending = loadQueue().filter(function(e){ return !e.spCleared; });
+  if (!pending.length) { alert('清單是空的，請先在上方加入寄件資料'); return; }
+  await printQueueEntries(pending);
+});
+
+document.getElementById('btnQueuePrintChecked').addEventListener('click', async function() {
+  await pullQueue();
+  var pending = loadQueue().filter(function(e){ return !e.spCleared && !qUnchecked.has(e.id); });
+  if (!pending.length) { alert('目前沒有勾選任何項目，請先在清單左邊的勾選框選擇要列印的'); return; }
+  await printQueueEntries(pending);
 });
 
 async function removeQueueEntry(id, hardDelete) {
@@ -1025,21 +1040,35 @@ window.hideEntryDetail = function hideEntryDetail() {
   document.getElementById('detailOverlay').style.display = 'none';
 }
 
+// 勾選列印：記錄「取消勾選」的 id（預設全部勾選，等同原本「列印全部」），
+// 只存在這個分頁的記憶體裡，重新整理會回到全選
+var qUnchecked = new Set();
+
 function renderQueue() {
   var list = loadQueue().filter(function(e){ return !e.spCleared; }); // 寄件區顯示本次「還沒清空」的項目（印過也留著）
+  var ids = {}; list.forEach(function(e){ ids[e.id] = 1; });
+  qUnchecked.forEach(function(id){ if (!ids[id]) qUnchecked.delete(id); }); // 清掉已經不在清單上的 id
+
   var totalCount = list.reduce(function(s,e){ return s + e.count; }, 0);
+  var checkedList = list.filter(function(e){ return !qUnchecked.has(e.id); });
+  var checkedCount = checkedList.reduce(function(s,e){ return s + e.count; }, 0);
   var pages = Math.ceil(totalCount / N) || 0;
+  var checkedPages = Math.ceil(checkedCount / N) || 0;
   document.getElementById('queueTotal').innerHTML =
     '目前清單：' + list.length + ' 位客戶、共 <b>' + totalCount + '</b> 件';
   document.getElementById('btnQueuePrint').textContent = '🖨️ 列印全部標籤（' + pages + ' 張）';
+  document.getElementById('btnQueuePrintChecked').textContent = '🖨️ 列印已勾選（' + checkedPages + ' 張）';
 
   var wrap = document.getElementById('queueTableWrap');
   if (!list.length) {
     wrap.innerHTML = '<div class="queue-empty">尚無資料，請在上方輸入後按「加入清單」</div>';
     return;
   }
+  var allChecked = checkedList.length === list.length;
   var rows = list.map(function(e) {
+    var checked = !qUnchecked.has(e.id);
     return '<tr class="qrow" onclick="showEntryDetail(\''+e.id+'\',\'send\')">' +
+      '<td class="qsel" onclick="event.stopPropagation()"><input type="checkbox" ' + (checked?'checked':'') + ' onchange="toggleQueueCheck(\''+e.id+'\',this.checked)"></td>' +
       '<td>' + esc(e.custId || '－') + (e.company ? ' <span style="color:#999">('+esc(e.company)+')</span>' : '') + '</td>' +
       '<td>' + esc(e.receiverName) + (e.printed ? ' <span style="color:#1a8f4a;font-size:12px;">✓已列印</span>' : '') + '</td>' +
       '<td class="qcount">' + e.count + '</td>' +
@@ -1051,8 +1080,20 @@ function renderQueue() {
   }).join('');
   wrap.innerHTML =
     '<table class="queue-table"><thead><tr>' +
+      '<th><input type="checkbox" title="全選/全不選" ' + (allChecked?'checked':'') + ' onchange="toggleQueueCheckAll(this.checked)"></th>' +
       '<th>客戶編號</th><th>收件人</th><th>件數</th><th>貨品內容</th><th>電話</th><th>加入時間</th><th>操作</th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function toggleQueueCheck(id, checked) {
+  if (checked) qUnchecked.delete(id); else qUnchecked.add(id);
+  renderQueue();
+}
+function toggleQueueCheckAll(checked) {
+  var list = loadQueue().filter(function(e){ return !e.spCleared; });
+  if (checked) qUnchecked.clear();
+  else list.forEach(function(e){ qUnchecked.add(e.id); });
+  renderQueue();
 }
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
