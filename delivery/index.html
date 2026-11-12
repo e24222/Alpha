@@ -24,6 +24,8 @@
   .main{padding:20px;max-width:680px;margin:0 auto;}
   .page{display:none;}
   .page.active{display:block;}
+  .delivery-date-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;color:var(--muted);}
+  .delivery-date-bar input[type=date]{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 10px;font-size:14px;font-family:inherit;}
   .search-bar{position:relative;margin-bottom:16px;}
   .search-bar input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 16px 12px 40px;font-size:14px;font-family:'Noto Sans TC',sans-serif;outline:none;}
   .search-bar input:focus{border-color:var(--accent);}
@@ -347,6 +349,10 @@
       <button class="back-btn" onclick="backToHistory()">🕘 返回歷史紀錄</button>
     </div>
     <div id="selectSection" style="display: block;">
+      <div class="delivery-date-bar">
+        📅 送貨日期
+        <input type="date" id="deliveryDateInput">
+      </div>
       <div class="search-bar">
         <span class="icon">🔍</span>
         <input type="text" id="searchInput" placeholder="輸入客戶編號按 Enter 打勾，或搜尋名稱" oninput="renderList()" onkeydown="handleSearchKey(event)">
@@ -2466,13 +2472,16 @@
     };
 
     if (!isEdit) {
-      // 全新排路線 → 新增一筆歷史
+      // 全新排路線 → 新增一筆歷史（送貨日期用上面選的，沒選或選錯格式就當作今天）
       const now = new Date();
-      const dateStr = now.toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'})
+      const pickedStr = document.getElementById('deliveryDateInput').value; // YYYY-MM-DD
+      const pm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(pickedStr || '');
+      const dateStr = (pm ? `${pm[1]}/${pm[2]}/${pm[3]}` : now.toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}))
         + ' ' + now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
       const newRecord = {
         id: Date.now().toString(),
         date: dateStr,
+        label: pm ? `${pm[1]}${pm[2]}${pm[3]}` : undefined, // 有選日期就直接定案標籤，歷史紀錄的分析才會照這天分組
         boxes: document.getElementById('boxCount').value || '',
         totalKm: calcTotalKm(sorted),
         stops: sorted.map(c=>stopRec(c)),
@@ -3191,6 +3200,12 @@
       saveHist();
     }
   }
+
+  function todayISO(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  document.getElementById('deliveryDateInput').value = todayISO();
 
   load(); renderList();
   custSync.start();
